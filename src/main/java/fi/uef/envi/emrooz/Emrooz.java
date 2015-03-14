@@ -5,9 +5,6 @@
 
 package fi.uef.envi.emrooz;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashSet;
@@ -16,14 +13,6 @@ import java.util.UUID;
 
 import org.joda.time.DateTime;
 import org.openrdf.model.Statement;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFHandler;
-import org.openrdf.rio.RDFHandlerException;
-import org.openrdf.rio.RDFParseException;
-import org.openrdf.rio.RDFParser;
-import org.openrdf.rio.Rio;
-import org.openrdf.rio.binary.BinaryRDFWriter;
-import org.openrdf.rio.helpers.StatementCollector;
 
 import com.carmatech.cassandra.TimeUUID;
 import com.datastax.driver.core.BoundStatement;
@@ -36,6 +25,8 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.utils.Bytes;
+
+import fi.uef.envi.emrooz.utils.ConverterUtil;
 
 /**
  * <p>
@@ -61,7 +52,6 @@ public class Emrooz {
 
 	private Cluster cluster;
 	private Session session;
-	private RDFParser rdfParser;
 
 	private boolean isConnected = false;
 
@@ -79,24 +69,23 @@ public class Emrooz {
 		if (keyspace != null)
 			this.keyspace = keyspace;
 
-		this.rdfParser = Rio.createParser(RDFFormat.BINARY);
 		this.cluster = Cluster.builder().addContactPoint(host).build();
-		
+
 		initialize();
 	}
 
 	public String getHost() {
 		return host;
 	}
-	
+
 	public String getKeyspace() {
 		return keyspace;
 	}
-	
+
 	public String getDataTable() {
 		return dataTable;
 	}
-	
+
 	public void connect() {
 		session = cluster.connect(keyspace);
 		isConnected = true;
@@ -109,24 +98,8 @@ public class Emrooz {
 
 	public void addSensorObservation(String rowKey, UUID columnName,
 			Set<Statement> columnValue) {
-		ByteArrayOutputStream os = new ByteArrayOutputStream();
-		RDFHandler rdfHandler = new BinaryRDFWriter(os);
-
-		rdfParser.setRDFHandler(rdfHandler);
-
-		try {
-			rdfHandler.startRDF();
-
-			for (Statement statement : columnValue) {
-				rdfHandler.handleStatement(statement);
-			}
-
-			rdfHandler.endRDF();
-		} catch (RDFHandlerException e) {
-			e.printStackTrace();
-		}
-
-		addSensorObservation(rowKey, columnName, os.toByteArray());
+		addSensorObservation(rowKey, columnName,
+				ConverterUtil.toByteArray(columnValue));
 	}
 
 	public void addSensorObservation(String rowKey, UUID columnName,
@@ -152,9 +125,7 @@ public class Emrooz {
 		if (!isConnected)
 			connect();
 
-		Set<Statement> ret = new HashSet<Statement>();
-		StatementCollector collector = new StatementCollector(ret);
-		rdfParser.setRDFHandler(collector);
+		Set<Statement> statements = new HashSet<Statement>();
 
 		PreparedStatement statement = session.prepare("SELECT value FROM "
 				+ keyspace + "." + dataTable
@@ -164,19 +135,11 @@ public class Emrooz {
 				columnNameFrom, columnNameTo));
 
 		for (Row row : results) {
-			ByteBuffer value = row.getBytes("value");
-			byte[] bytes = Bytes.getArray(value);
-
-			ByteArrayInputStream is = new ByteArrayInputStream(bytes);
-
-			try {
-				rdfParser.parse(is, null);
-			} catch (RDFParseException | RDFHandlerException | IOException e) {
-				e.printStackTrace();
-			}
+			ConverterUtil.toStatements(Bytes.getArray(row.getBytes("value")),
+					statements);
 		}
 
-		return Collections.unmodifiableSet(ret);
+		return Collections.unmodifiableSet(statements);
 	}
 
 	public void close() {
