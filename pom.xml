@@ -26,5 +26,10 @@
       <artifactId>cassandra-utils</artifactId>
       <version>0.2.1</version>
     </dependency>
+    <dependency>
+	  <groupId>com.datastax.cassandra</groupId>
+	  <artifactId>cassandra-driver-core</artifactId>
+	  <version>2.1.4</version>
+    </dependency>
   </dependencies>
 </project>
