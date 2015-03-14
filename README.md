@@ -2,7 +2,7 @@
 
 ## Requirements
 
-* [Cassandra](http://cassandra.apache.org/) (developed on 2.1.3)
+* [Apache Cassandra](http://cassandra.apache.org/) (developed on [Cassandra 2.1.3](http://archive.apache.org/dist/cassandra/2.1.3/))
 
 ## Configuration
 
