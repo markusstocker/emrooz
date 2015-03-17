@@ -1,0 +1,44 @@
+Copyright (C) Markus Stocker. All rights reserved.
+
+Author: 
+	Markus Stocker
+Email:
+	markus.stocker@gmail.com
+Web:
+	http://markusstocker.com
+Address:
+	University of Eastern Finland
+	Kuopio Campus
+	Department of Environmental Science 
+	Research Group of Environmental Informatics
+	P.O. Box 1627
+	70211 Kuopio 
+	Finland
+                                                                
+The development of this software was made possible using:
+
+Apache Cassandra (2.1.3):
+	http://cassandra.apache.org
+	Apache License 2.0
+	
+Java Driver 2.1 for Apache Cassandra (2.1.4):
+	http://www.datastax.com/
+	Apache License 2.0
+	
+Sesame (2.8.1):
+	http://rdf4j.org/
+	BSD License
+	
+Joda Time (2.7):
+	http://www.joda.org/joda-time/
+	Apache License 2.0
+	
+JUnit (4.12):
+	http://junit.org/
+	Eclipse Public License - v 1.0
+	
+cassandra-utils (0.2.1):
+	https://github.com/marccarre/cassandra-utils
+	Apache License 2.0
+	
+	
