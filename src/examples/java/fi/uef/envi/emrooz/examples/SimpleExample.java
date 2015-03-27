@@ -47,15 +47,20 @@ import fi.uef.envi.emrooz.vocabulary.Time;
 
 public class SimpleExample {
 
-	String host = "localhost";
-	String dataFrom = "2015-03-13T18:00:00.000+02:00";
-	String dataTo = "2015-03-13T20:00:00.000+02:00";
-	String queryFrom = "2015-03-13T18:55:00.000+02:00";
-	String queryTo = "2015-03-13T19:05:00.000+02:00";
-	String ns = "http://example.org";
-
 	ValueFactory vf = new ValueFactoryImpl();
 	DateTimeFormatter dtf = ISODateTimeFormat.dateTime().withOffsetParsed();
+
+	String host = "localhost";
+
+	String dataFrom = "2015-03-13T18:00:00.000+02:00";
+	String dataTo = "2015-03-13T20:00:00.000+02:00";
+
+	String queryFrom = "2015-03-13T18:55:00.000+02:00";
+	String queryTo = "2015-03-13T19:05:00.000+02:00";
+
+	String ns = "http://example.org";
+
+	boolean doInsert = false;
 
 	URI sensorId = _uri("s1");
 	URI propertyId = _uri("p1");
@@ -64,12 +69,15 @@ public class SimpleExample {
 	Emrooz emrooz = new Emrooz(host);
 
 	void run() {
-		// insert();
+		insert();
 		query();
 		close();
 	}
 
 	void insert() {
+		if (!doInsert)
+			return;
+
 		Random r = new Random();
 
 		emrooz.register(sensorId, propertyId, featureId, "HOUR");
@@ -109,7 +117,7 @@ public class SimpleExample {
 					+ result.getValue("value"));
 		}
 	}
-	
+
 	void close() {
 		emrooz.close();
 	}
