@@ -14,14 +14,14 @@ import java.util.UUID;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
+import org.openrdf.model.Literal;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
+import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.model.vocabulary.XMLSchema;
 import org.openrdf.query.BindingSet;
-import org.openrdf.query.MalformedQueryException;
-import org.openrdf.query.TupleQueryResult;
 
 import fi.uef.envi.emrooz.Emrooz;
 import fi.uef.envi.emrooz.vocabulary.DUL;
@@ -47,39 +47,46 @@ import fi.uef.envi.emrooz.vocabulary.Time;
 
 public class SimpleExample {
 
-	private static final String host = "localhost";
-	private static final String from = "2015-03-13T20:00:00.000+02:00";
-	private static final String to = "2015-03-13T21:00:00.000+02:00";
-	private static final String ns = "http://example.org#";
+	String host = "localhost";
+	String dataFrom = "2015-03-13T18:00:00.000+02:00";
+	String dataTo = "2015-03-13T20:00:00.000+02:00";
+	String queryFrom = "2015-03-13T18:55:00.000+02:00";
+	String queryTo = "2015-03-13T19:05:00.000+02:00";
+	String ns = "http://example.org";
 
-	private static final ValueFactory vf = new ValueFactoryImpl();
+	ValueFactory vf = new ValueFactoryImpl();
+	DateTimeFormatter dtf = ISODateTimeFormat.dateTime().withOffsetParsed();
 
-	public static void main(String[] args) {
+	URI sensorId = _uri("s1");
+	URI propertyId = _uri("p1");
+	URI featureId = _uri("f1");
+
+	Emrooz emrooz = new Emrooz(host);
+
+	void run() {
+		// insert();
+		query();
+		close();
+	}
+
+	void insert() {
 		Random r = new Random();
-		DateTimeFormatter dtf = ISODateTimeFormat.dateTime().withOffsetParsed();
 
-		Emrooz emrooz = new Emrooz(host);
+		emrooz.register(sensorId, propertyId, featureId, "HOUR");
 
-		URI sensor = vf.createURI(ns + "s1");
-		URI property = vf.createURI(ns + "p1");
-		URI feature = vf.createURI(ns + "f1");
+		DateTime dataTime = dtf.parseDateTime(dataFrom);
 
-		// emrooz.register(sensor, property, feature, "DAY");
+		while (dataTime.isBefore(dtf.parseDateTime(dataTo))) {
+			Set<Statement> observation = getObservation(sensorId, propertyId,
+					featureId, dataTime, r.nextDouble());
 
-		// Set<Statement> observation = getObservation(sensor, property,
-		// feature,
-		// dtf.parseDateTime("2015-03-13T19:20:00.000+02:00"),
-		// r.nextDouble());
+			emrooz.addSensorObservation(observation);
 
-		// emrooz.addSensorObservation(observation);
+			dataTime = dataTime.plusMinutes(1);
+		}
+	}
 
-		// Set<Statement> out = emrooz.getSensorObservations(sensor, property,
-		// feature, dtf.parseDateTime(from), dtf.parseDateTime(to));
-
-		// for (Statement statement : out) {
-		// System.out.println(statement);
-		// }
-
+	void query() {
 		String query = "prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#>"
 				+ "prefix time: <http://www.w3.org/2006/time#>"
 				+ "prefix dul: <http://www.loa-cnr.it/ontologies/DUL.owl#>"
@@ -91,10 +98,8 @@ public class SimpleExample {
 				+ "ssn:featureOfInterest <http://example.org#f1> ;"
 				+ "ssn:observationResultTime [ time:inXSDDateTime ?time ] ;"
 				+ "ssn:observationResult [ dul:hasRegion [ dul:hasRegionDataValue ?value ] ]"
-				+ "]"
-				+ "filter (?time >= \"2015-03-13T20:00:00.000+02:00\"^^xsd:dateTime "
-				+ "&& ?time < \"2015-03-13T21:00:00.000+02:00\"^^xsd:dateTime)"
-				+ "}"
+				+ "]" + "filter (?time >= \"" + queryFrom + "\"^^xsd:dateTime "
+				+ "&& ?time < \"" + queryTo + "\"^^xsd:dateTime)" + "}"
 				+ "order by asc(?time)";
 
 		List<BindingSet> results = emrooz.getSensorObservations(query);
@@ -103,36 +108,94 @@ public class SimpleExample {
 			System.out.println(result.getValue("time") + " "
 					+ result.getValue("value"));
 		}
-
+	}
+	
+	void close() {
 		emrooz.close();
 	}
 
-	private static Set<Statement> getObservation(URI sensor, URI property,
-			URI feature, DateTime time, Double value) {
+	Set<Statement> getObservation(URI sensorId, URI propertyId, URI featureId,
+			DateTime time, Double value) {
 		Set<Statement> ret = new HashSet<Statement>();
 
-		URI observationId = vf.createURI(ns + UUID.randomUUID().toString());
-		URI resultTimeId = vf.createURI(ns + UUID.randomUUID().toString());
-		URI outputId = vf.createURI(ns + UUID.randomUUID().toString());
-		URI valueId = vf.createURI(ns + UUID.randomUUID().toString());
+		URI observationId = _uri_uuid();
+		URI resultTimeId = _uri_uuid();
+		URI outputId = _uri_uuid();
+		URI valueId = _uri_uuid();
 
-		ret.add(vf.createStatement(observationId, SSN.observedBy, sensor));
-		ret.add(vf.createStatement(observationId, SSN.observedProperty,
-				property));
-		ret.add(vf.createStatement(observationId, SSN.featureOfInterest,
-				feature));
-		ret.add(vf.createStatement(observationId, SSN.observationResultTime,
-				resultTimeId));
-		ret.add(vf.createStatement(resultTimeId, Time.inXSDDateTime, vf
-				.createLiteral(ISODateTimeFormat.dateTime().print(time),
-						XMLSchema.DATETIME)));
-		ret.add(vf.createStatement(observationId, SSN.observationResult,
-				outputId));
-		ret.add(vf.createStatement(outputId, DUL.hasRegion, valueId));
-		ret.add(vf.createStatement(valueId, DUL.hasRegionDataValue,
-				vf.createLiteral(value)));
+		ret.add(_observedBy(observationId, sensorId));
+		ret.add(_observedProperty(observationId, propertyId));
+		ret.add(_featureOfInterest(observationId, featureId));
+		ret.add(_resultTime(observationId, resultTimeId));
+		ret.add(_inXSDDateTime(resultTimeId, time));
+		ret.add(_observationResult(observationId, outputId));
+		ret.add(_hasRegion(outputId, valueId));
+		ret.add(_hasRegionDataValue(valueId, value));
 
 		return ret;
+	}
+
+	Statement _observedBy(URI observationId, URI sensorId) {
+		return _statement(observationId, SSN.observedBy, sensorId);
+	}
+
+	Statement _observedProperty(URI observationId, URI propertyId) {
+		return _statement(observationId, SSN.observedProperty, propertyId);
+	}
+
+	Statement _featureOfInterest(URI observationId, URI featureId) {
+		return _statement(observationId, SSN.featureOfInterest, featureId);
+	}
+
+	Statement _resultTime(URI observationId, URI resultTimeId) {
+		return _statement(observationId, SSN.observationResultTime,
+				resultTimeId);
+	}
+
+	Statement _inXSDDateTime(URI resultTimeId, DateTime time) {
+		return _statement(
+				resultTimeId,
+				Time.inXSDDateTime,
+				_literal(ISODateTimeFormat.dateTime().print(time),
+						XMLSchema.DATETIME));
+	}
+
+	Statement _observationResult(URI observationId, URI outputId) {
+		return _statement(observationId, SSN.observationResult, outputId);
+	}
+
+	Statement _hasRegion(URI outputId, URI valueId) {
+		return _statement(outputId, DUL.hasRegion, valueId);
+	}
+
+	Statement _hasRegionDataValue(URI valueId, Double value) {
+		return _statement(valueId, DUL.hasRegionDataValue,
+				_literal(value.toString(), XMLSchema.DOUBLE));
+	}
+
+	Statement _statement(URI s, URI p, Value o) {
+		return vf.createStatement(s, p, o);
+	}
+
+	URI _uri(String fragment) {
+		return _uri(ns, fragment);
+	}
+
+	URI _uri(String ns, String fragment) {
+		return vf.createURI(ns + "#" + fragment);
+	}
+
+	URI _uri_uuid() {
+		return _uri(UUID.randomUUID().toString());
+	}
+
+	Literal _literal(String value, URI type) {
+		return vf.createLiteral(value, type);
+	}
+
+	public static void main(String[] args) {
+		SimpleExample app = new SimpleExample();
+		app.run();
 	}
 
 }

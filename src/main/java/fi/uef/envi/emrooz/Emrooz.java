@@ -574,7 +574,35 @@ public class Emrooz {
 	}
 
 	private String getRegistrationId(String s, String p, String f) {
-		return registrationIdsMap.get(s).get(p).get(f);
+		Map<String, Map<String, String>> m1 = registrationIdsMap.get(s);
+
+		if (m1 == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Sensor not registered [s = " + s
+						+ "; registrationIdsMap = " + registrationIdsMap + "]");
+
+			return null;
+		}
+
+		Map<String, String> m2 = m1.get(p);
+
+		if (m2 == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Property not registered [s = " + s + "; p = " + p
+						+ "; registrationIdsMap = " + registrationIdsMap + "]");
+
+			return null;
+		}
+		
+		String ret =  m2.get(f);
+		
+		if (ret == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Feature not registered [s = " + s + "; p = " + p
+						+ "; registrationIdsMap = " + registrationIdsMap + "]");
+		}
+		
+		return ret;
 	}
 
 	private void connect() {
