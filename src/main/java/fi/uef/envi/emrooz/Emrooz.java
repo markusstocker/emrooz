@@ -347,6 +347,9 @@ public class Emrooz {
 
 		Set<Statement> statements = getSensorObservations(sensor, property,
 				feature, visitor.getTimeFrom(), visitor.getTimeTo());
+		
+		if (statements == null)
+			return Collections.emptyList();
 
 		try {
 			Repository repo = new SailRepository(new MemoryStore());
@@ -391,10 +394,56 @@ public class Emrooz {
 
 	public Set<Statement> getSensorObservations(URI sensor, URI property,
 			URI feature, DateTime timeFrom, DateTime timeTo) {
-		// TODO Get set of row keys for the time range
-		return getSensorObservations(
-				getRowKey(sensor, property, feature, timeFrom), timeFrom,
-				timeTo);
+		Set<Statement> ret = new HashSet<Statement>();
+
+		String s = sensor.stringValue();
+		String p = property.stringValue();
+		String f = feature.stringValue();
+
+		String registrationId = getRegistrationId(s, p, f);
+
+		Map<String, String> registration = registrations.get(registrationId);
+
+		if (registration == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Registration not found [sensor = " + s
+						+ "; propery = " + p + "; feature = " + f + "]");
+
+			return null;
+		}
+
+		String rollover = registration.get("rollover");
+
+		if (rollover == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Registration rollover is null [registration = "
+						+ registration + "]");
+
+			return null;
+		}
+
+		DateTime time = timeFrom;
+
+		while (time.isBefore(timeTo)) {
+			ret.addAll(getSensorObservations(
+					getRowKey(sensor, property, feature, time), time, timeTo));
+
+			if (rollover.equals("YEAR"))
+				time = time.year().roundFloorCopy().plusYears(1);
+			else if (rollover.equals("MONTH"))
+				time = time.monthOfYear().roundFloorCopy().plusMonths(1);
+			else if (rollover.equals("DAY"))
+				time = time.dayOfMonth().roundFloorCopy().plusDays(1);
+			else if (rollover.equals("HOUR"))
+				time = time.hourOfDay().roundFloorCopy().plusHours(1);
+			else if (rollover.equals("MINUTE"))
+				time = time.minuteOfHour().roundFloorCopy().plusMinutes(1);
+			else
+				throw new RuntimeException("Unsupported rollover [rollover = "
+						+ rollover + "]");
+		}
+
+		return Collections.unmodifiableSet(ret);
 	}
 
 	public Set<Statement> getSensorObservations(String rowKey,
@@ -406,6 +455,10 @@ public class Emrooz {
 
 			return Collections.emptySet();
 		}
+
+		if (log.isLoggable(Level.INFO))
+			log.info("Query [rowKey = " + rowKey + "; timeFrom = " + timeFrom
+					+ "; timeTo = " + timeTo + "]");
 
 		return getSensorObservations(rowKey, TimeUUID.toUUID(timeFrom),
 				TimeUUID.toUUID(timeTo));
@@ -424,15 +477,19 @@ public class Emrooz {
 			return Collections.unmodifiableSet(statements);
 		}
 
+		if (log.isLoggable(Level.INFO))
+			log.info("Query [rowKey = " + rowKey + "; columnNameFrom = " + columnNameFrom
+					+ "; columnNameTo = " + columnNameTo + "]");
+		
 		ResultSet results = session.execute(new BoundStatement(
 				sensorObservationSelectStatement).bind(rowKey, columnNameFrom,
 				columnNameTo));
 
-		for (Row row : results) {
+		for (Row row : results) {			
 			ConverterUtil.toStatements(Bytes.getArray(row.getBytes("value")),
 					statements);
 		}
-
+		
 		return Collections.unmodifiableSet(statements);
 	}
 
@@ -556,21 +613,23 @@ public class Emrooz {
 			return null;
 		}
 
+		DateTime t = null;
+		
 		if (rollover.equals("YEAR"))
-			time = time.year().roundFloorCopy();
+			t = time.year().roundFloorCopy();
 		else if (rollover.equals("MONTH"))
-			time = time.monthOfYear().roundFloorCopy();
+			t = time.monthOfYear().roundFloorCopy();
 		else if (rollover.equals("DAY"))
-			time = time.dayOfMonth().roundFloorCopy();
+			t = time.dayOfMonth().roundFloorCopy();
 		else if (rollover.equals("HOUR"))
-			time = time.hourOfDay().roundFloorCopy();
+			t = time.hourOfDay().roundFloorCopy();
 		else if (rollover.equals("MINUTE"))
-			time = time.minuteOfHour().roundFloorCopy();
+			t = time.minuteOfHour().roundFloorCopy();
 		else
 			throw new RuntimeException("Unsupported rollover [rollover = "
 					+ rollover + "]");
-
-		return registrationId + "-" + dtfRowKey.print(time);
+		
+		return registrationId + "-" + dtfRowKey.print(t);
 	}
 
 	private String getRegistrationId(String s, String p, String f) {
@@ -593,15 +652,15 @@ public class Emrooz {
 
 			return null;
 		}
-		
-		String ret =  m2.get(f);
-		
+
+		String ret = m2.get(f);
+
 		if (ret == null) {
 			if (log.isLoggable(Level.SEVERE))
 				log.severe("Feature not registered [s = " + s + "; p = " + p
 						+ "; registrationIdsMap = " + registrationIdsMap + "]");
 		}
-		
+
 		return ret;
 	}
 
