@@ -8,6 +8,7 @@ package fi.uef.envi.emrooz;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -129,8 +130,11 @@ public class Emrooz {
 				+ this.keyspace + "." + dataTable
 				+ " (key,column1,value) VALUES (?, ?, ?)");
 		this.sensorObservationSelectStatement = session
-				.prepare("SELECT value FROM " + this.keyspace + "." + dataTable
-						+ " WHERE key=? AND column1>=? AND column1<?");
+				.prepare("SELECT value FROM "
+						+ this.keyspace
+						+ "."
+						+ dataTable
+						+ " WHERE key=? AND column1>=minTimeuuid(?) AND column1<minTimeuuid(?)");
 	}
 
 	public String getHost() {
@@ -347,7 +351,7 @@ public class Emrooz {
 
 		Set<Statement> statements = getSensorObservations(sensor, property,
 				feature, visitor.getTimeFrom(), visitor.getTimeTo());
-		
+
 		if (statements == null)
 			return Collections.emptyList();
 
@@ -460,37 +464,29 @@ public class Emrooz {
 			log.info("Query [rowKey = " + rowKey + "; timeFrom = " + timeFrom
 					+ "; timeTo = " + timeTo + "]");
 
-		return getSensorObservations(rowKey, TimeUUID.toUUID(timeFrom),
-				TimeUUID.toUUID(timeTo));
+		return getSensorObservations(rowKey, timeFrom.toDate(), timeTo.toDate());
 	}
 
 	public Set<Statement> getSensorObservations(String rowKey,
-			UUID columnNameFrom, UUID columnNameTo) {
-		Set<Statement> statements = new HashSet<Statement>();
-
+			Date columnNameFrom, Date columnNameTo) {
 		if (rowKey == null || columnNameFrom == null || columnNameTo == null) {
 			if (log.isLoggable(Level.WARNING))
 				log.warning("Returned empty result set [rowKey = " + rowKey
 						+ "; columnNameFrom = " + columnNameFrom
 						+ "; columnNameTo = " + columnNameTo + "]");
 
-			return Collections.unmodifiableSet(statements);
+			return Collections.emptySet();
 		}
 
 		if (log.isLoggable(Level.INFO))
-			log.info("Query [rowKey = " + rowKey + "; columnNameFrom = " + columnNameFrom
-					+ "; columnNameTo = " + columnNameTo + "]");
-		
+			log.info("Query [rowKey = " + rowKey + "; columnNameFrom = "
+					+ columnNameFrom + "; columnNameTo = " + columnNameTo + "]");
+
 		ResultSet results = session.execute(new BoundStatement(
 				sensorObservationSelectStatement).bind(rowKey, columnNameFrom,
 				columnNameTo));
 
-		for (Row row : results) {			
-			ConverterUtil.toStatements(Bytes.getArray(row.getBytes("value")),
-					statements);
-		}
-		
-		return Collections.unmodifiableSet(statements);
+		return ConverterUtil.toStatements(results.all());
 	}
 
 	public void close() {
@@ -614,7 +610,7 @@ public class Emrooz {
 		}
 
 		DateTime t = null;
-		
+
 		if (rollover.equals("YEAR"))
 			t = time.year().roundFloorCopy();
 		else if (rollover.equals("MONTH"))
@@ -628,7 +624,7 @@ public class Emrooz {
 		else
 			throw new RuntimeException("Unsupported rollover [rollover = "
 					+ rollover + "]");
-		
+
 		return registrationId + "-" + dtfRowKey.print(t);
 	}
 

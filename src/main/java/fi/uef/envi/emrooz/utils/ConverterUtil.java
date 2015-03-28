@@ -8,6 +8,9 @@ package fi.uef.envi.emrooz.utils;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.openrdf.model.Statement;
@@ -19,6 +22,9 @@ import org.openrdf.rio.RDFParser;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.binary.BinaryRDFWriter;
 import org.openrdf.rio.helpers.StatementCollector;
+
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.utils.Bytes;
 
 /**
  * <p>
@@ -58,16 +64,23 @@ public class ConverterUtil {
 		return os.toByteArray();
 	}
 
-	public static void toStatements(byte[] byteArray, Set<Statement> statements) {
+	public static Set<Statement> toStatements(List<Row> rows) {
+		Set<Statement> ret = new HashSet<Statement>();
 		RDFParser rdfParser = Rio.createParser(RDFFormat.BINARY);
-		StatementCollector collector = new StatementCollector(statements);
+		StatementCollector collector = new StatementCollector(ret);
 		rdfParser.setRDFHandler(collector);
 
 		try {
-			rdfParser.parse(new ByteArrayInputStream(byteArray), null);
+			for (Row row : rows) {
+				rdfParser.parse(
+						new ByteArrayInputStream(Bytes.getArray(row
+								.getBytes("value"))), null);
+			}
 		} catch (RDFParseException | RDFHandlerException | IOException e) {
 			e.printStackTrace();
 		}
+		
+		return Collections.unmodifiableSet(ret);
 	}
 
 }
