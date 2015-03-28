@@ -5,6 +5,8 @@
 
 package fi.uef.envi.emrooz.utils;
 
+import static fi.uef.envi.emrooz.EmroozOptions.DATA_TABLE_ATTRIBUTE_3;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -23,6 +25,7 @@ import org.openrdf.rio.Rio;
 import org.openrdf.rio.binary.BinaryRDFWriter;
 import org.openrdf.rio.helpers.StatementCollector;
 
+import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.utils.Bytes;
 
@@ -64,6 +67,10 @@ public class ConverterUtil {
 		return os.toByteArray();
 	}
 
+	public static Set<Statement> toStatements(ResultSet result) {
+		return toStatements(result.all());
+	}
+
 	public static Set<Statement> toStatements(List<Row> rows) {
 		Set<Statement> ret = new HashSet<Statement>();
 		RDFParser rdfParser = Rio.createParser(RDFFormat.BINARY);
@@ -74,12 +81,12 @@ public class ConverterUtil {
 			for (Row row : rows) {
 				rdfParser.parse(
 						new ByteArrayInputStream(Bytes.getArray(row
-								.getBytes("value"))), null);
+								.getBytes(DATA_TABLE_ATTRIBUTE_3))), null);
 			}
 		} catch (RDFParseException | RDFHandlerException | IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		return Collections.unmodifiableSet(ret);
 	}
 

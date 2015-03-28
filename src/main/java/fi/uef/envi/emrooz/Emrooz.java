@@ -55,11 +55,24 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.TableMetadata;
-import com.datastax.driver.core.utils.Bytes;
 
 import fi.uef.envi.emrooz.utils.ConverterUtil;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 import fi.uef.envi.emrooz.vocabulary.Time;
+
+import static fi.uef.envi.emrooz.EmroozOptions.HOST;
+import static fi.uef.envi.emrooz.EmroozOptions.KEYSPACE;
+import static fi.uef.envi.emrooz.EmroozOptions.DATA_TABLE;
+import static fi.uef.envi.emrooz.EmroozOptions.REGISTRATIONS_TABLE;
+import static fi.uef.envi.emrooz.EmroozOptions.ROWKEY_DATETIME_PATTERN;
+import static fi.uef.envi.emrooz.EmroozOptions.DATA_TABLE_ATTRIBUTE_1;
+import static fi.uef.envi.emrooz.EmroozOptions.DATA_TABLE_ATTRIBUTE_2;
+import static fi.uef.envi.emrooz.EmroozOptions.DATA_TABLE_ATTRIBUTE_3;
+import static fi.uef.envi.emrooz.EmroozOptions.REGISTRATIONS_TABLE_ATTRIBUTE_1;
+import static fi.uef.envi.emrooz.EmroozOptions.REGISTRATIONS_TABLE_ATTRIBUTE_2;
+import static fi.uef.envi.emrooz.EmroozOptions.REGISTRATIONS_TABLE_ATTRIBUTE_3;
+import static fi.uef.envi.emrooz.EmroozOptions.REGISTRATIONS_TABLE_ATTRIBUTE_4;
+import static fi.uef.envi.emrooz.EmroozOptions.REGISTRATIONS_TABLE_ATTRIBUTE_5;
 
 /**
  * <p>
@@ -79,10 +92,7 @@ import fi.uef.envi.emrooz.vocabulary.Time;
  */
 
 public class Emrooz {
-	private String host = "127.0.0.1";
-	private String keyspace = "emrooz";
-	private String dataTable = "data";
-	private String registrationsTable = "registrations";
+	private String host = HOST;
 
 	private Cluster cluster;
 	private Session session;
@@ -97,7 +107,7 @@ public class Emrooz {
 	private PreparedStatement sensorObservationSelectStatement;
 
 	private DateTimeFormatter dtfRowKey = DateTimeFormat
-			.forPattern("yyyyMMddHHmmss");
+			.forPattern(ROWKEY_DATETIME_PATTERN);
 
 	private static final Logger log = Logger.getLogger(Emrooz.class.getName());
 
@@ -106,14 +116,8 @@ public class Emrooz {
 	}
 
 	public Emrooz(String host) {
-		this(host, null);
-	}
-
-	public Emrooz(String host, String keyspace) {
 		if (host != null)
 			this.host = host;
-		if (keyspace != null)
-			this.keyspace = keyspace;
 
 		this.cluster = Cluster.builder().addContactPoint(host).build();
 		this.registrations = new HashMap<String, Map<String, String>>();
@@ -127,26 +131,18 @@ public class Emrooz {
 		registrations();
 
 		this.sensorObservationInsertStatement = session.prepare("INSERT INTO "
-				+ this.keyspace + "." + dataTable
-				+ " (key,column1,value) VALUES (?, ?, ?)");
-		this.sensorObservationSelectStatement = session
-				.prepare("SELECT value FROM "
-						+ this.keyspace
-						+ "."
-						+ dataTable
-						+ " WHERE key=? AND column1>=minTimeuuid(?) AND column1<minTimeuuid(?)");
+				+ KEYSPACE + "." + DATA_TABLE + " (" + DATA_TABLE_ATTRIBUTE_1
+				+ "," + DATA_TABLE_ATTRIBUTE_2 + "," + DATA_TABLE_ATTRIBUTE_3
+				+ ") VALUES (?, ?, ?)");
+		this.sensorObservationSelectStatement = session.prepare("SELECT "
+				+ DATA_TABLE_ATTRIBUTE_3 + " FROM " + KEYSPACE + "."
+				+ DATA_TABLE + " WHERE " + DATA_TABLE_ATTRIBUTE_1 + "=? AND "
+				+ DATA_TABLE_ATTRIBUTE_2 + ">=minTimeuuid(?) AND "
+				+ DATA_TABLE_ATTRIBUTE_2 + "<minTimeuuid(?)");
 	}
 
 	public String getHost() {
 		return host;
-	}
-
-	public String getKeyspace() {
-		return keyspace;
-	}
-
-	public String getDataTable() {
-		return dataTable;
 	}
 
 	public void register(URI sensor, URI property, URI feature, String rollover) {
@@ -164,9 +160,13 @@ public class Emrooz {
 			return;
 		}
 
-		PreparedStatement statement = session.prepare("INSERT INTO " + keyspace
-				+ "." + registrationsTable
-				+ " (id,sensor,property,feature,rollover) VALUES (?,?,?,?,?)");
+		PreparedStatement statement = session.prepare("INSERT INTO " + KEYSPACE
+				+ "." + REGISTRATIONS_TABLE + " ("
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_1 + ","
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_2 + ","
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_3 + ","
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_4 + ","
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_5 + ") VALUES (?,?,?,?,?)");
 		BoundStatement boundStatement = new BoundStatement(statement);
 		session.execute(boundStatement.bind(registrationId, s, p, f, rollover));
 
@@ -482,11 +482,9 @@ public class Emrooz {
 			log.info("Query [rowKey = " + rowKey + "; columnNameFrom = "
 					+ columnNameFrom + "; columnNameTo = " + columnNameTo + "]");
 
-		ResultSet results = session.execute(new BoundStatement(
+		return ConverterUtil.toStatements(session.execute(new BoundStatement(
 				sensorObservationSelectStatement).bind(rowKey, columnNameFrom,
-				columnNameTo));
-
-		return ConverterUtil.toStatements(results.all());
+				columnNameTo)));
 	}
 
 	public void close() {
@@ -497,24 +495,28 @@ public class Emrooz {
 		registrations.clear();
 		registrationIdsMap.clear();
 
-		ResultSet rows = session
-				.execute("SELECT id,sensor,property,feature,rollover FROM "
-						+ keyspace + "." + registrationsTable);
+		ResultSet rows = session.execute("SELECT "
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_1 + ","
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_2 + ","
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_3 + ","
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_4 + ","
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_5 + " FROM " + KEYSPACE + "."
+				+ REGISTRATIONS_TABLE);
 
 		for (Row row : rows) {
-			String id = row.getString("id");
-			String sensor = row.getString("sensor");
-			String property = row.getString("property");
-			String feature = row.getString("feature");
-			String rollover = row.getString("rollover");
+			String id = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_1);
+			String sensor = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_2);
+			String property = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_3);
+			String feature = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_4);
+			String rollover = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_5);
 
 			Map<String, String> m = new HashMap<String, String>();
 			registrations.put(id, m);
 
-			m.put("sensor", sensor);
-			m.put("property", property);
-			m.put("feature", feature);
-			m.put("rollover", rollover);
+			m.put(REGISTRATIONS_TABLE_ATTRIBUTE_2, sensor);
+			m.put(REGISTRATIONS_TABLE_ATTRIBUTE_3, property);
+			m.put(REGISTRATIONS_TABLE_ATTRIBUTE_4, feature);
+			m.put(REGISTRATIONS_TABLE_ATTRIBUTE_5, rollover);
 
 			Map<String, Map<String, String>> m1 = registrationIdsMap
 					.get(sensor);
@@ -538,36 +540,48 @@ public class Emrooz {
 	private void initialize() {
 		Session session = cluster.connect();
 		Metadata metadata = cluster.getMetadata();
-		KeyspaceMetadata keyspaceMetadata = metadata.getKeyspace(keyspace);
+		KeyspaceMetadata keyspaceMetadata = metadata.getKeyspace(KEYSPACE);
 
 		if (keyspaceMetadata == null) {
 			session.execute("CREATE KEYSPACE "
-					+ keyspace
+					+ KEYSPACE
 					+ " WITH REPLICATION = { 'class' : 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '1' } AND DURABLE_WRITES = true;");
 		}
 
-		session = cluster.connect(keyspace);
+		session = cluster.connect(KEYSPACE);
 		metadata = cluster.getMetadata();
-		keyspaceMetadata = metadata.getKeyspace(keyspace);
-		TableMetadata dataTableMetadata = keyspaceMetadata.getTable(dataTable);
+		keyspaceMetadata = metadata.getKeyspace(KEYSPACE);
+		TableMetadata dataTableMetadata = keyspaceMetadata.getTable(DATA_TABLE);
 
 		if (dataTableMetadata == null) {
 			session.execute("CREATE TABLE "
-					+ keyspace
+					+ KEYSPACE
 					+ "."
-					+ dataTable
-					+ " (key ascii,column1 timeuuid,value blob,PRIMARY KEY (key, column1)) WITH COMPACT STORAGE AND read_repair_chance = 0.0 AND dclocal_read_repair_chance = 0.1 AND gc_grace_seconds = 864000 AND bloom_filter_fp_chance = 0.01 AND caching = { 'keys' : 'ALL', 'rows_per_partition' : 'NONE' } AND comment = '' AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy' } AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.LZ4Compressor' } AND default_time_to_live = 0 AND speculative_retry = 'NONE' AND min_index_interval = 128 AND max_index_interval = 2048;");
+					+ DATA_TABLE
+					+ " ("
+					+ DATA_TABLE_ATTRIBUTE_1
+					+ " ascii,"
+					+ DATA_TABLE_ATTRIBUTE_2
+					+ " timeuuid,"
+					+ DATA_TABLE_ATTRIBUTE_3
+					+ " blob,PRIMARY KEY ("
+					+ DATA_TABLE_ATTRIBUTE_1
+					+ ", "
+					+ DATA_TABLE_ATTRIBUTE_2
+					+ ")) WITH COMPACT STORAGE AND read_repair_chance = 0.0 AND dclocal_read_repair_chance = 0.1 AND gc_grace_seconds = 864000 AND bloom_filter_fp_chance = 0.01 AND caching = { 'keys' : 'ALL', 'rows_per_partition' : 'NONE' } AND comment = '' AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy' } AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.LZ4Compressor' } AND default_time_to_live = 0 AND speculative_retry = 'NONE' AND min_index_interval = 128 AND max_index_interval = 2048;");
 		}
 
 		TableMetadata registrationsTableMetadata = keyspaceMetadata
-				.getTable(registrationsTable);
+				.getTable(REGISTRATIONS_TABLE);
 
 		if (registrationsTableMetadata == null) {
-			session.execute("CREATE TABLE "
-					+ keyspace
-					+ "."
-					+ registrationsTable
-					+ " (id ascii PRIMARY KEY, sensor ascii, property ascii, feature ascii, rollover ascii);");
+			session.execute("CREATE TABLE " + KEYSPACE + "."
+					+ REGISTRATIONS_TABLE + " ("
+					+ REGISTRATIONS_TABLE_ATTRIBUTE_1 + " ascii PRIMARY KEY, "
+					+ REGISTRATIONS_TABLE_ATTRIBUTE_2 + " ascii, "
+					+ REGISTRATIONS_TABLE_ATTRIBUTE_3 + " ascii, "
+					+ REGISTRATIONS_TABLE_ATTRIBUTE_4 + " ascii, "
+					+ REGISTRATIONS_TABLE_ATTRIBUTE_5 + " ascii);");
 		}
 	}
 
@@ -609,23 +623,21 @@ public class Emrooz {
 			return null;
 		}
 
-		DateTime t = null;
-
 		if (rollover.equals("YEAR"))
-			t = time.year().roundFloorCopy();
+			time = time.year().roundFloorCopy();
 		else if (rollover.equals("MONTH"))
-			t = time.monthOfYear().roundFloorCopy();
+			time = time.monthOfYear().roundFloorCopy();
 		else if (rollover.equals("DAY"))
-			t = time.dayOfMonth().roundFloorCopy();
+			time = time.dayOfMonth().roundFloorCopy();
 		else if (rollover.equals("HOUR"))
-			t = time.hourOfDay().roundFloorCopy();
+			time = time.hourOfDay().roundFloorCopy();
 		else if (rollover.equals("MINUTE"))
-			t = time.minuteOfHour().roundFloorCopy();
+			time = time.minuteOfHour().roundFloorCopy();
 		else
 			throw new RuntimeException("Unsupported rollover [rollover = "
 					+ rollover + "]");
 
-		return registrationId + "-" + dtfRowKey.print(t);
+		return registrationId + "-" + dtfRowKey.print(time);
 	}
 
 	private String getRegistrationId(String s, String p, String f) {
@@ -661,7 +673,7 @@ public class Emrooz {
 	}
 
 	private void connect() {
-		session = cluster.connect(keyspace);
+		session = cluster.connect(KEYSPACE);
 	}
 
 }

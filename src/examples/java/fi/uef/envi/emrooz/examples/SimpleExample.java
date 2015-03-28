@@ -53,14 +53,14 @@ public class SimpleExample {
 	String host = "localhost";
 
 	String dataFrom = "2015-03-13T18:00:00.000+02:00";
-	String dataTo = "2015-03-13T18:02:00.000+02:00";
+	String dataTo = "2015-03-13T18:05:00.000+02:00";
 
-	String queryFrom = "2015-03-13T18:00:59.000+02:00";
-	String queryTo = "2015-03-13T18:01:10.000+02:00";
+	String queryFrom = "2015-03-13T18:00:00.000+02:00";
+	String queryTo = "2015-03-13T18:03:00.000+02:00";
 
 	String rollover = "MINUTE";
 
-	int interval = 1;
+	int interval = 60;
 
 	String ns = "http://example.org";
 
