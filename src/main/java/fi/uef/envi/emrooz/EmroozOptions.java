@@ -49,4 +49,5 @@ public class EmroozOptions {
 	public final static String REGISTRATIONS_TABLE_ATTRIBUTE_4 = "feature";
 	
 	public final static String REGISTRATIONS_TABLE_ATTRIBUTE_5 = "rollover";
+	
 }

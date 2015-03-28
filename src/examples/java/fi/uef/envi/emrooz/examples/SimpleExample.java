@@ -24,6 +24,7 @@ import org.openrdf.model.vocabulary.XMLSchema;
 import org.openrdf.query.BindingSet;
 
 import fi.uef.envi.emrooz.Emrooz;
+import fi.uef.envi.emrooz.Rollover;
 import fi.uef.envi.emrooz.vocabulary.DUL;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 import fi.uef.envi.emrooz.vocabulary.Time;
@@ -50,15 +51,13 @@ public class SimpleExample {
 	ValueFactory vf = new ValueFactoryImpl();
 	DateTimeFormatter dtf = ISODateTimeFormat.dateTime().withOffsetParsed();
 
-	String host = "localhost";
-
 	String dataFrom = "2015-03-13T18:00:00.000+02:00";
 	String dataTo = "2015-03-13T18:05:00.000+02:00";
 
 	String queryFrom = "2015-03-13T18:00:00.000+02:00";
 	String queryTo = "2015-03-13T18:03:00.000+02:00";
 
-	String rollover = "MINUTE";
+	Rollover rollover = Rollover.MINUTE;
 
 	int interval = 60;
 
@@ -70,7 +69,7 @@ public class SimpleExample {
 	URI propertyId = _uri("p1");
 	URI featureId = _uri("f1");
 
-	Emrooz emrooz = new Emrooz(host);
+	Emrooz emrooz = new Emrooz();
 
 	void run() {
 		insert();
@@ -105,9 +104,9 @@ public class SimpleExample {
 				+ "select ?time ?value "
 				+ "where {"
 				+ "["
-				+ "ssn:observedBy <http://example.org#s1> ;"
-				+ "ssn:observedProperty <http://example.org#p1> ;"
-				+ "ssn:featureOfInterest <http://example.org#f1> ;"
+				+ "ssn:observedBy <" + sensorId + "> ;"
+				+ "ssn:observedProperty <" + propertyId + "> ;"
+				+ "ssn:featureOfInterest <" + featureId + "> ;"
 				+ "ssn:observationResultTime [ time:inXSDDateTime ?time ] ;"
 				+ "ssn:observationResult [ dul:hasRegion [ dul:hasRegionDataValue ?value ] ]"
 				+ "]" + "filter (?time >= \"" + queryFrom + "\"^^xsd:dateTime "

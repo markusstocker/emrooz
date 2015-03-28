@@ -105,6 +105,8 @@ public class Emrooz {
 
 	private PreparedStatement sensorObservationInsertStatement;
 	private PreparedStatement sensorObservationSelectStatement;
+	private PreparedStatement registrationInsertStatement;
+	private String registrationSelectStatement;
 
 	private DateTimeFormatter dtfRowKey = DateTimeFormat
 			.forPattern(ROWKEY_DATETIME_PATTERN);
@@ -119,7 +121,7 @@ public class Emrooz {
 		if (host != null)
 			this.host = host;
 
-		this.cluster = Cluster.builder().addContactPoint(host).build();
+		this.cluster = Cluster.builder().addContactPoint(this.host).build();
 		this.registrations = new HashMap<String, Map<String, String>>();
 		this.registrationIdsMap = new HashMap<String, Map<String, Map<String, String>>>();
 		this.dtf = ISODateTimeFormat.dateTime().withOffsetParsed();
@@ -128,6 +130,22 @@ public class Emrooz {
 
 		initialize();
 		connect();
+
+		this.registrationInsertStatement = session.prepare("INSERT INTO "
+				+ KEYSPACE + "." + REGISTRATIONS_TABLE + " ("
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_1 + ","
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_2 + ","
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_3 + ","
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_4 + ","
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_5 + ") VALUES (?,?,?,?,?)");
+		this.registrationSelectStatement = "SELECT "
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_1 + ","
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_2 + ","
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_3 + ","
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_4 + ","
+				+ REGISTRATIONS_TABLE_ATTRIBUTE_5 + " FROM " + KEYSPACE + "."
+				+ REGISTRATIONS_TABLE;
+
 		registrations();
 
 		this.sensorObservationInsertStatement = session.prepare("INSERT INTO "
@@ -139,13 +157,15 @@ public class Emrooz {
 				+ DATA_TABLE + " WHERE " + DATA_TABLE_ATTRIBUTE_1 + "=? AND "
 				+ DATA_TABLE_ATTRIBUTE_2 + ">=minTimeuuid(?) AND "
 				+ DATA_TABLE_ATTRIBUTE_2 + "<minTimeuuid(?)");
+
 	}
 
 	public String getHost() {
 		return host;
 	}
 
-	public void register(URI sensor, URI property, URI feature, String rollover) {
+	public void register(URI sensor, URI property, URI feature,
+			Rollover rollover) {
 		String s = sensor.stringValue();
 		String p = property.stringValue();
 		String f = feature.stringValue();
@@ -160,63 +180,20 @@ public class Emrooz {
 			return;
 		}
 
-		PreparedStatement statement = session.prepare("INSERT INTO " + KEYSPACE
-				+ "." + REGISTRATIONS_TABLE + " ("
-				+ REGISTRATIONS_TABLE_ATTRIBUTE_1 + ","
-				+ REGISTRATIONS_TABLE_ATTRIBUTE_2 + ","
-				+ REGISTRATIONS_TABLE_ATTRIBUTE_3 + ","
-				+ REGISTRATIONS_TABLE_ATTRIBUTE_4 + ","
-				+ REGISTRATIONS_TABLE_ATTRIBUTE_5 + ") VALUES (?,?,?,?,?)");
-		BoundStatement boundStatement = new BoundStatement(statement);
-		session.execute(boundStatement.bind(registrationId, s, p, f, rollover));
+		session.execute(new BoundStatement(registrationInsertStatement).bind(
+				registrationId, s, p, f, rollover.toString()));
 
 		registrations();
 	}
 
 	public void addSensorObservation(Set<Statement> statements) {
-		URI sensor = null;
-		URI property = null;
-		URI feature = null;
-		DateTime time = null;
+		SensorObservationExtractor extractor = new SensorObservationExtractor(
+				statements);
 
-		for (Statement statement : statements) {
-			URI predicate = statement.getPredicate();
-			Value object = statement.getObject();
-
-			if (predicate.equals(SSN.observedBy)) {
-				if (object instanceof URI)
-					sensor = (URI) object;
-				else {
-					if (log.isLoggable(Level.SEVERE))
-						log.severe("Expected URI object [object = " + object
-								+ "; statement = " + statement + "]");
-				}
-			} else if (predicate.equals(SSN.observedProperty)) {
-				if (object instanceof URI)
-					property = (URI) object;
-				else {
-					if (log.isLoggable(Level.SEVERE))
-						log.severe("Expected URI object [object = " + object
-								+ "; statement = " + statement + "]");
-				}
-			} else if (predicate.equals(SSN.featureOfInterest)) {
-				if (object instanceof URI)
-					feature = (URI) object;
-				else {
-					if (log.isLoggable(Level.SEVERE))
-						log.severe("Expected URI object [object = " + object
-								+ "; statement = " + statement + "]");
-				}
-			} else if (predicate.equals(Time.inXSDDateTime)) {
-				if (object instanceof Literal)
-					time = dtf.parseDateTime(object.stringValue());
-				else {
-					if (log.isLoggable(Level.SEVERE))
-						log.severe("Expected Literal object [object = "
-								+ object + "; statement = " + statement + "]");
-				}
-			}
-		}
+		URI sensor = extractor.getSensor();
+		URI property = extractor.getProperty();
+		URI feature = extractor.getFeature();
+		DateTime resultTime = extractor.getResultTime();
 
 		if (sensor == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -242,31 +219,31 @@ public class Emrooz {
 			return;
 		}
 
-		if (time == null) {
+		if (resultTime == null) {
 			if (log.isLoggable(Level.SEVERE))
-				log.severe("Failed to extract time from observation [time = "
-						+ time + "; statements = " + statements + "]");
+				log.severe("Failed to extract time from observation [resultTime = "
+						+ resultTime + "; statements = " + statements + "]");
 
 			return;
 		}
 
-		addSensorObservation(sensor, property, feature, time, statements);
+		addSensorObservation(sensor, property, feature, resultTime, statements);
 	}
 
 	public void addSensorObservation(URI sensor, URI property, URI feature,
-			DateTime columnName, Set<Statement> columnValue) {
-		addSensorObservation(getRowKey(sensor, property, feature, columnName),
-				columnName, columnValue);
+			DateTime resultTime, Set<Statement> columnValue) {
+		addSensorObservation(getRowKey(sensor, property, feature, resultTime),
+				resultTime, columnValue);
 	}
 
-	public void addSensorObservation(String rowKey, DateTime columnName,
+	public void addSensorObservation(String rowKey, DateTime resultTime,
 			Set<Statement> columnValue) {
-		addSensorObservation(rowKey, TimeUUID.toUUID(columnName), columnValue);
+		addSensorObservation(rowKey, TimeUUID.toUUID(resultTime), columnValue);
 	}
 
-	public void addSensorObservation(String rowKey, UUID columnName,
+	public void addSensorObservation(String rowKey, UUID resultTime,
 			Set<Statement> columnValue) {
-		addSensorObservation(rowKey, columnName,
+		addSensorObservation(rowKey, resultTime,
 				ConverterUtil.toByteArray(columnValue));
 	}
 
@@ -416,7 +393,7 @@ public class Emrooz {
 			return null;
 		}
 
-		String rollover = registration.get("rollover");
+		Rollover rollover = Rollover.valueOf(registration.get("rollover"));
 
 		if (rollover == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -432,15 +409,15 @@ public class Emrooz {
 			ret.addAll(getSensorObservations(
 					getRowKey(sensor, property, feature, time), time, timeTo));
 
-			if (rollover.equals("YEAR"))
+			if (rollover.equals(Rollover.YEAR))
 				time = time.year().roundFloorCopy().plusYears(1);
-			else if (rollover.equals("MONTH"))
+			else if (rollover.equals(Rollover.MONTH))
 				time = time.monthOfYear().roundFloorCopy().plusMonths(1);
-			else if (rollover.equals("DAY"))
+			else if (rollover.equals(Rollover.DAY))
 				time = time.dayOfMonth().roundFloorCopy().plusDays(1);
-			else if (rollover.equals("HOUR"))
+			else if (rollover.equals(Rollover.HOUR))
 				time = time.hourOfDay().roundFloorCopy().plusHours(1);
-			else if (rollover.equals("MINUTE"))
+			else if (rollover.equals(Rollover.MINUTE))
 				time = time.minuteOfHour().roundFloorCopy().plusMinutes(1);
 			else
 				throw new RuntimeException("Unsupported rollover [rollover = "
@@ -460,10 +437,6 @@ public class Emrooz {
 			return Collections.emptySet();
 		}
 
-		if (log.isLoggable(Level.INFO))
-			log.info("Query [rowKey = " + rowKey + "; timeFrom = " + timeFrom
-					+ "; timeTo = " + timeTo + "]");
-
 		return getSensorObservations(rowKey, timeFrom.toDate(), timeTo.toDate());
 	}
 
@@ -478,10 +451,6 @@ public class Emrooz {
 			return Collections.emptySet();
 		}
 
-		if (log.isLoggable(Level.INFO))
-			log.info("Query [rowKey = " + rowKey + "; columnNameFrom = "
-					+ columnNameFrom + "; columnNameTo = " + columnNameTo + "]");
-
 		return ConverterUtil.toStatements(session.execute(new BoundStatement(
 				sensorObservationSelectStatement).bind(rowKey, columnNameFrom,
 				columnNameTo)));
@@ -495,13 +464,7 @@ public class Emrooz {
 		registrations.clear();
 		registrationIdsMap.clear();
 
-		ResultSet rows = session.execute("SELECT "
-				+ REGISTRATIONS_TABLE_ATTRIBUTE_1 + ","
-				+ REGISTRATIONS_TABLE_ATTRIBUTE_2 + ","
-				+ REGISTRATIONS_TABLE_ATTRIBUTE_3 + ","
-				+ REGISTRATIONS_TABLE_ATTRIBUTE_4 + ","
-				+ REGISTRATIONS_TABLE_ATTRIBUTE_5 + " FROM " + KEYSPACE + "."
-				+ REGISTRATIONS_TABLE);
+		ResultSet rows = session.execute(registrationSelectStatement);
 
 		for (Row row : rows) {
 			String id = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_1);
@@ -613,7 +576,7 @@ public class Emrooz {
 			return null;
 		}
 
-		String rollover = registration.get("rollover");
+		Rollover rollover = Rollover.valueOf(registration.get("rollover"));
 
 		if (rollover == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -623,15 +586,15 @@ public class Emrooz {
 			return null;
 		}
 
-		if (rollover.equals("YEAR"))
+		if (rollover.equals(Rollover.YEAR))
 			time = time.year().roundFloorCopy();
-		else if (rollover.equals("MONTH"))
+		else if (rollover.equals(Rollover.MONTH))
 			time = time.monthOfYear().roundFloorCopy();
-		else if (rollover.equals("DAY"))
+		else if (rollover.equals(Rollover.DAY))
 			time = time.dayOfMonth().roundFloorCopy();
-		else if (rollover.equals("HOUR"))
+		else if (rollover.equals(Rollover.HOUR))
 			time = time.hourOfDay().roundFloorCopy();
-		else if (rollover.equals("MINUTE"))
+		else if (rollover.equals(Rollover.MINUTE))
 			time = time.minuteOfHour().roundFloorCopy();
 		else
 			throw new RuntimeException("Unsupported rollover [rollover = "
