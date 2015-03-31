@@ -18,12 +18,9 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
-import org.openrdf.model.Literal;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
@@ -96,10 +93,9 @@ public class Emrooz {
 
 	private Cluster cluster;
 	private Session session;
-	private Map<String, Map<String, String>> registrations;
-	private Map<String, Map<String, Map<String, String>>> registrationIdsMap;
+	private Map<String, Registration> registrations;
+	private Map<URI, Map<URI, Map<URI, String>>> registrationIdsMap;
 
-	private DateTimeFormatter dtf;
 	private SparqlQueryModelVisitor visitor;
 	private StatementPatternCollector collector;
 
@@ -122,9 +118,8 @@ public class Emrooz {
 			this.host = host;
 
 		this.cluster = Cluster.builder().addContactPoint(this.host).build();
-		this.registrations = new HashMap<String, Map<String, String>>();
-		this.registrationIdsMap = new HashMap<String, Map<String, Map<String, String>>>();
-		this.dtf = ISODateTimeFormat.dateTime().withOffsetParsed();
+		this.registrations = new HashMap<String, Registration>();
+		this.registrationIdsMap = new HashMap<URI, Map<URI, Map<URI, String>>>();
 		this.visitor = new SparqlQueryModelVisitor();
 		this.collector = new StatementPatternCollector();
 
@@ -166,22 +161,24 @@ public class Emrooz {
 
 	public void register(URI sensor, URI property, URI feature,
 			Rollover rollover) {
-		String s = sensor.stringValue();
-		String p = property.stringValue();
-		String f = feature.stringValue();
+		Registration registration = new Registration(sensor, property, feature,
+				rollover);
 
-		String registrationId = DigestUtils.sha1Hex(s + "-" + p + "-" + f);
+		String registrationId = registration.getId();
 
 		if (registrations.containsKey(registrationId)) {
 			if (log.isLoggable(Level.WARNING))
-				log.warning("Registrations exists [sensor = " + s
-						+ "; property = " + p + "; feature = " + f + "]");
+				log.warning("Registrations exists [registration = "
+						+ registration + "]");
 
 			return;
 		}
 
 		session.execute(new BoundStatement(registrationInsertStatement).bind(
-				registrationId, s, p, f, rollover.toString()));
+				registrationId, registration.getSensor().stringValue(),
+				registration.getProperty().stringValue(), registration
+						.getFeature().stringValue(), registration.getRollover()
+						.toString()));
 
 		registrations();
 	}
@@ -257,6 +254,11 @@ public class Emrooz {
 	}
 
 	public List<BindingSet> getSensorObservations(String sparql) {
+		return getSensorObservations(sparql, null);
+	}
+
+	public List<BindingSet> getSensorObservations(String sparql,
+			Set<Statement> graph) {
 		SPARQLParser parser = new SPARQLParser();
 		ParsedQuery query;
 		try {
@@ -373,27 +375,113 @@ public class Emrooz {
 		return Collections.emptyList();
 	}
 
+	// private URI resolve(StatementPattern pattern,
+	// List<StatementPattern> patterns, Set<Statement> graph) {
+	// // Try to resolve resource subject by first getting the joined triple
+	// // patterns matching resource subject and then execute a SPARQL query
+	// // with the triple patterns over graph to resolve resource
+	//
+	// Set<StatementPattern> basicGraphPattern = new
+	// HashSet<StatementPattern>();
+	//
+	// Var findVar = pattern.getObjectVar();
+	//
+	// find(findVar, patterns, basicGraphPattern);
+	//
+	// GraphPattern gp = new GraphPattern();
+	//
+	// for (StatementPattern bgp : basicGraphPattern) {
+	// gp.addRequiredSP(bgp.getSubjectVar(), bgp.getPredicateVar(),
+	// bgp.getObjectVar());
+	// }
+	//
+	// TupleExpr query = new Projection(gp.buildTupleExpr(),
+	// new ProjectionElemList(new ProjectionElem(findVar.getName())));
+	//
+	// try {
+	// Repository repo = new SailRepository(new MemoryStore());
+	// repo.initialize();
+	//
+	// SailRepositoryConnection conn = (SailRepositoryConnection) repo
+	// .getConnection();
+	//
+	// for (Statement statement : graph) {
+	// conn.add(statement);
+	// }
+	//
+	// ParsedTupleQuery tp = new ParsedTupleQuery(query);
+	// SailTupleQuery q = new SailTupleQuery(tp, conn);
+	//
+	// TupleQueryResult r = q.evaluate();
+	//
+	// while (r.hasNext()) {
+	//
+	// }
+	//
+	// conn.close();
+	// } catch (RepositoryException | MalformedQueryException
+	// | QueryEvaluationException e) {
+	// e.printStackTrace();
+	// }
+	//
+	// return null;
+	// }
+
+	// private void find(Var s, List<StatementPattern> patterns,
+	// Set<StatementPattern> ret) {
+	// for (StatementPattern pattern : patterns) {
+	// if (!s.equals(pattern.getSubjectVar()))
+	// continue;
+	//
+	// ret.add(pattern);
+	//
+	// find(pattern.getObjectVar(), patterns, ret);
+	// }
+	// }
+
 	public Set<Statement> getSensorObservations(URI sensor, URI property,
 			URI feature, DateTime timeFrom, DateTime timeTo) {
-		Set<Statement> ret = new HashSet<Statement>();
-
-		String s = sensor.stringValue();
-		String p = property.stringValue();
-		String f = feature.stringValue();
-
-		String registrationId = getRegistrationId(s, p, f);
-
-		Map<String, String> registration = registrations.get(registrationId);
-
-		if (registration == null) {
+		if (sensor == null || property == null || feature == null
+				|| timeFrom == null || timeTo == null) {
 			if (log.isLoggable(Level.SEVERE))
-				log.severe("Registration not found [sensor = " + s
-						+ "; propery = " + p + "; feature = " + f + "]");
+				log.severe("At least one parameter is null; returned empty set [sensor = "
+						+ sensor
+						+ "; property = "
+						+ property
+						+ "; feature = "
+						+ feature
+						+ "; timeFrom = "
+						+ timeFrom
+						+ "; timeTo = "
+						+ timeTo + "]");
+
+			return Collections.emptySet();
+		}
+
+		String registrationId = getCachedRegistrationId(sensor, property,
+				feature);
+
+		if (registrationId == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Registration id not found in cache [sensor = "
+						+ sensor + "; propery = " + property + "; feature = "
+						+ feature + "]");
 
 			return null;
 		}
 
-		Rollover rollover = Rollover.valueOf(registration.get("rollover"));
+		Registration registration = registrations.get(registrationId);
+
+		if (registration == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Registration not found [sensor = " + sensor
+						+ "; propery = " + property + "; feature = " + feature
+						+ "]");
+
+			return null;
+		}
+
+		Rollover rollover = registration.getRollover();
 
 		if (rollover == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -404,6 +492,7 @@ public class Emrooz {
 		}
 
 		DateTime time = timeFrom;
+		Set<Statement> ret = new HashSet<Statement>();
 
 		while (time.isBefore(timeTo)) {
 			ret.addAll(getSensorObservations(
@@ -468,31 +557,45 @@ public class Emrooz {
 
 		for (Row row : rows) {
 			String id = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_1);
-			String sensor = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_2);
-			String property = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_3);
-			String feature = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_4);
-			String rollover = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_5);
+			String s = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_2);
+			String p = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_3);
+			String f = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_4);
+			String r = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_5);
 
-			Map<String, String> m = new HashMap<String, String>();
-			registrations.put(id, m);
+			Registration registration = new Registration(s, p, f, r);
 
-			m.put(REGISTRATIONS_TABLE_ATTRIBUTE_2, sensor);
-			m.put(REGISTRATIONS_TABLE_ATTRIBUTE_3, property);
-			m.put(REGISTRATIONS_TABLE_ATTRIBUTE_4, feature);
-			m.put(REGISTRATIONS_TABLE_ATTRIBUTE_5, rollover);
+			String registrationId = registration.getId();
+			URI sensor = registration.getSensor();
+			URI property = registration.getProperty();
+			URI feature = registration.getFeature();
 
-			Map<String, Map<String, String>> m1 = registrationIdsMap
-					.get(sensor);
+			if (!id.equals(registrationId)) {
+				if (log.isLoggable(Level.SEVERE))
+					log.severe("Unexpected difference in registration ids; persisted registration is not cached [id = "
+							+ id
+							+ "; registrationId = "
+							+ registrationId
+							+ "; sensor = "
+							+ sensor
+							+ "; property = "
+							+ property + "; feature = " + feature + "]");
+
+				continue;
+			}
+
+			registrations.put(id, registration);
+
+			Map<URI, Map<URI, String>> m1 = registrationIdsMap.get(sensor);
 
 			if (m1 == null) {
-				m1 = new HashMap<String, Map<String, String>>();
+				m1 = new HashMap<URI, Map<URI, String>>();
 				registrationIdsMap.put(sensor, m1);
 			}
 
-			Map<String, String> m2 = m1.get(property);
+			Map<URI, String> m2 = m1.get(property);
 
 			if (m2 == null) {
-				m2 = new HashMap<String, String>();
+				m2 = new HashMap<URI, String>();
 				m1.put(property, m2);
 			}
 
@@ -560,23 +663,30 @@ public class Emrooz {
 			return null;
 		}
 
-		String s = sensor.stringValue();
-		String p = property.stringValue();
-		String f = feature.stringValue();
+		String registrationId = getCachedRegistrationId(sensor, property,
+				feature);
 
-		String registrationId = getRegistrationId(s, p, f);
-
-		Map<String, String> registration = registrations.get(registrationId);
-
-		if (registration == null) {
+		if (registrationId == null) {
 			if (log.isLoggable(Level.SEVERE))
-				log.severe("Registration not found [sensor = " + s
-						+ "; propery = " + p + "; feature = " + f + "]");
+				log.severe("Registration id not found in cache [sensor = "
+						+ sensor + "; propery = " + property + "; feature = "
+						+ feature + "]");
 
 			return null;
 		}
 
-		Rollover rollover = Rollover.valueOf(registration.get("rollover"));
+		Registration registration = registrations.get(registrationId);
+
+		if (registration == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Registration not found [sensor = " + sensor
+						+ "; propery = " + property + "; feature = " + feature
+						+ "]");
+
+			return null;
+		}
+
+		Rollover rollover = registration.getRollover();
 
 		if (rollover == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -603,33 +713,37 @@ public class Emrooz {
 		return registrationId + "-" + dtfRowKey.print(time);
 	}
 
-	private String getRegistrationId(String s, String p, String f) {
-		Map<String, Map<String, String>> m1 = registrationIdsMap.get(s);
+	private String getCachedRegistrationId(URI sensor, URI property, URI feature) {
+		Map<URI, Map<URI, String>> m1 = registrationIdsMap.get(sensor);
 
 		if (m1 == null) {
 			if (log.isLoggable(Level.SEVERE))
-				log.severe("Sensor not registered [s = " + s
+				log.severe("Sensor not registered [sensor = " + sensor
 						+ "; registrationIdsMap = " + registrationIdsMap + "]");
 
 			return null;
 		}
 
-		Map<String, String> m2 = m1.get(p);
+		Map<URI, String> m2 = m1.get(property);
 
 		if (m2 == null) {
 			if (log.isLoggable(Level.SEVERE))
-				log.severe("Property not registered [s = " + s + "; p = " + p
+				log.severe("Property not registered [sensor = " + sensor
+						+ "; property = " + property
 						+ "; registrationIdsMap = " + registrationIdsMap + "]");
 
 			return null;
 		}
 
-		String ret = m2.get(f);
+		String ret = m2.get(feature);
 
 		if (ret == null) {
 			if (log.isLoggable(Level.SEVERE))
-				log.severe("Feature not registered [s = " + s + "; p = " + p
+				log.severe("Feature not registered [sensor = " + sensor
+						+ "; property = " + property + "; feature = " + feature
 						+ "; registrationIdsMap = " + registrationIdsMap + "]");
+
+			return null;
 		}
 
 		return ret;
