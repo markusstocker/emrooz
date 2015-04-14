@@ -16,7 +16,9 @@ Emrooz is a database for sensor data, specifically [SSN](http://www.w3.org/2005/
 
 ## Usage
 
-### Create
+The following sections describe how to add and query observations with Emrooz.
+
+### Initialize
 
 You can create an Emrooz instance to `localhost` as follows
 
