@@ -92,7 +92,8 @@ The method takes a set of `org.openrdf.model.Statement`. Statements are [RDF](ht
 
 SSN observations can be retrieved using SPARQL. However, queries need to specify the sensor, property, feature as well as a time interval. The following lines demonstrate how the observations we just persisted can be retrieved.
 
-    # The SPARQL query
+First, the SPARQL query.
+
     prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#>
     prefix time: <http://www.w3.org/2006/time#>
     prefix dul: <http://www.loa-cnr.it/ontologies/DUL.owl#>
@@ -109,6 +110,8 @@ SSN observations can be retrieved using SPARQL. However, queries need to specify
         && ?time < "2015-04-14T18:00:00.000+03:00"^^xsd:dateTime)
     }
     order by asc(?time)
+
+The Java code to execute the SPARQL query. Read the SPARQL query from file or, as suggested in this example, set it as value of the `String query` variable.
 
     // Create an Emrooz instance
     Emrooz emrooz = new Emrooz();
