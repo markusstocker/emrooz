@@ -33,6 +33,27 @@ public class SSN {
 	/** http://purl.oclc.org/NET/ssnx/ssn */
 	public static final URI ns = vf.createURI("http://purl.oclc.org/NET/ssnx/ssn");
 
+	/** http://purl.oclc.org/NET/ssnx/ssn#Observation */
+	public static final URI Observation = _("Observation");
+	
+	/** http://purl.oclc.org/NET/ssnx/ssn#Sensor */
+	public static final URI Sensor = _("Sensor");
+	
+	/** http://purl.oclc.org/NET/ssnx/ssn#SensingDevice */
+	public static final URI SensingDevice = _("SensingDevice");
+	
+	/** http://purl.oclc.org/NET/ssnx/ssn#Property */
+	public static final URI Property = _("Property");
+	
+	/** http://purl.oclc.org/NET/ssnx/ssn#FeatureOfInterest */
+	public static final URI FeatureOfInterest = _("FeatureOfInterest");
+	
+	/** http://purl.oclc.org/NET/ssnx/ssn#SensorOutput */
+	public static final URI SensorOutput = _("SensorOutput");
+	
+	/** http://purl.oclc.org/NET/ssnx/ssn#ObservationValue */
+	public static final URI ObservationValue = _("ObservationValue");
+	
 	/** http://purl.oclc.org/NET/ssnx/ssn#featureOfInterest */
 	public static final URI featureOfInterest = _("featureOfInterest");
 

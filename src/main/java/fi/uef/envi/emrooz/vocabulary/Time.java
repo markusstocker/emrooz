@@ -32,6 +32,9 @@ public class Time {
 	
 	public static final URI ns = vf.createURI("http://www.w3.org/2006/time");
 	
+	/** http://www.w3.org/2006/time#Instant **/
+	public static final URI Instant = _("Instant");
+	
 	/** http://www.w3.org/2006/time#inXSDDateTime **/
 	public static final URI inXSDDateTime = _("inXSDDateTime");
 
