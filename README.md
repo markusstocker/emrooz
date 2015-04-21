@@ -23,72 +23,44 @@ The following sections describe how to add and query observations with Emrooz.
 You can create an Emrooz instance to `localhost` as follows
 
     public static void main(String[] args) {
+      // Initialize ...
       Emrooz emrooz = new Emrooz();
+
+      // ... and remember to close
+      emrooz.close();
     }
+
+### Register
+
+As a first step, we need to register sensors we are using. Such registration take a `Sensor`, a `Property`, a `Feature`, and a `Rollover`. When Emrooz stores sensor observations in sequence, the rollover tells Emrooz after what period it should start a new row. Rows should not be _too long_, meaning that if your sensor samples at high frequency, say 10 or 100 Hz, you should consider `Rollover.DAY`. For even higher frequencies you can set rollover to `HOUR` or even `MINUTE`. For sensor sampling at lower frequency you can set rollover to `MONTH` or `YEAR`.
+
+A sensor registration is done as follows:
+
+    EntityFactory f = EntityFactory.getInstance("http://example.org#");
+
+    Sensor sensor = f.createSensor("thermometer");
+    Property property = f.createProperty("temperature");
+    FeatureOfInterest feature = f.createFeatureOfInterest("air");
+ 
+    emrooz.register(sensor, property, feature, Rollover.DAY);
+
+You can find a [complete example](https://github.com/markusstocker/emrooz/blob/master/src/examples/java/fi/uef/envi/emrooz/examples/SensorRegistrationExample.java) in the sources.
 
 ### Add
 
-Sensor observations are added using the `addSensorObservation` method
+Emrooz supports the addition of sensor observations in several forms. The most straightforward approach is to use the available API classes to create sensor observations. Here is an example:
 
-    emrooz.addSensorObservation(statements);
+    EntityFactory f = EntityFactory.getInstance("http://example.org#");
 
-The method takes a set of `org.openrdf.model.Statement`. Statements are [RDF](http://www.w3.org/TR/2004/REC-rdf-primer-20040210/) triples and they need to conform [SSN observations](http://www.w3.org/2005/Incubator/ssn/wiki/SSN_Observation) with observation result time conforming [OWL-Time](http://www.w3.org/TR/owl-time/). Let's look at an example:
+    // Create a sensor observation made by the thermometer for temperature of air on April 21, 2015 at 1 am
+    SensorObservation observation = f.createSensorObservation(
+      "thermometer", "temperature", "air", 7.6,
+      "2015-04-21T01:00:00.000+03:00");
 
-    // First we need to define a namespace for our URIs, identifiers
-    String ns = "http://example.org#";
+    // And store the observation
+    emrooz.add(observation);
 
-    // Get an instance of `org.openrdf.model.ValueFactory`
-    ValueFactory vf = ValueFactoryImpl.getInstance();
-
-    // Next create the required `org.openrdf.model.URI` URIs
-    // Identifier for the observation
-    URI observationId = vf.createURI(ns + "o1");
-    // Identifier for the sensor, some thermometer
-    URI sensorId = vf.createURI(ns + "thermometer");
-    // Identifier for the property, temperature
-    URI propertyId = vf.createURI(ns + "temperature");
-    // Identifier for the feature, i.e. the phenomenon observed, here ambient air
-    URI featureId = vf.createURI(ns + "ambientAir");
-    // And a few more identifiers for the time, sensor output, and its value
-    URI resultTimeId = vf.createURI(ns + "rt1");
-    URI outputId = vf.createURI(ns + "so1");
-    URI valueId = vf.createURI(ns + "ov1");
-    // Finally, we need two `org.openrdf.model.Literal` literals
-    // One for the time of the observation, here April 14, 2015, at noon in Finnish timezone
-    Literal time = vf.createLiteral("2015-04-14T12:00:00.000+03:00", XMLSchema.DATETIME);
-    // And one for the value measured by the thermometer for ambient air temperature at noon on April 14, 2015
-    Literal value = vf.createLiteral("7.8", XMLSchema.DOUBLE);
-
-    // Next, initialize and populate the set of statements
-    Set<Statement> statements = new HashSet<Statement>();
-
-    // Statement with `fi.uef.envi.emrooz.vocabulary.SSN.observedBy` property
-    statements.add(vf.createStatement(observationId, SSN.observedBy, sensorId));
-    // Statement with `fi.uef.envi.emrooz.vocabulary.SSN.observedProperty` property
-    statements.add(vf.createStatement(observationId, SSN.observedProperty, propertyId));
-    // Statement with `fi.uef.envi.emrooz.vocabulary.SSN.featureOfInterest` property
-    statements.add(vf.createStatement(observationId, SSN.featureOfInterest, featureId));
-    // Statement with `fi.uef.envi.emrooz.vocabulary.SSN.observationResultTime` property
-    statements.add(vf.createStatement(observationId, SSN.observationResultTime, resultTimeId));
-    // Statement with `fi.uef.envi.emrooz.vocabulary.Time.inXSDDateTime` property
-    statements.add(vf.createStatement(resultTimeId, Time.inXSDDateTime, time));
-    // Statement with `fi.uef.envi.emrooz.vocabulary.SSN.observationResult` property
-    statements.add(vf.createStatement(observationId, SSN.observationResult, outputId));
-    // Statement with `fi.uef.envi.emrooz.vocabulary.DUL.hasRegion` property
-    statements.add(vf.createStatement(outputId, DUL.hasRegion, valueId));
-    // Statement with `fi.uef.envi.emrooz.vocabulary.DUL.hasRegionDataValue` property
-    statements.add(vf.createStatement(valueId, DUL.hasRegionDataValue, value));
-
-    // Next, register the sensor with property of feature observed
-    // `Rollover` is an additional required parameter, and `DAY` is fine for this example
-    // Note that you need to register a sensor only once
-    emrooz.register(sensorId, propertyId, featureId, Rollover.DAY);
-
-    // Finally, we are ready to instruct Emrooz to persist the SSN observation
-    emrooz.addSensorObservation(statements);
-
-    // Remember to close the Emrooz instance
-    emrooz.close();
+You can find a [complete example](https://github.com/markusstocker/emrooz/blob/master/src/examples/java/fi/uef/envi/emrooz/examples/AddSensorObservationExample.java) in the sources.
 
 ### Query
 
@@ -104,9 +76,9 @@ First, the SPARQL query.
       [
         ssn:observedBy <http://example.org#thermometer> ;
         ssn:observedProperty <http://example.org#temperature> ;
-        ssn:featureOfInterest <http://example.org#ambientAir> ;
+        ssn:featureOfInterest <http://example.org#air> ;
         ssn:observationResultTime [ time:inXSDDateTime ?time ] ;
-        ssn:observationResult [ dul:hasRegion [ dul:hasRegionDataValue ?value ] ]
+        ssn:observationResult [ ssn:hasValue [ dul:hasRegionDataValue ?value ] ]
       ]
       filter (?time >= "2015-04-14T06:00:00.000+03:00"^^xsd:dateTime 
         && ?time < "2015-04-14T18:00:00.000+03:00"^^xsd:dateTime)
@@ -115,10 +87,6 @@ First, the SPARQL query.
 
 The Java code to execute the SPARQL query. Read the SPARQL query from file or, as suggested in this example, set it as value of the `String query` variable.
 
-    // Create an Emrooz instance
-    Emrooz emrooz = new Emrooz();
-
-    // The string for the SPARQL query above
     String query = "...";
 
     // Execute the query
@@ -129,8 +97,7 @@ The Java code to execute the SPARQL query. Read the SPARQL query from file or, a
       System.out.println(result.getValue("time") + " " + result.getValue("value"));
     }
 
-    // Remember to close
-    emrooz.close();
+You can find a [complete example](https://github.com/markusstocker/emrooz/blob/master/src/examples/java/fi/uef/envi/emrooz/examples/QuerySensorObservationsExample.java) in the sources.
 
 ### Drop
 
