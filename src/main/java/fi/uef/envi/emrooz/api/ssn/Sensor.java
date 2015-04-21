@@ -8,6 +8,7 @@ package fi.uef.envi.emrooz.api.ssn;
 import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.api.AbstractEntity;
+import fi.uef.envi.emrooz.api.EntityVisitor;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 
 /**
@@ -36,6 +37,10 @@ public class Sensor extends AbstractEntity {
 	public Sensor(URI id, URI type) {
 		super(id, type);
 	}
+	
+	public void accept(EntityVisitor visitor) {
+		visitor.visit(this);
+	}
 
 	public int hashCode() {
 		return 31 * (id.hashCode() + type.hashCode());
@@ -51,6 +56,10 @@ public class Sensor extends AbstractEntity {
 			return true;
 
 		return false;
+	}
+	
+	public String toString() {
+		return "Sensor [id = " + id + "; type = " + type + "]";
 	}
 
 }

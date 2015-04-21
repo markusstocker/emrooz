@@ -8,6 +8,8 @@ package fi.uef.envi.emrooz.api;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
@@ -43,12 +45,50 @@ public class EntityFactory {
 
 	private String ns;
 	private static final ValueFactory vf = ValueFactoryImpl.getInstance();
+	private static final DateTimeFormatter dtf = ISODateTimeFormat.dateTime()
+			.withOffsetParsed();
 
 	public EntityFactory(String ns) {
 		if (ns == null)
 			throw new NullPointerException("[ns = null]");
 
 		this.ns = ns;
+	}
+
+	public Sensor createSensor(String fragment) {
+		return new Sensor(vf.createURI(ns + fragment));
+	}
+
+	public Sensor createSensor(URI id) {
+		return new Sensor(id);
+	}
+
+	public Sensor createSensor(URI id, URI type) {
+		return new Sensor(id, type);
+	}
+
+	public Property createProperty(String fragment) {
+		return new Property(vf.createURI(ns + fragment));
+	}
+
+	public Property createProperty(URI id) {
+		return new Property(id);
+	}
+
+	public Property createProperty(URI id, URI type) {
+		return new Property(id, type);
+	}
+
+	public FeatureOfInterest createFeatureOfInterest(String fragment) {
+		return new FeatureOfInterest(vf.createURI(ns + fragment));
+	}
+
+	public FeatureOfInterest createFeatureOfInterest(URI id) {
+		return new FeatureOfInterest(id);
+	}
+
+	public FeatureOfInterest createFeatureOfInterest(URI id, URI type) {
+		return new FeatureOfInterest(id, type);
 	}
 
 	public SensorObservation createSensorObservation(Sensor sensor,
@@ -65,6 +105,49 @@ public class EntityFactory {
 				new SensorOutput(randomUUID(), new ObservationValueDouble(
 						randomUUID(), result)), new Instant(randomUUID(),
 						resultTime));
+	}
+
+	/**
+	 * The sensor, property, and feature string are relative to the namespace of
+	 * this factory.
+	 * 
+	 * @param sensor
+	 * @param property
+	 * @param feature
+	 * @param result
+	 * @param resultTime
+	 * @return SensorObservation
+	 */
+	public SensorObservation createSensorObservation(String sensor,
+			String property, String feature, Double result, DateTime resultTime) {
+		return new SensorObservation(randomUUID(), new Sensor(vf.createURI(ns
+				+ sensor)), new Property(vf.createURI(ns + property)),
+				new FeatureOfInterest(vf.createURI(ns + feature)),
+				new SensorOutput(randomUUID(), new ObservationValueDouble(
+						randomUUID(), result)), new Instant(randomUUID(),
+						resultTime));
+	}
+
+	/**
+	 * The sensor, property, and feature string are relative to the namespace of
+	 * this factory. The result time must be ISO date time,
+	 * yyyy-MM-ddThh:mm:ss.SSS+/-hh:mm
+	 * 
+	 * @param sensor
+	 * @param property
+	 * @param feature
+	 * @param result
+	 * @param resultTime
+	 * @return SensorObservation
+	 */
+	public SensorObservation createSensorObservation(String sensor,
+			String property, String feature, Double result, String resultTime) {
+		return new SensorObservation(randomUUID(), new Sensor(vf.createURI(ns
+				+ sensor)), new Property(vf.createURI(ns + property)),
+				new FeatureOfInterest(vf.createURI(ns + feature)),
+				new SensorOutput(randomUUID(), new ObservationValueDouble(
+						randomUUID(), result)), new Instant(randomUUID(),
+						dtf.parseDateTime(resultTime)));
 	}
 
 	public static EntityFactory getInstance(String ns) {

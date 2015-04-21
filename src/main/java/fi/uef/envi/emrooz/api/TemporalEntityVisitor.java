@@ -5,11 +5,11 @@
 
 package fi.uef.envi.emrooz.api;
 
-import org.openrdf.model.URI;
+import fi.uef.envi.emrooz.api.time.Instant;
 
 /**
  * <p>
- * Title: Entity
+ * Title: TemporalEntityVisitor
  * </p>
  * <p>
  * Description:
@@ -24,12 +24,8 @@ import org.openrdf.model.URI;
  * @author Markus Stocker
  */
 
-public interface Entity {
+public interface TemporalEntityVisitor {
 
-	public URI getId();
-	
-	public URI getType();
-	
-	public void accept(EntityVisitor visitor);
+	public void visit(Instant entity);
 	
 }

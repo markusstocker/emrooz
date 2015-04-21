@@ -7,6 +7,8 @@ package fi.uef.envi.emrooz.api.ssn;
 
 import org.openrdf.model.URI;
 
+import fi.uef.envi.emrooz.api.EntityVisitor;
+import fi.uef.envi.emrooz.api.ObservationValueVisitor;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 
 /**
@@ -33,7 +35,7 @@ public class ObservationValueDouble extends ObservationValue {
 	public ObservationValueDouble(URI id) {
 		this(id, SSN.ObservationValue);
 	}
-	
+
 	public ObservationValueDouble(URI id, Double value) {
 		this(id, SSN.ObservationValue, value);
 	}
@@ -56,6 +58,14 @@ public class ObservationValueDouble extends ObservationValue {
 		return value;
 	}
 
+	public void accept(EntityVisitor visitor) {
+		visitor.visit(this);
+	}
+
+	public void accept(ObservationValueVisitor visitor) {
+		visitor.visit(this);
+	}
+
 	public int hashCode() {
 		return 31 * (id.hashCode() + type.hashCode() + value.hashCode());
 	}
@@ -71,6 +81,11 @@ public class ObservationValueDouble extends ObservationValue {
 			return true;
 
 		return false;
+	}
+
+	public String toString() {
+		return "ObservationValueDouble [id = " + id + "; type = " + type
+				+ "; value = " + value + "]";
 	}
 
 }

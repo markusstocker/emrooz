@@ -8,6 +8,7 @@ package fi.uef.envi.emrooz.api.ssn;
 import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.api.AbstractEntity;
+import fi.uef.envi.emrooz.api.ObservationValueVisitor;
 
 /**
  * <p>
@@ -31,5 +32,7 @@ public abstract class ObservationValue extends AbstractEntity {
 	public ObservationValue(URI id, URI type) {
 		super(id, type);
 	}
+
+	public abstract void accept(ObservationValueVisitor visitor);
 
 }

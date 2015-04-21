@@ -8,6 +8,7 @@ package fi.uef.envi.emrooz.api.time;
 import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.api.AbstractEntity;
+import fi.uef.envi.emrooz.api.TemporalEntityVisitor;
 
 /**
  * <p>
@@ -31,5 +32,7 @@ public abstract class TemporalEntity extends AbstractEntity {
 	public TemporalEntity(URI id, URI type) {
 		super(id, type);
 	}
+
+	public abstract void accept(TemporalEntityVisitor visitor);
 
 }

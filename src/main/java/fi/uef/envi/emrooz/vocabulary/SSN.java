@@ -68,6 +68,9 @@ public class SSN {
 
 	/** http://purl.oclc.org/NET/ssnx/ssn#observationResult */
 	public static final URI observationResult = _("observationResult");
+	
+	/** http://purl.oclc.org/NET/ssnx/ssn#hasValue */
+	public static final URI hasValue = _("hasValue");
 
 	private static URI _(String fragment) {
 		return vf.createURI(ns + "#" + fragment);

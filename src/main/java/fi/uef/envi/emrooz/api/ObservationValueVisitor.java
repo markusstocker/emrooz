@@ -5,11 +5,11 @@
 
 package fi.uef.envi.emrooz.api;
 
-import org.openrdf.model.URI;
+import fi.uef.envi.emrooz.api.ssn.ObservationValueDouble;
 
 /**
  * <p>
- * Title: Entity
+ * Title: ObservationValueVisitor
  * </p>
  * <p>
  * Description:
@@ -24,12 +24,8 @@ import org.openrdf.model.URI;
  * @author Markus Stocker
  */
 
-public interface Entity {
+public interface ObservationValueVisitor {
 
-	public URI getId();
-	
-	public URI getType();
-	
-	public void accept(EntityVisitor visitor);
+	public void visit(ObservationValueDouble entity);
 	
 }

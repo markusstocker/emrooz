@@ -5,9 +5,13 @@
 
 package fi.uef.envi.emrooz.api.ssn;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.api.AbstractEntity;
+import fi.uef.envi.emrooz.api.EntityVisitor;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 
 /**
@@ -31,6 +35,9 @@ public class SensorOutput extends AbstractEntity {
 
 	private ObservationValue value;
 
+	private static final Logger log = Logger.getLogger(SensorOutput.class
+			.getName());
+
 	public SensorOutput(URI id) {
 		this(id, SSN.SensorOutput);
 	}
@@ -46,7 +53,25 @@ public class SensorOutput extends AbstractEntity {
 	public SensorOutput(URI id, URI type, ObservationValue value) {
 		super(id, type);
 
+		if (value != null)
+			setValue(value);
+	}
+
+	public void setValue(ObservationValue value) {
+		if (value == null) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("[value = null; output = " + toString() + "]");
+		}
+
 		this.value = value;
+	}
+
+	public ObservationValue getValue() {
+		return value;
+	}
+
+	public void accept(EntityVisitor visitor) {
+		visitor.visit(this);
 	}
 
 	public int hashCode() {
@@ -64,6 +89,11 @@ public class SensorOutput extends AbstractEntity {
 			return true;
 
 		return false;
+	}
+
+	public String toString() {
+		return "SensorOutput [id = " + id + "; type = " + type + "; value = "
+				+ value + "]";
 	}
 
 }

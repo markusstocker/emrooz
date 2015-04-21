@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.api.AbstractEntity;
+import fi.uef.envi.emrooz.api.EntityVisitor;
 import fi.uef.envi.emrooz.api.time.TemporalEntity;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 
@@ -117,6 +118,10 @@ public class SensorObservation extends AbstractEntity {
 
 	public TemporalEntity getObservationResultTime() {
 		return resultTime;
+	}
+	
+	public void accept(EntityVisitor visitor) {
+		visitor.visit(this);
 	}
 
 	public int hashCode() {

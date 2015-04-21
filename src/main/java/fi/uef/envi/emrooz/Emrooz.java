@@ -53,10 +53,16 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.TableMetadata;
 
+import fi.uef.envi.emrooz.api.TemporalEntityVisitor;
+import fi.uef.envi.emrooz.api.ssn.FeatureOfInterest;
+import fi.uef.envi.emrooz.api.ssn.Property;
+import fi.uef.envi.emrooz.api.ssn.Sensor;
+import fi.uef.envi.emrooz.api.ssn.SensorObservation;
+import fi.uef.envi.emrooz.api.time.Instant;
+import fi.uef.envi.emrooz.rdf.RDFEntityRepresenter;
 import fi.uef.envi.emrooz.utils.ConverterUtil;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 import fi.uef.envi.emrooz.vocabulary.Time;
-
 import static fi.uef.envi.emrooz.EmroozOptions.HOST;
 import static fi.uef.envi.emrooz.EmroozOptions.KEYSPACE;
 import static fi.uef.envi.emrooz.EmroozOptions.DATA_TABLE;
@@ -107,6 +113,10 @@ public class Emrooz {
 	private DateTimeFormatter dtfRowKey = DateTimeFormat
 			.forPattern(ROWKEY_DATETIME_PATTERN);
 
+	private DateTime instant = null;
+	private final TemporalEntityVisitor temporalEntityVisitor;
+	private final RDFEntityRepresenter representer;
+
 	private static final Logger log = Logger.getLogger(Emrooz.class.getName());
 
 	public Emrooz() {
@@ -122,6 +132,8 @@ public class Emrooz {
 		this.registrationIdsMap = new HashMap<URI, Map<URI, Map<URI, String>>>();
 		this.visitor = new SparqlQueryModelVisitor();
 		this.collector = new StatementPatternCollector();
+		this.temporalEntityVisitor = new EmroozTemporalEntityVisitor();
+		this.representer = new RDFEntityRepresenter();
 
 		initialize();
 		connect();
@@ -159,6 +171,11 @@ public class Emrooz {
 		return host;
 	}
 
+	public void register(Sensor sensor, Property property,
+			FeatureOfInterest feature, Rollover rollover) {
+		register(sensor.getId(), property.getId(), feature.getId(), rollover);
+	}
+
 	public void register(URI sensor, URI property, URI feature,
 			Rollover rollover) {
 		Registration registration = new Registration(sensor, property, feature,
@@ -181,6 +198,16 @@ public class Emrooz {
 						.toString()));
 
 		registrations();
+	}
+
+	public void add(SensorObservation observation) {
+		instant = null;
+
+		observation.getObservationResultTime().accept(temporalEntityVisitor);
+
+		addSensorObservation(observation.getSensor(),
+				observation.getProperty(), observation.getFeatureOfInterest(),
+				instant, representer.createRepresentation(observation));
 	}
 
 	public void addSensorObservation(Set<Statement> statements) {
@@ -225,6 +252,13 @@ public class Emrooz {
 		}
 
 		addSensorObservation(sensor, property, feature, resultTime, statements);
+	}
+
+	public void addSensorObservation(Sensor sensor, Property property,
+			FeatureOfInterest feature, DateTime resultTime,
+			Set<Statement> columnValue) {
+		addSensorObservation(sensor.getId(), property.getId(), feature.getId(),
+				resultTime, columnValue);
 	}
 
 	public void addSensorObservation(URI sensor, URI property, URI feature,
@@ -751,6 +785,15 @@ public class Emrooz {
 
 	private void connect() {
 		session = cluster.connect(KEYSPACE);
+	}
+
+	private class EmroozTemporalEntityVisitor implements TemporalEntityVisitor {
+
+		@Override
+		public void visit(Instant entity) {
+			instant = entity.getValue();
+		}
+
 	}
 
 }

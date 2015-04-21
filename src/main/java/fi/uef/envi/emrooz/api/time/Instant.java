@@ -8,6 +8,8 @@ package fi.uef.envi.emrooz.api.time;
 import org.joda.time.DateTime;
 import org.openrdf.model.URI;
 
+import fi.uef.envi.emrooz.api.EntityVisitor;
+import fi.uef.envi.emrooz.api.TemporalEntityVisitor;
 import fi.uef.envi.emrooz.vocabulary.Time;
 
 /**
@@ -46,6 +48,14 @@ public class Instant extends TemporalEntity {
 
 	public DateTime getValue() {
 		return value;
+	}
+	
+	public void accept(EntityVisitor visitor) {
+		visitor.visit(this);
+	}
+	
+	public void accept(TemporalEntityVisitor visitor) {
+		visitor.visit(this);
 	}
 
 	public int hashCode() {
