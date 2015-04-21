@@ -80,8 +80,8 @@ First, the SPARQL query.
         ssn:observationResultTime [ time:inXSDDateTime ?time ] ;
         ssn:observationResult [ ssn:hasValue [ dul:hasRegionDataValue ?value ] ]
       ]
-      filter (?time >= "2015-04-14T06:00:00.000+03:00"^^xsd:dateTime 
-        && ?time < "2015-04-14T18:00:00.000+03:00"^^xsd:dateTime)
+      filter (?time >= "2015-04-21T00:00:00.000+03:00"^^xsd:dateTime 
+        && ?time < "2015-04-21T02:00:00.000+03:00"^^xsd:dateTime)
     }
     order by asc(?time)
 
