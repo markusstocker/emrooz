@@ -14,7 +14,7 @@ import fi.uef.envi.emrooz.api.ssn.Sensor;
 
 /**
  * <p>
- * Title:
+ * Title: SensorRegistrationExample
  * </p>
  * <p>
  * Description:

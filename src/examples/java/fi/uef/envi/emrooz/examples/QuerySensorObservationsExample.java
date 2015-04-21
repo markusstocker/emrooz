@@ -13,7 +13,7 @@ import fi.uef.envi.emrooz.Emrooz;
 
 /**
  * <p>
- * Title:
+ * Title: QuerySensorObservationsExample
  * </p>
  * <p>
  * Description:
