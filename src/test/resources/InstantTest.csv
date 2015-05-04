@@ -1,0 +1,9 @@
+http://example.org#i1,http://www.w3.org/2006/time#Instant,2015-04-05T00:00:00.000+03:00,http://example.org#i1,http://www.w3.org/2006/time#Instant,2015-04-05T00:00:00.000+03:00,assertEquals
+http://example.org#i1,,2015-04-05T00:00:00.000+03:00,http://example.org#i1,,2015-04-05T00:00:00.000+03:00,assertEquals
+http://example.org#i1,http://www.w3.org/2006/time#Instant,2015-04-05T00:00:00.000+03:00,http://example.org#i1,,2015-04-05T00:00:00.000+03:00,assertEquals
+http://example.org#i1,,2015-04-05T00:00:00.000+03:00,http://example.org#i1,http://www.w3.org/2006/time#Instant,2015-04-05T00:00:00.000+03:00,assertEquals
+http://example.org#i1,http://example.org#Instant,2015-04-05T00:00:00.000+03:00,http://example.org#i1,http://example.org#Instant,2015-04-05T00:00:00.000+03:00,assertEquals
+http://example.org#i1,http://example.org#Instant,2015-04-05T00:00:00.000+03:00,http://example.org#i2,http://example.org#Instant,2015-04-05T00:00:00.000+03:00,assertNotEquals
+http://example.org#i1,,2015-04-05T00:00:00.000+03:00,http://example.org#i1,http://example.org#Instant,2015-04-05T00:00:00.000+03:00,assertNotEquals
+http://example.org#i1,,2015-04-05T01:00:00.000+03:00,http://example.org#i1,,2015-04-05T01:00:00.000+03:00,assertEquals
+http://example.org#i1,,2015-04-05T00:00:00.000+03:00,http://example.org#i1,,2015-04-05T01:00:00.000+03:00,assertNotEquals

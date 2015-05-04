@@ -5,11 +5,16 @@
 
 package fi.uef.envi.emrooz.api.ssn.test;
 
+import junitparams.FileParameters;
+import junitparams.JUnitParamsRunner;
+import junitparams.converters.ConvertParam;
+
 import org.junit.Test;
-import org.openrdf.model.ValueFactory;
-import org.openrdf.model.impl.ValueFactoryImpl;
+import org.junit.runner.RunWith;
+import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.api.ssn.Sensor;
+import fi.uef.envi.emrooz.test.ParamsConverterTest;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -31,80 +36,33 @@ import static org.junit.Assert.assertNotEquals;
  * @author Markus Stocker
  */
 
+@RunWith(JUnitParamsRunner.class)
 public class SensorTest {
 
-	private static final String ns = "http://example.org#";
-	private static final ValueFactory vf = ValueFactoryImpl.getInstance();
-
 	@Test
-	public void test1() {
-		Sensor s1 = new Sensor(vf.createURI(ns + "s1"));
+	@FileParameters("src/test/resources/SensorTest.csv")
+	public void testSensors(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id1,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type1,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id2,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type2,
+			String assertType) {
+		if (type1 == null)
+			type1 = SSN.Sensor;
+		if (type2 == null)
+			type2 = SSN.Sensor;
 
-		assertEquals(vf.createURI(ns + "s1"), s1.getId());
-	}
+		Sensor s1 = new Sensor(id1, type1);
+		Sensor s2 = new Sensor(id2, type2);
 
-	@Test
-	public void test2() {
-		Sensor s1 = new Sensor(vf.createURI(ns + "s1"));
-
-		assertEquals(SSN.Sensor, s1.getType());
-	}
-
-	@Test
-	public void test3() {
-		Sensor s1 = new Sensor(vf.createURI(ns + "s1"), vf.createURI(ns
-				+ "Sensor"));
-
-		assertEquals(vf.createURI(ns + "Sensor"), s1.getType());
-	}
-
-	@Test
-	public void test4() {
-		Sensor s1 = new Sensor(vf.createURI(ns + "s1"));
-		Sensor s2 = new Sensor(vf.createURI(ns + "s1"));
-
-		assertEquals(s1, s2);
-	}
-
-	@Test
-	public void test5() {
-		Sensor s1 = new Sensor(vf.createURI(ns + "s1"));
-		Sensor s2 = new Sensor(vf.createURI(ns + "s1"));
-
-		assertEquals(s1.hashCode(), s2.hashCode());
-	}
-
-	@Test
-	public void test6() {
-		Sensor s1 = new Sensor(vf.createURI(ns + "s1"));
-		Sensor s2 = new Sensor(vf.createURI(ns + "s2"));
+		if (assertType.equals("assertEquals")) {
+			assertEquals(s1, s2);
+			assertEquals(s1.hashCode(), s2.hashCode());
+			return;
+		}
 
 		assertNotEquals(s1, s2);
-	}
-
-	@Test
-	public void test7() {
-		Sensor s1 = new Sensor(vf.createURI(ns + "s1"));
-		Sensor s2 = new Sensor(vf.createURI(ns + "s2"));
-
 		assertNotEquals(s1.hashCode(), s2.hashCode());
 	}
 
-	@Test
-	public void test8() {
-		Sensor s1 = new Sensor(vf.createURI(ns + "s1"));
-		Sensor s2 = new Sensor(vf.createURI(ns + "s2"), vf.createURI(ns
-				+ "Sensor"));
-
-		assertNotEquals(s1, s2);
-	}
-
-	@Test
-	public void test9() {
-		Sensor s1 = new Sensor(vf.createURI(ns + "s1"));
-		Sensor s2 = new Sensor(vf.createURI(ns + "s2"), vf.createURI(ns
-				+ "Sensor"));
-
-		assertNotEquals(s1.hashCode(), s2.hashCode());
-	}
 }

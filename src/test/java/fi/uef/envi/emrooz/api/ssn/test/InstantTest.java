@@ -5,15 +5,20 @@
 
 package fi.uef.envi.emrooz.api.ssn.test;
 
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
-import org.openrdf.model.ValueFactory;
-import org.openrdf.model.impl.ValueFactoryImpl;
+import junitparams.FileParameters;
+import junitparams.JUnitParamsRunner;
+import junitparams.converters.ConvertParam;
+
+import org.joda.time.DateTime;
+import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.api.time.Instant;
+import fi.uef.envi.emrooz.test.ParamsConverterTest;
 import fi.uef.envi.emrooz.vocabulary.Time;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
@@ -34,84 +39,34 @@ import static org.junit.Assert.assertNotEquals;
  * @author Markus Stocker
  */
 
+@RunWith(JUnitParamsRunner.class)
 public class InstantTest {
 
-	private static final String ns = "http://example.org#";
-	private static final ValueFactory vf = ValueFactoryImpl.getInstance();
-	private static final DateTimeFormatter dtf = ISODateTimeFormat.dateTime()
-			.withOffsetParsed();
-
 	@Test
-	public void test1() {
-		Instant i1 = new Instant(vf.createURI(ns + "i1"),
-				dtf.parseDateTime("2015-04-21T14:00:00.000+03:00"));
+	@FileParameters("src/test/resources/InstantTest.csv")
+	public void testInstants(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id1,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type1,
+			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime value1,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id2,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type2,
+			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime value2,
+			String assertType) {
+		if (type1 == null)
+			type1 = Time.Instant;
+		if (type2 == null)
+			type2 = Time.Instant;
 
-		assertEquals(vf.createURI(ns + "i1"), i1.getId());
-	}
+		Instant i1 = new Instant(id1, type1, value1);
+		Instant i2 = new Instant(id2, type2, value2);
 
-	@Test
-	public void test2() {
-		Instant i1 = new Instant(vf.createURI(ns + "i1"),
-				dtf.parseDateTime("2015-04-21T14:00:00.000+03:00"));
-
-		assertEquals(Time.Instant, i1.getType());
-	}
-
-	@Test
-	public void test3() {
-		Instant i1 = new Instant(vf.createURI(ns + "i1"), vf.createURI(ns
-				+ "Instant"),
-				dtf.parseDateTime("2015-04-21T14:00:00.000+03:00"));
-
-		assertEquals(vf.createURI(ns + "Instant"), i1.getType());
-	}
-
-	@Test
-	public void test4() {
-		Instant i1 = new Instant(vf.createURI(ns + "i1"),
-				dtf.parseDateTime("2015-04-21T14:00:00.000+03:00"));
-
-		assertEquals(dtf.parseDateTime("2015-04-21T14:00:00.000+03:00"),
-				i1.getValue());
-	}
-
-	@Test
-	public void test5() {
-		Instant i1 = new Instant(vf.createURI(ns + "i1"),
-				dtf.parseDateTime("2015-04-21T14:00:00.000+03:00"));
-		Instant i2 = new Instant(vf.createURI(ns + "i1"),
-				dtf.parseDateTime("2015-04-21T14:00:00.000+03:00"));
-
-		assertEquals(i1, i2);
-	}
-
-	@Test
-	public void test6() {
-		Instant i1 = new Instant(vf.createURI(ns + "i1"),
-				dtf.parseDateTime("2015-04-21T14:00:00.000+03:00"));
-		Instant i2 = new Instant(vf.createURI(ns + "i1"),
-				dtf.parseDateTime("2015-04-21T14:00:00.000+03:00"));
-
-		assertEquals(i1.hashCode(), i2.hashCode());
-	}
-
-	@Test
-	public void test7() {
-		Instant i1 = new Instant(vf.createURI(ns + "i1"),
-				dtf.parseDateTime("2015-04-21T14:00:00.000+03:00"));
-		Instant i2 = new Instant(vf.createURI(ns + "i1"),
-				dtf.parseDateTime("2015-04-21T14:01:00.000+03:00"));
+		if (assertType.equals("assertEquals")) {
+			assertEquals(i1, i2);
+			assertEquals(i1.hashCode(), i2.hashCode());
+			return;
+		}
 
 		assertNotEquals(i1, i2);
-	}
-
-	@Test
-	public void test8() {
-		Instant i1 = new Instant(vf.createURI(ns + "i1"),
-				dtf.parseDateTime("2015-04-21T14:00:00.000+03:00"));
-		Instant i2 = new Instant(vf.createURI(ns + "i1"),
-				dtf.parseDateTime("2015-04-21T14:01:00.000+03:00"));
-
 		assertNotEquals(i1.hashCode(), i2.hashCode());
 	}
 

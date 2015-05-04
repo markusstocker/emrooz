@@ -119,15 +119,22 @@ public class SensorObservation extends AbstractEntity {
 	public TemporalEntity getObservationResultTime() {
 		return resultTime;
 	}
-	
+
 	public void accept(EntityVisitor visitor) {
 		visitor.visit(this);
 	}
 
 	public int hashCode() {
-		return 31 * (id.hashCode() + type.hashCode() + sensor.hashCode()
-				+ property.hashCode() + feature.hashCode() + result.hashCode() + resultTime
-					.hashCode());
+		int base = id.hashCode() + type.hashCode() + sensor.hashCode()
+				+ property.hashCode() + feature.hashCode();
+
+		if (result != null)
+			base += result.hashCode();
+		
+		if (resultTime != null)
+			base += resultTime.hashCode();
+
+		return 31 * base;
 	}
 
 	public boolean equals(Object obj) {
@@ -139,9 +146,24 @@ public class SensorObservation extends AbstractEntity {
 		if (other.id.equals(id) && other.type.equals(type)
 				&& other.sensor.equals(sensor)
 				&& other.property.equals(property)
-				&& other.feature.equals(feature) && other.result.equals(result)
-				&& other.resultTime.equals(resultTime))
-			return true;
+				&& other.feature.equals(feature)) {
+			if ((other.result == null && result == null)
+					&& (other.resultTime == null && resultTime == null))
+				return true;
+
+			if (other.result == null && result == null) {
+				if (other.resultTime.equals(resultTime))
+					return true;
+			}
+
+			if ((other.resultTime == null && resultTime == null))
+				if (other.result.equals(result))
+					return true;
+
+			if (other.result.equals(result)
+					&& other.resultTime.equals(resultTime))
+				return true;
+		}
 
 		return false;
 	}

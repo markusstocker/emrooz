@@ -1,0 +1,7 @@
+http://example.org#p1,http://purl.oclc.org/NET/ssnx/ssn#Property,http://example.org#p1,http://purl.oclc.org/NET/ssnx/ssn#Property,assertEquals
+http://example.org#p1,,http://example.org#p1,,assertEquals
+http://example.org#p1,http://purl.oclc.org/NET/ssnx/ssn#Property,http://example.org#p1,,assertEquals
+http://example.org#p1,,http://example.org#p1,http://purl.oclc.org/NET/ssnx/ssn#Property,assertEquals
+http://example.org#p1,http://example.org#Property,http://example.org#p1,http://example.org#Property,assertEquals
+http://example.org#p1,http://example.org#Property,http://example.org#p2,http://example.org#Property,assertNotEquals
+http://example.org#p1,,http://example.org#p1,http://example.org#Property,assertNotEquals

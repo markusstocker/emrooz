@@ -75,6 +75,9 @@ public class SensorOutput extends AbstractEntity {
 	}
 
 	public int hashCode() {
+		if (value == null)
+			return 31 * (id.hashCode() + type.hashCode());
+
 		return 31 * (id.hashCode() + type.hashCode() + value.hashCode());
 	}
 
@@ -84,9 +87,12 @@ public class SensorOutput extends AbstractEntity {
 
 		SensorOutput other = (SensorOutput) obj;
 
-		if (other.id.equals(id) && other.type.equals(type)
-				&& other.value.equals(value))
-			return true;
+		if (other.id.equals(id) && other.type.equals(type)) {
+			if (other.value == null && value == null)
+				return true;
+			if (other.value.equals(value))
+				return true;
+		}
 
 		return false;
 	}

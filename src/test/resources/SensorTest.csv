@@ -1,0 +1,7 @@
+http://example.org#s1,http://purl.oclc.org/NET/ssnx/ssn#Sensor,http://example.org#s1,http://purl.oclc.org/NET/ssnx/ssn#Sensor,assertEquals
+http://example.org#s1,,http://example.org#s1,,assertEquals
+http://example.org#s1,http://purl.oclc.org/NET/ssnx/ssn#Sensor,http://example.org#s1,,assertEquals
+http://example.org#s1,,http://example.org#s1,http://purl.oclc.org/NET/ssnx/ssn#Sensor,assertEquals
+http://example.org#s1,http://example.org#Sensor,http://example.org#s1,http://example.org#Sensor,assertEquals
+http://example.org#s1,http://example.org#Sensor,http://example.org#s2,http://example.org#Sensor,assertNotEquals
+http://example.org#s1,,http://example.org#s1,http://example.org#Sensor,assertNotEquals

@@ -5,16 +5,20 @@
 
 package fi.uef.envi.emrooz.api.ssn.test;
 
+import junitparams.FileParameters;
+import junitparams.JUnitParamsRunner;
+import junitparams.converters.ConvertParam;
+
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-import org.openrdf.model.ValueFactory;
-import org.openrdf.model.impl.ValueFactoryImpl;
+import org.openrdf.model.URI;
 
-import fi.uef.envi.emrooz.api.ssn.ObservationValue;
 import fi.uef.envi.emrooz.api.ssn.ObservationValueDouble;
+import fi.uef.envi.emrooz.test.ParamsConverterTest;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 
 /**
@@ -34,80 +38,37 @@ import fi.uef.envi.emrooz.vocabulary.SSN;
  * @author Markus Stocker
  */
 
+@RunWith(JUnitParamsRunner.class)
 public class ObservationValueDoubleTest {
 
-	private static final String ns = "http://example.org#";
-	private static final ValueFactory vf = ValueFactoryImpl.getInstance();
-
 	@Test
-	public void test1() {
-		ObservationValue ov1 = new ObservationValueDouble(vf.createURI(ns
-				+ "ov1"), 0.0);
+	@FileParameters("src/test/resources/ObservationValueDoubleTest.csv")
+	public void testObservationValuesDouble(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id1,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type1,
+			@ConvertParam(value = ParamsConverterTest.StringToDoubleConverter.class) Double value1,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id2,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type2,
+			@ConvertParam(value = ParamsConverterTest.StringToDoubleConverter.class) Double value2,
+			String assertType) {
+		if (type1 == null)
+			type1 = SSN.ObservationValue;
+		if (type2 == null)
+			type2 = SSN.ObservationValue;
 
-		assertEquals(vf.createURI(ns + "ov1"), ov1.getId());
-	}
+		ObservationValueDouble ov1 = new ObservationValueDouble(id1, type1);
+		ObservationValueDouble ov2 = new ObservationValueDouble(id2, type2);
 
-	@Test
-	public void test2() {
-		ObservationValue ov1 = new ObservationValueDouble(vf.createURI(ns
-				+ "ov1"), 0.0);
+		ov1.setValue(value1);
+		ov2.setValue(value2);
 
-		assertEquals(SSN.ObservationValue, ov1.getType());
-	}
-
-	@Test
-	public void test3() {
-		ObservationValue ov1 = new ObservationValueDouble(vf.createURI(ns
-				+ "ov1"), vf.createURI(ns + "ObservationValue"), 0.0);
-
-		assertEquals(vf.createURI(ns + "ObservationValue"), ov1.getType());
-	}
-
-	@Test
-	public void test4() {
-		ObservationValueDouble ov1 = new ObservationValueDouble(vf.createURI(ns
-				+ "ov1"), 0.0);
-
-		assertEquals(new Double(0.0), ov1.getValue());
-	}
-
-	@Test
-	public void test5() {
-		ObservationValueDouble ov1 = new ObservationValueDouble(vf.createURI(ns
-				+ "ov1"), 0.0);
-		ObservationValueDouble ov2 = new ObservationValueDouble(vf.createURI(ns
-				+ "ov1"), 0.0);
-
-		assertEquals(ov1, ov2);
-	}
-
-	@Test
-	public void test6() {
-		ObservationValueDouble ov1 = new ObservationValueDouble(vf.createURI(ns
-				+ "ov1"), 0.0);
-		ObservationValueDouble ov2 = new ObservationValueDouble(vf.createURI(ns
-				+ "ov1"), 0.0);
-
-		assertEquals(ov1.hashCode(), ov2.hashCode());
-	}
-
-	@Test
-	public void test7() {
-		ObservationValueDouble ov1 = new ObservationValueDouble(vf.createURI(ns
-				+ "ov1"), 0.0);
-		ObservationValueDouble ov2 = new ObservationValueDouble(vf.createURI(ns
-				+ "ov1"), 0.1);
+		if (assertType.equals("assertEquals")) {
+			assertEquals(ov1, ov2);
+			assertEquals(ov1.hashCode(), ov2.hashCode());
+			return;
+		}
 
 		assertNotEquals(ov1, ov2);
-	}
-
-	@Test
-	public void test8() {
-		ObservationValueDouble ov1 = new ObservationValueDouble(vf.createURI(ns
-				+ "ov1"), 0.0);
-		ObservationValueDouble ov2 = new ObservationValueDouble(vf.createURI(ns
-				+ "ov1"), 0.1);
-
 		assertNotEquals(ov1.hashCode(), ov2.hashCode());
 	}
 

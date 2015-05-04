@@ -1,0 +1,10 @@
+http://example.org#ov1,http://purl.oclc.org/NET/ssnx/ssn#ObservationValue,0.0,http://example.org#ov1,http://purl.oclc.org/NET/ssnx/ssn#ObservationValue,0.0,assertEquals
+http://example.org#ov1,,0.0,http://example.org#ov1,,0.0,assertEquals
+http://example.org#ov1,http://purl.oclc.org/NET/ssnx/ssn#ObservationValue,0.0,http://example.org#ov1,,0.0,assertEquals
+http://example.org#ov1,,0.0,http://example.org#ov1,http://purl.oclc.org/NET/ssnx/ssn#ObservationValue,0.0,assertEquals
+http://example.org#ov1,,,http://example.org#ov1,,,assertEquals
+http://example.org#ov1,http://example.org#ObservationValue,0.0,http://example.org#ov1,http://example.org#ObservationValue,0.0,assertEquals
+http://example.org#ov1,http://example.org#ObservationValue,0.0,http://example.org#ov2,http://example.org#ObservationValue,0.0,assertNotEquals
+http://example.org#ov1,,0.0,http://example.org#ov1,http://example.org#ObservationValue,0.0,assertNotEquals
+http://example.org#ov1,,0.0,http://example.org#ov1,,0.5,assertNotEquals
+http://example.org#ov1,,,http://example.org#ov1,,0.0,assertNotEquals

@@ -7,12 +7,16 @@ package fi.uef.envi.emrooz.api.ssn.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import junitparams.FileParameters;
+import junitparams.JUnitParamsRunner;
+import junitparams.converters.ConvertParam;
 
 import org.junit.Test;
-import org.openrdf.model.ValueFactory;
-import org.openrdf.model.impl.ValueFactoryImpl;
+import org.junit.runner.RunWith;
+import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.api.ssn.FeatureOfInterest;
+import fi.uef.envi.emrooz.test.ParamsConverterTest;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 
 /**
@@ -32,80 +36,32 @@ import fi.uef.envi.emrooz.vocabulary.SSN;
  * @author Markus Stocker
  */
 
+@RunWith(JUnitParamsRunner.class)
 public class FeatureOfInterestTest {
 
-	private static final String ns = "http://example.org#";
-	private static final ValueFactory vf = ValueFactoryImpl.getInstance();
-
 	@Test
-	public void test1() {
-		FeatureOfInterest f1 = new FeatureOfInterest(vf.createURI(ns + "f1"));
+	@FileParameters("src/test/resources/FeatureOfInterestTest.csv")
+	public void testFeaturesOfInterest(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id1,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type1,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id2,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type2,
+			String assertType) {
+		if (type1 == null)
+			type1 = SSN.FeatureOfInterest;
+		if (type2 == null)
+			type2 = SSN.FeatureOfInterest;
 
-		assertEquals(vf.createURI(ns + "f1"), f1.getId());
-	}
+		FeatureOfInterest f1 = new FeatureOfInterest(id1, type1);
+		FeatureOfInterest f2 = new FeatureOfInterest(id2, type2);
 
-	@Test
-	public void test2() {
-		FeatureOfInterest f1 = new FeatureOfInterest(vf.createURI(ns + "f1"));
-
-		assertEquals(SSN.FeatureOfInterest, f1.getType());
-	}
-
-	@Test
-	public void test3() {
-		FeatureOfInterest f1 = new FeatureOfInterest(vf.createURI(ns + "f1"),
-				vf.createURI(ns + "FeatureOfInterest"));
-
-		assertEquals(vf.createURI(ns + "FeatureOfInterest"), f1.getType());
-	}
-
-	@Test
-	public void test4() {
-		FeatureOfInterest f1 = new FeatureOfInterest(vf.createURI(ns + "f1"));
-		FeatureOfInterest f2 = new FeatureOfInterest(vf.createURI(ns + "f1"));
-
-		assertEquals(f1, f2);
-	}
-
-	@Test
-	public void test5() {
-		FeatureOfInterest f1 = new FeatureOfInterest(vf.createURI(ns + "f1"));
-		FeatureOfInterest f2 = new FeatureOfInterest(vf.createURI(ns + "f1"));
-
-		assertEquals(f1.hashCode(), f2.hashCode());
-	}
-
-	@Test
-	public void test6() {
-		FeatureOfInterest f1 = new FeatureOfInterest(vf.createURI(ns + "f1"));
-		FeatureOfInterest f2 = new FeatureOfInterest(vf.createURI(ns + "f2"));
+		if (assertType.equals("assertEquals")) {
+			assertEquals(f1, f2);
+			assertEquals(f1.hashCode(), f2.hashCode());
+			return;
+		}
 
 		assertNotEquals(f1, f2);
-	}
-
-	@Test
-	public void test7() {
-		FeatureOfInterest f1 = new FeatureOfInterest(vf.createURI(ns + "f1"));
-		FeatureOfInterest f2 = new FeatureOfInterest(vf.createURI(ns + "f2"));
-
-		assertNotEquals(f1.hashCode(), f2.hashCode());
-	}
-
-	@Test
-	public void test8() {
-		FeatureOfInterest f1 = new FeatureOfInterest(vf.createURI(ns + "f1"));
-		FeatureOfInterest f2 = new FeatureOfInterest(vf.createURI(ns + "f2"),
-				vf.createURI(ns + "FeatureOfInterest"));
-
-		assertNotEquals(f1, f2);
-	}
-
-	@Test
-	public void test9() {
-		FeatureOfInterest f1 = new FeatureOfInterest(vf.createURI(ns + "f1"));
-		FeatureOfInterest f2 = new FeatureOfInterest(vf.createURI(ns + "f2"),
-				vf.createURI(ns + "FeatureOfInterest"));
-
 		assertNotEquals(f1.hashCode(), f2.hashCode());
 	}
 
