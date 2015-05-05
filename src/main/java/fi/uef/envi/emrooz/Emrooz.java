@@ -211,13 +211,16 @@ public class Emrooz {
 	}
 
 	public void addSensorObservation(Set<Statement> statements) {
-		SensorObservationExtractor extractor = new SensorObservationExtractor(
-				statements);
+		SensorObservation observation = representer
+				.createSensorObservation(statements);
 
-		URI sensor = extractor.getSensor();
-		URI property = extractor.getProperty();
-		URI feature = extractor.getFeature();
-		DateTime resultTime = extractor.getResultTime();
+		URI sensor = observation.getSensor().getId();
+		URI property = observation.getProperty().getId();
+		URI feature = observation.getFeatureOfInterest().getId();
+
+		observation.getObservationResultTime().accept(temporalEntityVisitor);
+
+		DateTime resultTime = instant;
 
 		if (sensor == null) {
 			if (log.isLoggable(Level.SEVERE))

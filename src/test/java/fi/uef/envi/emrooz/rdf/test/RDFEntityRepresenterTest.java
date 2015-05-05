@@ -62,17 +62,20 @@ public class RDFEntityRepresenterTest {
 	public void testInstant(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
 			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime value,
-			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> expected,
+			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
 			String assertType) {
-		Set<Statement> actual = representer.createRepresentation(new Instant(
-				id, value));
+		Instant instantA = new Instant(id, value);
+		Set<Statement> statementsA = representer.createRepresentation(instantA);
+		Instant instantE = representer.createInstant(statementsE);
 
 		if (assertType.equals("assertEquals")) {
-			assertEquals(expected, actual);
+			assertEquals(statementsE, statementsA);
+			assertEquals(instantE, instantA);
 			return;
 		}
 
-		assertNotEquals(expected, actual);
+		assertNotEquals(statementsE, statementsA);
+		assertNotEquals(instantE, instantA);
 	}
 
 	@Test
@@ -80,17 +83,23 @@ public class RDFEntityRepresenterTest {
 	public void testObservationValueDouble(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
 			@ConvertParam(value = ParamsConverterTest.StringToDoubleConverter.class) Double value,
-			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> expected,
+			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
 			String assertType) {
-		Set<Statement> actual = representer
-				.createRepresentation(new ObservationValueDouble(id, value));
+		ObservationValueDouble observationValueA = new ObservationValueDouble(
+				id, value);
+		Set<Statement> statementsA = representer
+				.createRepresentation(observationValueA);
+		ObservationValueDouble observationValueE = representer
+				.createObservationValueDouble(statementsE);
 
 		if (assertType.equals("assertEquals")) {
-			assertEquals(expected, actual);
+			assertEquals(statementsE, statementsA);
+			assertEquals(observationValueE, observationValueA);
 			return;
 		}
 
-		assertNotEquals(expected, actual);
+		assertNotEquals(statementsE, statementsA);
+		assertNotEquals(observationValueE, observationValueA);
 	}
 
 	@Test
@@ -105,23 +114,26 @@ public class RDFEntityRepresenterTest {
 			@ConvertParam(value = ParamsConverterTest.StringToDoubleConverter.class) Double value,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI timeId,
 			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime time,
-			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> expected,
+			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
 			String assertType) {
-		SensorObservation observation = new SensorObservation(id, new Sensor(
+		SensorObservation observationA = new SensorObservation(id, new Sensor(
 				sensorId), new Property(propertyId), new FeatureOfInterest(
 				featureId));
-		observation.setObservationResult(new SensorOutput(outputId,
+		observationA.setObservationResult(new SensorOutput(outputId,
 				new ObservationValueDouble(valueId, value)));
-		observation.setObservationResultTime(new Instant(timeId, time));
-
-		Set<Statement> actual = representer.createRepresentation(observation);
+		observationA.setObservationResultTime(new Instant(timeId, time));
+		Set<Statement> statementsA = representer
+				.createRepresentation(observationA);
+		SensorObservation observationE = representer
+				.createSensorObservation(statementsE);
 
 		if (assertType.equals("assertEquals")) {
-			assertEquals(expected, actual);
+			assertEquals(statementsE, statementsA);
+			assertEquals(observationE, observationA);
 			return;
 		}
 
-		assertNotEquals(expected, actual);
+		assertNotEquals(statementsE, statementsA);
+		assertNotEquals(observationE, observationA);
 	}
-
 }
