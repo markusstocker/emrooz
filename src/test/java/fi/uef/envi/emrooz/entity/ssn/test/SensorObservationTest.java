@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-package fi.uef.envi.emrooz.api.ssn.test;
+package fi.uef.envi.emrooz.entity.ssn.test;
 
 import junitparams.FileParameters;
 import junitparams.JUnitParamsRunner;
@@ -18,13 +18,13 @@ import static org.junit.Assert.assertNotEquals;
 
 import org.openrdf.model.URI;
 
-import fi.uef.envi.emrooz.api.ssn.FeatureOfInterest;
-import fi.uef.envi.emrooz.api.ssn.ObservationValueDouble;
-import fi.uef.envi.emrooz.api.ssn.Property;
-import fi.uef.envi.emrooz.api.ssn.Sensor;
-import fi.uef.envi.emrooz.api.ssn.SensorObservation;
-import fi.uef.envi.emrooz.api.ssn.SensorOutput;
-import fi.uef.envi.emrooz.api.time.Instant;
+import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
+import fi.uef.envi.emrooz.entity.ssn.ObservationValueDouble;
+import fi.uef.envi.emrooz.entity.ssn.Property;
+import fi.uef.envi.emrooz.entity.ssn.Sensor;
+import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
+import fi.uef.envi.emrooz.entity.ssn.SensorOutput;
+import fi.uef.envi.emrooz.entity.time.Instant;
 import fi.uef.envi.emrooz.test.ParamsConverterTest;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 import fi.uef.envi.emrooz.vocabulary.Time;

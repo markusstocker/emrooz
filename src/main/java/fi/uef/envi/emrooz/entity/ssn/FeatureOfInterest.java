@@ -3,17 +3,17 @@
  * All rights reserved.
  */
 
-package fi.uef.envi.emrooz.api.ssn;
+package fi.uef.envi.emrooz.entity.ssn;
 
 import org.openrdf.model.URI;
 
-import fi.uef.envi.emrooz.api.AbstractEntity;
-import fi.uef.envi.emrooz.api.EntityVisitor;
+import fi.uef.envi.emrooz.entity.AbstractEntity;
+import fi.uef.envi.emrooz.entity.EntityVisitor;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 
 /**
  * <p>
- * Title: Sensor
+ * Title: FeatureOfInterest
  * </p>
  * <p>
  * Description:
@@ -28,16 +28,16 @@ import fi.uef.envi.emrooz.vocabulary.SSN;
  * @author Markus Stocker
  */
 
-public class Sensor extends AbstractEntity {
+public class FeatureOfInterest extends AbstractEntity {
 
-	public Sensor(URI id) {
-		this(id, SSN.Sensor);
+	public FeatureOfInterest(URI id) {
+		this(id, SSN.FeatureOfInterest);
 	}
 
-	public Sensor(URI id, URI type) {
+	public FeatureOfInterest(URI id, URI type) {
 		super(id, type);
 	}
-	
+
 	public void accept(EntityVisitor visitor) {
 		visitor.visit(this);
 	}
@@ -47,19 +47,19 @@ public class Sensor extends AbstractEntity {
 	}
 
 	public boolean equals(Object obj) {
-		if (!(obj instanceof Sensor))
+		if (!(obj instanceof FeatureOfInterest))
 			return false;
 
-		Sensor other = (Sensor) obj;
+		FeatureOfInterest other = (FeatureOfInterest) obj;
 
 		if (other.id.equals(id) && other.type.equals(type))
 			return true;
 
 		return false;
 	}
-	
+
 	public String toString() {
-		return "Sensor [id = " + id + "; type = " + type + "]";
+		return "FeatureOfInterest [id = " + id + "; type = " + type + "]";
 	}
 
 }

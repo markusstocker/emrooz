@@ -3,11 +3,18 @@
  * All rights reserved.
  */
 
-package fi.uef.envi.emrooz.api.ssn.test;
+package fi.uef.envi.emrooz.entity.time.test;
 
 import junitparams.FileParameters;
 import junitparams.JUnitParamsRunner;
 import junitparams.converters.ConvertParam;
+
+import org.joda.time.DateTime;
+import org.openrdf.model.URI;
+
+import fi.uef.envi.emrooz.entity.time.Instant;
+import fi.uef.envi.emrooz.test.ParamsConverterTest;
+import fi.uef.envi.emrooz.vocabulary.Time;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,16 +22,9 @@ import org.junit.runner.RunWith;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-import org.openrdf.model.URI;
-
-import fi.uef.envi.emrooz.api.ssn.ObservationValueDouble;
-import fi.uef.envi.emrooz.api.ssn.SensorOutput;
-import fi.uef.envi.emrooz.test.ParamsConverterTest;
-import fi.uef.envi.emrooz.vocabulary.SSN;
-
 /**
  * <p>
- * Title: SensorOutputTest
+ * Title: InstantTest
  * </p>
  * <p>
  * Description:
@@ -40,36 +40,34 @@ import fi.uef.envi.emrooz.vocabulary.SSN;
  */
 
 @RunWith(JUnitParamsRunner.class)
-public class SensorOutputTest {
+public class InstantTest {
 
 	@Test
-	@FileParameters("src/test/resources/SensorOutputTest.csv")
-	public void testSensorOutputs(
+	@FileParameters("src/test/resources/InstantTest.csv")
+	public void testInstants(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type1,
+			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime value1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id2,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type2,
-			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI valueId,
+			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime value2,
 			String assertType) {
 		if (type1 == null)
-			type1 = SSN.SensorOutput;
+			type1 = Time.Instant;
 		if (type2 == null)
-			type2 = SSN.SensorOutput;
+			type2 = Time.Instant;
 
-		SensorOutput so1 = new SensorOutput(id1, type1);
-		SensorOutput so2 = new SensorOutput(id2, type2);
-
-		so1.setValue(new ObservationValueDouble(valueId));
-		so2.setValue(new ObservationValueDouble(valueId));
+		Instant i1 = new Instant(id1, type1, value1);
+		Instant i2 = new Instant(id2, type2, value2);
 
 		if (assertType.equals("assertEquals")) {
-			assertEquals(so1, so2);
-			assertEquals(so1.hashCode(), so2.hashCode());
+			assertEquals(i1, i2);
+			assertEquals(i1.hashCode(), i2.hashCode());
 			return;
 		}
 
-		assertNotEquals(so1, so2);
-		assertNotEquals(so1.hashCode(), so2.hashCode());
+		assertNotEquals(i1, i2);
+		assertNotEquals(i1.hashCode(), i2.hashCode());
 	}
 
 }

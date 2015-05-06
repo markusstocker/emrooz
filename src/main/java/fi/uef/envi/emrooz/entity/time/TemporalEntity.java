@@ -3,12 +3,12 @@
  * All rights reserved.
  */
 
-package fi.uef.envi.emrooz.api.time;
+package fi.uef.envi.emrooz.entity.time;
 
 import org.openrdf.model.URI;
 
-import fi.uef.envi.emrooz.api.AbstractEntity;
-import fi.uef.envi.emrooz.api.TemporalEntityVisitor;
+import fi.uef.envi.emrooz.entity.AbstractEntity;
+import fi.uef.envi.emrooz.entity.TemporalEntityVisitor;
 
 /**
  * <p>

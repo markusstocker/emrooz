@@ -3,13 +3,13 @@
  * All rights reserved.
  */
 
-package fi.uef.envi.emrooz.api.time;
+package fi.uef.envi.emrooz.entity.time;
 
 import org.joda.time.DateTime;
 import org.openrdf.model.URI;
 
-import fi.uef.envi.emrooz.api.EntityVisitor;
-import fi.uef.envi.emrooz.api.TemporalEntityVisitor;
+import fi.uef.envi.emrooz.entity.EntityVisitor;
+import fi.uef.envi.emrooz.entity.TemporalEntityVisitor;
 import fi.uef.envi.emrooz.vocabulary.Time;
 
 /**

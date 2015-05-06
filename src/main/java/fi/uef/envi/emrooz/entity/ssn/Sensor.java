@@ -3,17 +3,17 @@
  * All rights reserved.
  */
 
-package fi.uef.envi.emrooz.api.ssn;
+package fi.uef.envi.emrooz.entity.ssn;
 
 import org.openrdf.model.URI;
 
-import fi.uef.envi.emrooz.api.AbstractEntity;
-import fi.uef.envi.emrooz.api.EntityVisitor;
+import fi.uef.envi.emrooz.entity.AbstractEntity;
+import fi.uef.envi.emrooz.entity.EntityVisitor;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 
 /**
  * <p>
- * Title: Property
+ * Title: Sensor
  * </p>
  * <p>
  * Description:
@@ -28,29 +28,29 @@ import fi.uef.envi.emrooz.vocabulary.SSN;
  * @author Markus Stocker
  */
 
-public class Property extends AbstractEntity {
+public class Sensor extends AbstractEntity {
 
-	public Property(URI id) {
-		this(id, SSN.Property);
+	public Sensor(URI id) {
+		this(id, SSN.Sensor);
 	}
 
-	public Property(URI id, URI type) {
+	public Sensor(URI id, URI type) {
 		super(id, type);
 	}
-
+	
 	public void accept(EntityVisitor visitor) {
 		visitor.visit(this);
 	}
-	
+
 	public int hashCode() {
 		return 31 * (id.hashCode() + type.hashCode());
 	}
 
 	public boolean equals(Object obj) {
-		if (!(obj instanceof Property))
+		if (!(obj instanceof Sensor))
 			return false;
 
-		Property other = (Property) obj;
+		Sensor other = (Sensor) obj;
 
 		if (other.id.equals(id) && other.type.equals(type))
 			return true;
@@ -59,7 +59,7 @@ public class Property extends AbstractEntity {
 	}
 	
 	public String toString() {
-		return "Property [id = " + id + "; type = " + type + "]";
+		return "Sensor [id = " + id + "; type = " + type + "]";
 	}
 
 }

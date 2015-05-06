@@ -3,15 +3,15 @@
  * All rights reserved.
  */
 
-package fi.uef.envi.emrooz.api.ssn;
+package fi.uef.envi.emrooz.entity.ssn;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.openrdf.model.URI;
 
-import fi.uef.envi.emrooz.api.AbstractEntity;
-import fi.uef.envi.emrooz.api.EntityVisitor;
+import fi.uef.envi.emrooz.entity.AbstractEntity;
+import fi.uef.envi.emrooz.entity.EntityVisitor;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 
 /**

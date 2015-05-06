@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-package fi.uef.envi.emrooz.api.ssn.test;
+package fi.uef.envi.emrooz.entity.ssn.test;
 
 import junitparams.FileParameters;
 import junitparams.JUnitParamsRunner;
@@ -17,7 +17,7 @@ import static org.junit.Assert.assertNotEquals;
 
 import org.openrdf.model.URI;
 
-import fi.uef.envi.emrooz.api.ssn.ObservationValueDouble;
+import fi.uef.envi.emrooz.entity.ssn.ObservationValueDouble;
 import fi.uef.envi.emrooz.test.ParamsConverterTest;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 

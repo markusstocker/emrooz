@@ -3,12 +3,12 @@
  * All rights reserved.
  */
 
-package fi.uef.envi.emrooz.api.ssn;
+package fi.uef.envi.emrooz.entity.ssn;
 
 import org.openrdf.model.URI;
 
-import fi.uef.envi.emrooz.api.EntityVisitor;
-import fi.uef.envi.emrooz.api.ObservationValueVisitor;
+import fi.uef.envi.emrooz.entity.EntityVisitor;
+import fi.uef.envi.emrooz.entity.ObservationValueVisitor;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 
 /**

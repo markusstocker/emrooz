@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-package fi.uef.envi.emrooz.api;
+package fi.uef.envi.emrooz.entity;
 
 import java.util.UUID;
 
@@ -14,15 +14,15 @@ import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 
-import fi.uef.envi.emrooz.api.ssn.FeatureOfInterest;
-import fi.uef.envi.emrooz.api.ssn.ObservationValue;
-import fi.uef.envi.emrooz.api.ssn.ObservationValueDouble;
-import fi.uef.envi.emrooz.api.ssn.Property;
-import fi.uef.envi.emrooz.api.ssn.Sensor;
-import fi.uef.envi.emrooz.api.ssn.SensorObservation;
-import fi.uef.envi.emrooz.api.ssn.SensorOutput;
-import fi.uef.envi.emrooz.api.time.Instant;
-import fi.uef.envi.emrooz.api.time.TemporalEntity;
+import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
+import fi.uef.envi.emrooz.entity.ssn.ObservationValue;
+import fi.uef.envi.emrooz.entity.ssn.ObservationValueDouble;
+import fi.uef.envi.emrooz.entity.ssn.Property;
+import fi.uef.envi.emrooz.entity.ssn.Sensor;
+import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
+import fi.uef.envi.emrooz.entity.ssn.SensorOutput;
+import fi.uef.envi.emrooz.entity.time.Instant;
+import fi.uef.envi.emrooz.entity.time.TemporalEntity;
 
 /**
  * <p>

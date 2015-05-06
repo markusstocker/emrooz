@@ -3,13 +3,13 @@
  * All rights reserved.
  */
 
-package fi.uef.envi.emrooz.api;
+package fi.uef.envi.emrooz.entity;
 
-import fi.uef.envi.emrooz.api.ssn.ObservationValueDouble;
+import fi.uef.envi.emrooz.entity.time.Instant;
 
 /**
  * <p>
- * Title: ObservationValueVisitor
+ * Title: TemporalEntityVisitor
  * </p>
  * <p>
  * Description:
@@ -24,8 +24,8 @@ import fi.uef.envi.emrooz.api.ssn.ObservationValueDouble;
  * @author Markus Stocker
  */
 
-public interface ObservationValueVisitor {
+public interface TemporalEntityVisitor {
 
-	public void visit(ObservationValueDouble entity);
+	public void visit(Instant entity);
 	
 }

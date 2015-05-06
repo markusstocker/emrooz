@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-package fi.uef.envi.emrooz.api.ssn.test;
+package fi.uef.envi.emrooz.entity.ssn.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -15,7 +15,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.openrdf.model.URI;
 
-import fi.uef.envi.emrooz.api.ssn.FeatureOfInterest;
+import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
 import fi.uef.envi.emrooz.test.ParamsConverterTest;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 

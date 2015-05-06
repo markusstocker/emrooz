@@ -6,8 +6,8 @@
 package fi.uef.envi.emrooz.examples;
 
 import fi.uef.envi.emrooz.Emrooz;
-import fi.uef.envi.emrooz.api.EntityFactory;
-import fi.uef.envi.emrooz.api.ssn.SensorObservation;
+import fi.uef.envi.emrooz.entity.EntityFactory;
+import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
 
 /**
  * <p>

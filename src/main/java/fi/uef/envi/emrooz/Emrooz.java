@@ -53,12 +53,12 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.TableMetadata;
 
-import fi.uef.envi.emrooz.api.TemporalEntityVisitor;
-import fi.uef.envi.emrooz.api.ssn.FeatureOfInterest;
-import fi.uef.envi.emrooz.api.ssn.Property;
-import fi.uef.envi.emrooz.api.ssn.Sensor;
-import fi.uef.envi.emrooz.api.ssn.SensorObservation;
-import fi.uef.envi.emrooz.api.time.Instant;
+import fi.uef.envi.emrooz.entity.TemporalEntityVisitor;
+import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
+import fi.uef.envi.emrooz.entity.ssn.Property;
+import fi.uef.envi.emrooz.entity.ssn.Sensor;
+import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
+import fi.uef.envi.emrooz.entity.time.Instant;
 import fi.uef.envi.emrooz.rdf.RDFEntityRepresenter;
 import fi.uef.envi.emrooz.utils.ConverterUtil;
 import fi.uef.envi.emrooz.vocabulary.SSN;

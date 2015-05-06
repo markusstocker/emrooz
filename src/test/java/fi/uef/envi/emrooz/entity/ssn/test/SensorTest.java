@@ -3,10 +3,8 @@
  * All rights reserved.
  */
 
-package fi.uef.envi.emrooz.api.ssn.test;
+package fi.uef.envi.emrooz.entity.ssn.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import junitparams.FileParameters;
 import junitparams.JUnitParamsRunner;
 import junitparams.converters.ConvertParam;
@@ -15,13 +13,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.openrdf.model.URI;
 
-import fi.uef.envi.emrooz.api.ssn.Property;
+import fi.uef.envi.emrooz.entity.ssn.Sensor;
 import fi.uef.envi.emrooz.test.ParamsConverterTest;
 import fi.uef.envi.emrooz.vocabulary.SSN;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 /**
  * <p>
- * Title: PropertyTest
+ * Title: SensorTest
  * </p>
  * <p>
  * Description:
@@ -37,32 +37,32 @@ import fi.uef.envi.emrooz.vocabulary.SSN;
  */
 
 @RunWith(JUnitParamsRunner.class)
-public class PropertyTest {
+public class SensorTest {
 
 	@Test
-	@FileParameters("src/test/resources/PropertyTest.csv")
-	public void testProperties(
+	@FileParameters("src/test/resources/SensorTest.csv")
+	public void testSensors(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id2,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type2,
 			String assertType) {
 		if (type1 == null)
-			type1 = SSN.Property;
+			type1 = SSN.Sensor;
 		if (type2 == null)
-			type2 = SSN.Property;
+			type2 = SSN.Sensor;
 
-		Property p1 = new Property(id1, type1);
-		Property p2 = new Property(id2, type2);
+		Sensor s1 = new Sensor(id1, type1);
+		Sensor s2 = new Sensor(id2, type2);
 
 		if (assertType.equals("assertEquals")) {
-			assertEquals(p1, p2);
-			assertEquals(p1.hashCode(), p2.hashCode());
+			assertEquals(s1, s2);
+			assertEquals(s1.hashCode(), s2.hashCode());
 			return;
 		}
 
-		assertNotEquals(p1, p2);
-		assertNotEquals(p1.hashCode(), p2.hashCode());
+		assertNotEquals(s1, s2);
+		assertNotEquals(s1.hashCode(), s2.hashCode());
 	}
 
 }
