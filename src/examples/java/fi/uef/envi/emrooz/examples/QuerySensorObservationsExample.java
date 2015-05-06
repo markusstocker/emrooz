@@ -45,7 +45,7 @@ public class QuerySensorObservationsExample {
 				+ "ssn:observationResult [ ssn:hasValue [ dul:hasRegionDataValue ?value ] ]"
 				+ "]"
 				+ "filter (?time >= \"2015-04-21T00:00:00.000+03:00\"^^xsd:dateTime && ?time < \"2015-04-21T02:00:00.000+03:00\"^^xsd:dateTime)"
-				+ "}";
+				+ "} order by desc (?time)";
 
 		Emrooz emrooz = new Emrooz();
 

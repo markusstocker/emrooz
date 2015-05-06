@@ -40,6 +40,11 @@ public class AddSensorObservationExample {
 		// Make sure to have register the sensor
 		emrooz.add(observation);
 
+		observation = f.createSensorObservation("thermometer", "temperature",
+				"air", 7.4, "2015-04-21T01:30:00.000+03:00");
+
+		emrooz.add(observation);
+
 		emrooz.close();
 	}
 
