@@ -51,8 +51,7 @@ public class ResultSet {
 	private static final Logger log = Logger.getLogger(ResultSet.class
 			.getName());
 
-	public ResultSet(SensorObservationQuery query,
-			Set<Statement> statements) {
+	public ResultSet(SensorObservationQuery query, Set<Statement> statements) {
 		this.query = query;
 		this.statements = statements;
 
@@ -67,6 +66,8 @@ public class ResultSet {
 
 	public boolean hasNext() {
 		if (isEmpty)
+			return false;
+		if (result == null)
 			return false;
 
 		boolean hasNext = false;
@@ -93,13 +94,16 @@ public class ResultSet {
 	public void close() {
 		try {
 			try {
-				result.close();
+				if (result != null)
+					result.close();
 			} catch (QueryEvaluationException e) {
 				if (log.isLoggable(Level.SEVERE))
 					log.severe(e.getMessage());
 			} finally {
-				conn.close();
-				repo.shutDown();
+				if (conn != null)
+					conn.close();
+				if (repo != null)
+					repo.shutDown();
 			}
 		} catch (RepositoryException e) {
 			if (log.isLoggable(Level.SEVERE))
@@ -137,5 +141,5 @@ public class ResultSet {
 		result = conn.prepareTupleQuery(QueryLanguage.SPARQL,
 				query.getQueryString()).evaluate();
 	}
-	
+
 }
