@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-package fi.uef.envi.emrooz;
+package fi.uef.envi.emrooz.query;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

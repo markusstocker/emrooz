@@ -4,6 +4,7 @@ v0.3.0
 * Moved to data-driven unit tests
 * Implemented create* entity methods in RDF representer
 * Removed SensorObservationExtractor because obsolete
+* Introduced QueryFactory and ResultSet
 
 v0.2.0
 ======

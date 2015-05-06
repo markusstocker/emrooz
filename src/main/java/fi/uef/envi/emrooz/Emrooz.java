@@ -6,12 +6,10 @@
 package fi.uef.envi.emrooz;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -23,24 +21,6 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
-import org.openrdf.model.Value;
-import org.openrdf.query.BindingSet;
-import org.openrdf.query.MalformedQueryException;
-import org.openrdf.query.QueryEvaluationException;
-import org.openrdf.query.QueryLanguage;
-import org.openrdf.query.TupleQuery;
-import org.openrdf.query.TupleQueryResult;
-import org.openrdf.query.algebra.StatementPattern;
-import org.openrdf.query.algebra.TupleExpr;
-import org.openrdf.query.algebra.Var;
-import org.openrdf.query.algebra.helpers.StatementPatternCollector;
-import org.openrdf.query.parser.ParsedQuery;
-import org.openrdf.query.parser.sparql.SPARQLParser;
-import org.openrdf.repository.Repository;
-import org.openrdf.repository.RepositoryConnection;
-import org.openrdf.repository.RepositoryException;
-import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.sail.memory.MemoryStore;
 
 import com.carmatech.cassandra.TimeUUID;
 import com.datastax.driver.core.BoundStatement;
@@ -48,7 +28,6 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.KeyspaceMetadata;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.TableMetadata;
@@ -59,10 +38,9 @@ import fi.uef.envi.emrooz.entity.ssn.Property;
 import fi.uef.envi.emrooz.entity.ssn.Sensor;
 import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
 import fi.uef.envi.emrooz.entity.time.Instant;
+import fi.uef.envi.emrooz.query.SensorObservationQuery;
 import fi.uef.envi.emrooz.rdf.RDFEntityRepresenter;
 import fi.uef.envi.emrooz.utils.ConverterUtil;
-import fi.uef.envi.emrooz.vocabulary.SSN;
-import fi.uef.envi.emrooz.vocabulary.Time;
 import static fi.uef.envi.emrooz.EmroozOptions.HOST;
 import static fi.uef.envi.emrooz.EmroozOptions.KEYSPACE;
 import static fi.uef.envi.emrooz.EmroozOptions.DATA_TABLE;
@@ -102,9 +80,6 @@ public class Emrooz {
 	private Map<String, Registration> registrations;
 	private Map<URI, Map<URI, Map<URI, String>>> registrationIdsMap;
 
-	private SparqlQueryModelVisitor visitor;
-	private StatementPatternCollector collector;
-
 	private PreparedStatement sensorObservationInsertStatement;
 	private PreparedStatement sensorObservationSelectStatement;
 	private PreparedStatement registrationInsertStatement;
@@ -130,8 +105,6 @@ public class Emrooz {
 		this.cluster = Cluster.builder().addContactPoint(this.host).build();
 		this.registrations = new HashMap<String, Registration>();
 		this.registrationIdsMap = new HashMap<URI, Map<URI, Map<URI, String>>>();
-		this.visitor = new SparqlQueryModelVisitor();
-		this.collector = new StatementPatternCollector();
 		this.temporalEntityVisitor = new EmroozTemporalEntityVisitor();
 		this.representer = new RDFEntityRepresenter();
 
@@ -173,6 +146,15 @@ public class Emrooz {
 
 	public void register(Sensor sensor, Property property,
 			FeatureOfInterest feature, Rollover rollover) {
+		if (sensor == null || property == null || feature == null
+				|| rollover == null) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("At least one parameter is null [sensor = "
+						+ sensor + "; property = " + property + "; feature = "
+						+ feature + "; rollover = " + rollover + "]");
+			return;
+		}
+
 		register(sensor.getId(), property.getId(), feature.getId(), rollover);
 	}
 
@@ -201,6 +183,12 @@ public class Emrooz {
 	}
 
 	public void add(SensorObservation observation) {
+		if (observation == null) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("Null parameter not allowed [observation = null]");
+			return;
+		}
+
 		instant = null;
 
 		observation.getObservationResultTime().accept(temporalEntityVisitor);
@@ -208,6 +196,37 @@ public class Emrooz {
 		addSensorObservation(observation.getSensor(),
 				observation.getProperty(), observation.getFeatureOfInterest(),
 				instant, representer.createRepresentation(observation));
+	}
+
+	public void addSensorObservation(Sensor sensor, Property property,
+			FeatureOfInterest feature, DateTime resultTime,
+			Set<Statement> statements) {
+		if (sensor == null || property == null || feature == null
+				|| resultTime == null) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("At least one parameter is null [sensor = "
+						+ sensor + "; property = " + property + "; feature = "
+						+ feature + "; resultTime = " + resultTime + "]");
+			return;
+		}
+
+		if (statements.isEmpty()) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("Empty collection of statements [sensor = "
+						+ sensor + "; property = " + property + "; feature = "
+						+ feature + "; resultTime = " + resultTime
+						+ "; statements = " + statements + "]");
+			return;
+		}
+
+		addSensorObservation(sensor.getId(), property.getId(), feature.getId(),
+				resultTime, statements);
+	}
+
+	public void addSensorObservation(URI sensor, URI property, URI feature,
+			DateTime resultTime, Set<Statement> statements) {
+		addSensorObservation(getRowKey(sensor, property, feature, resultTime),
+				resultTime, statements);
 	}
 
 	public void addSensorObservation(Set<Statement> statements) {
@@ -257,226 +276,146 @@ public class Emrooz {
 		addSensorObservation(sensor, property, feature, resultTime, statements);
 	}
 
-	public void addSensorObservation(Sensor sensor, Property property,
-			FeatureOfInterest feature, DateTime resultTime,
-			Set<Statement> columnValue) {
-		addSensorObservation(sensor.getId(), property.getId(), feature.getId(),
-				resultTime, columnValue);
+	public fi.uef.envi.emrooz.query.ResultSet evaluate(
+			SensorObservationQuery query) {
+		return new fi.uef.envi.emrooz.query.ResultSet(query,
+				getSensorObservations(query.getSensorId(),
+						query.getPropertyId(), query.getFeatureOfInterestId(),
+						query.getTimeFrom(), query.getTimeTo()));
 	}
 
-	public void addSensorObservation(URI sensor, URI property, URI feature,
-			DateTime resultTime, Set<Statement> columnValue) {
-		addSensorObservation(getRowKey(sensor, property, feature, resultTime),
-				resultTime, columnValue);
+	public void close() {
+		cluster.close();
 	}
 
-	public void addSensorObservation(String rowKey, DateTime resultTime,
+	private void initialize() {
+		Session session = cluster.connect();
+		Metadata metadata = cluster.getMetadata();
+		KeyspaceMetadata keyspaceMetadata = metadata.getKeyspace(KEYSPACE);
+
+		if (keyspaceMetadata == null) {
+			session.execute("CREATE KEYSPACE "
+					+ KEYSPACE
+					+ " WITH REPLICATION = { 'class' : 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '1' } AND DURABLE_WRITES = true;");
+		}
+
+		session = cluster.connect(KEYSPACE);
+		metadata = cluster.getMetadata();
+		keyspaceMetadata = metadata.getKeyspace(KEYSPACE);
+		TableMetadata dataTableMetadata = keyspaceMetadata.getTable(DATA_TABLE);
+
+		if (dataTableMetadata == null) {
+			session.execute("CREATE TABLE "
+					+ KEYSPACE
+					+ "."
+					+ DATA_TABLE
+					+ " ("
+					+ DATA_TABLE_ATTRIBUTE_1
+					+ " ascii,"
+					+ DATA_TABLE_ATTRIBUTE_2
+					+ " timeuuid,"
+					+ DATA_TABLE_ATTRIBUTE_3
+					+ " blob,PRIMARY KEY ("
+					+ DATA_TABLE_ATTRIBUTE_1
+					+ ", "
+					+ DATA_TABLE_ATTRIBUTE_2
+					+ ")) WITH COMPACT STORAGE AND read_repair_chance = 0.0 AND dclocal_read_repair_chance = 0.1 AND gc_grace_seconds = 864000 AND bloom_filter_fp_chance = 0.01 AND caching = { 'keys' : 'ALL', 'rows_per_partition' : 'NONE' } AND comment = '' AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy' } AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.LZ4Compressor' } AND default_time_to_live = 0 AND speculative_retry = 'NONE' AND min_index_interval = 128 AND max_index_interval = 2048;");
+		}
+
+		TableMetadata registrationsTableMetadata = keyspaceMetadata
+				.getTable(REGISTRATIONS_TABLE);
+
+		if (registrationsTableMetadata == null) {
+			session.execute("CREATE TABLE " + KEYSPACE + "."
+					+ REGISTRATIONS_TABLE + " ("
+					+ REGISTRATIONS_TABLE_ATTRIBUTE_1 + " ascii PRIMARY KEY, "
+					+ REGISTRATIONS_TABLE_ATTRIBUTE_2 + " ascii, "
+					+ REGISTRATIONS_TABLE_ATTRIBUTE_3 + " ascii, "
+					+ REGISTRATIONS_TABLE_ATTRIBUTE_4 + " ascii, "
+					+ REGISTRATIONS_TABLE_ATTRIBUTE_5 + " ascii);");
+		}
+	}
+
+	private void registrations() {
+		registrations.clear();
+		registrationIdsMap.clear();
+
+		com.datastax.driver.core.ResultSet rows = session
+				.execute(registrationSelectStatement);
+
+		for (Row row : rows) {
+			String id = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_1);
+			String s = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_2);
+			String p = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_3);
+			String f = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_4);
+			String r = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_5);
+
+			Registration registration = new Registration(s, p, f, r);
+
+			String registrationId = registration.getId();
+			URI sensor = registration.getSensor();
+			URI property = registration.getProperty();
+			URI feature = registration.getFeature();
+
+			if (!id.equals(registrationId)) {
+				if (log.isLoggable(Level.SEVERE))
+					log.severe("Unexpected difference in registration ids; persisted registration is not cached [id = "
+							+ id
+							+ "; registrationId = "
+							+ registrationId
+							+ "; sensor = "
+							+ sensor
+							+ "; property = "
+							+ property + "; feature = " + feature + "]");
+
+				continue;
+			}
+
+			registrations.put(id, registration);
+
+			Map<URI, Map<URI, String>> m1 = registrationIdsMap.get(sensor);
+
+			if (m1 == null) {
+				m1 = new HashMap<URI, Map<URI, String>>();
+				registrationIdsMap.put(sensor, m1);
+			}
+
+			Map<URI, String> m2 = m1.get(property);
+
+			if (m2 == null) {
+				m2 = new HashMap<URI, String>();
+				m1.put(property, m2);
+			}
+
+			m2.put(feature, id);
+		}
+	}
+
+	private void addSensorObservation(String rowKey, DateTime resultTime,
 			Set<Statement> columnValue) {
 		addSensorObservation(rowKey, TimeUUID.toUUID(resultTime), columnValue);
 	}
 
-	public void addSensorObservation(String rowKey, UUID resultTime,
+	private void addSensorObservation(String rowKey, UUID resultTime,
 			Set<Statement> columnValue) {
 		addSensorObservation(rowKey, resultTime,
 				ConverterUtil.toByteArray(columnValue));
 	}
 
-	public void addSensorObservation(String rowKey, UUID columnName,
+	private void addSensorObservation(String rowKey, UUID columnName,
 			byte[] columnValue) {
-		if (rowKey == null || columnName == null || columnValue == null)
+		if (rowKey == null || columnName == null || columnValue == null) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("At least one parameter is null (possibly the byte[] columnValue [rowKey = "
+						+ rowKey + "; columnName = " + columnName + "]");
 			return;
+		}
 
 		session.execute(new BoundStatement(sensorObservationInsertStatement)
 				.bind(rowKey, columnName, ByteBuffer.wrap(columnValue)));
 	}
 
-	public List<BindingSet> getSensorObservations(String sparql) {
-		return getSensorObservations(sparql, null);
-	}
-
-	public List<BindingSet> getSensorObservations(String sparql,
-			Set<Statement> graph) {
-		SPARQLParser parser = new SPARQLParser();
-		ParsedQuery query;
-		try {
-			query = parser.parseQuery(sparql, null);
-		} catch (MalformedQueryException e) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe(e.getMessage());
-
-			return Collections.emptyList();
-		}
-
-		TupleExpr expr = query.getTupleExpr();
-
-		expr.visit(collector);
-
-		URI sensor = null;
-		URI property = null;
-		URI feature = null;
-		Var inXSDDateTimeVar = null;
-
-		List<StatementPattern> patterns = collector.getStatementPatterns();
-
-		for (StatementPattern pattern : patterns) {
-			Value predicate = pattern.getPredicateVar().getValue();
-
-			if (predicate == null)
-				continue;
-
-			if (!(predicate instanceof URI))
-				continue;
-
-			URI p = (URI) predicate;
-
-			Var object = pattern.getObjectVar();
-
-			if (p.equals(SSN.observedBy)) {
-				Value o = object.getValue();
-				if (o != null) {
-					if (o instanceof URI)
-						sensor = (URI) o;
-				}
-			} else if (p.equals(SSN.observedProperty)) {
-				Value o = object.getValue();
-				if (o != null) {
-					if (o instanceof URI)
-						property = (URI) o;
-				}
-			} else if (p.equals(SSN.featureOfInterest)) {
-				Value o = object.getValue();
-				if (o != null) {
-					if (o instanceof URI)
-						feature = (URI) o;
-				}
-			} else if (p.equals(Time.inXSDDateTime)) {
-				inXSDDateTimeVar = object;
-			}
-		}
-
-		visitor.setInXSDDateTimeVar(inXSDDateTimeVar);
-
-		try {
-			expr.visit(visitor);
-		} catch (Exception e) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe(e.getMessage());
-
-			return Collections.emptyList();
-		}
-
-		Set<Statement> statements = getSensorObservations(sensor, property,
-				feature, visitor.getTimeFrom(), visitor.getTimeTo());
-
-		if (statements == null)
-			return Collections.emptyList();
-
-		try {
-			Repository repo = new SailRepository(new MemoryStore());
-			repo.initialize();
-			RepositoryConnection conn = repo.getConnection();
-
-			for (Statement statement : statements) {
-				conn.add(statement);
-			}
-
-			List<BindingSet> ret = new ArrayList<BindingSet>();
-
-			try {
-				TupleQuery tupleQuery = conn.prepareTupleQuery(
-						QueryLanguage.SPARQL, sparql);
-
-				TupleQueryResult result = tupleQuery.evaluate();
-
-				try {
-					while (result.hasNext()) {
-						ret.add(result.next());
-					}
-				} finally {
-					result.close();
-				}
-			} catch (MalformedQueryException | QueryEvaluationException e) {
-				if (log.isLoggable(Level.SEVERE))
-					log.severe(e.getMessage());
-			} finally {
-				conn.close();
-				repo.shutDown();
-			}
-
-			return Collections.unmodifiableList(ret);
-		} catch (RepositoryException e) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe(e.getMessage());
-		}
-
-		return Collections.emptyList();
-	}
-
-	// private URI resolve(StatementPattern pattern,
-	// List<StatementPattern> patterns, Set<Statement> graph) {
-	// // Try to resolve resource subject by first getting the joined triple
-	// // patterns matching resource subject and then execute a SPARQL query
-	// // with the triple patterns over graph to resolve resource
-	//
-	// Set<StatementPattern> basicGraphPattern = new
-	// HashSet<StatementPattern>();
-	//
-	// Var findVar = pattern.getObjectVar();
-	//
-	// find(findVar, patterns, basicGraphPattern);
-	//
-	// GraphPattern gp = new GraphPattern();
-	//
-	// for (StatementPattern bgp : basicGraphPattern) {
-	// gp.addRequiredSP(bgp.getSubjectVar(), bgp.getPredicateVar(),
-	// bgp.getObjectVar());
-	// }
-	//
-	// TupleExpr query = new Projection(gp.buildTupleExpr(),
-	// new ProjectionElemList(new ProjectionElem(findVar.getName())));
-	//
-	// try {
-	// Repository repo = new SailRepository(new MemoryStore());
-	// repo.initialize();
-	//
-	// SailRepositoryConnection conn = (SailRepositoryConnection) repo
-	// .getConnection();
-	//
-	// for (Statement statement : graph) {
-	// conn.add(statement);
-	// }
-	//
-	// ParsedTupleQuery tp = new ParsedTupleQuery(query);
-	// SailTupleQuery q = new SailTupleQuery(tp, conn);
-	//
-	// TupleQueryResult r = q.evaluate();
-	//
-	// while (r.hasNext()) {
-	//
-	// }
-	//
-	// conn.close();
-	// } catch (RepositoryException | MalformedQueryException
-	// | QueryEvaluationException e) {
-	// e.printStackTrace();
-	// }
-	//
-	// return null;
-	// }
-
-	// private void find(Var s, List<StatementPattern> patterns,
-	// Set<StatementPattern> ret) {
-	// for (StatementPattern pattern : patterns) {
-	// if (!s.equals(pattern.getSubjectVar()))
-	// continue;
-	//
-	// ret.add(pattern);
-	//
-	// find(pattern.getObjectVar(), patterns, ret);
-	// }
-	// }
-
-	public Set<Statement> getSensorObservations(URI sensor, URI property,
+	private Set<Statement> getSensorObservations(URI sensor, URI property,
 			URI feature, DateTime timeFrom, DateTime timeTo) {
 		if (sensor == null || property == null || feature == null
 				|| timeFrom == null || timeTo == null) {
@@ -553,7 +492,7 @@ public class Emrooz {
 		return Collections.unmodifiableSet(ret);
 	}
 
-	public Set<Statement> getSensorObservations(String rowKey,
+	private Set<Statement> getSensorObservations(String rowKey,
 			DateTime timeFrom, DateTime timeTo) {
 		if (timeFrom == null || timeTo == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -566,7 +505,7 @@ public class Emrooz {
 		return getSensorObservations(rowKey, timeFrom.toDate(), timeTo.toDate());
 	}
 
-	public Set<Statement> getSensorObservations(String rowKey,
+	private Set<Statement> getSensorObservations(String rowKey,
 			Date columnNameFrom, Date columnNameTo) {
 		if (rowKey == null || columnNameFrom == null || columnNameTo == null) {
 			if (log.isLoggable(Level.WARNING))
@@ -580,112 +519,6 @@ public class Emrooz {
 		return ConverterUtil.toStatements(session.execute(new BoundStatement(
 				sensorObservationSelectStatement).bind(rowKey, columnNameFrom,
 				columnNameTo)));
-	}
-
-	public void close() {
-		cluster.close();
-	}
-
-	private void registrations() {
-		registrations.clear();
-		registrationIdsMap.clear();
-
-		ResultSet rows = session.execute(registrationSelectStatement);
-
-		for (Row row : rows) {
-			String id = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_1);
-			String s = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_2);
-			String p = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_3);
-			String f = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_4);
-			String r = row.getString(REGISTRATIONS_TABLE_ATTRIBUTE_5);
-
-			Registration registration = new Registration(s, p, f, r);
-
-			String registrationId = registration.getId();
-			URI sensor = registration.getSensor();
-			URI property = registration.getProperty();
-			URI feature = registration.getFeature();
-
-			if (!id.equals(registrationId)) {
-				if (log.isLoggable(Level.SEVERE))
-					log.severe("Unexpected difference in registration ids; persisted registration is not cached [id = "
-							+ id
-							+ "; registrationId = "
-							+ registrationId
-							+ "; sensor = "
-							+ sensor
-							+ "; property = "
-							+ property + "; feature = " + feature + "]");
-
-				continue;
-			}
-
-			registrations.put(id, registration);
-
-			Map<URI, Map<URI, String>> m1 = registrationIdsMap.get(sensor);
-
-			if (m1 == null) {
-				m1 = new HashMap<URI, Map<URI, String>>();
-				registrationIdsMap.put(sensor, m1);
-			}
-
-			Map<URI, String> m2 = m1.get(property);
-
-			if (m2 == null) {
-				m2 = new HashMap<URI, String>();
-				m1.put(property, m2);
-			}
-
-			m2.put(feature, id);
-		}
-	}
-
-	private void initialize() {
-		Session session = cluster.connect();
-		Metadata metadata = cluster.getMetadata();
-		KeyspaceMetadata keyspaceMetadata = metadata.getKeyspace(KEYSPACE);
-
-		if (keyspaceMetadata == null) {
-			session.execute("CREATE KEYSPACE "
-					+ KEYSPACE
-					+ " WITH REPLICATION = { 'class' : 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '1' } AND DURABLE_WRITES = true;");
-		}
-
-		session = cluster.connect(KEYSPACE);
-		metadata = cluster.getMetadata();
-		keyspaceMetadata = metadata.getKeyspace(KEYSPACE);
-		TableMetadata dataTableMetadata = keyspaceMetadata.getTable(DATA_TABLE);
-
-		if (dataTableMetadata == null) {
-			session.execute("CREATE TABLE "
-					+ KEYSPACE
-					+ "."
-					+ DATA_TABLE
-					+ " ("
-					+ DATA_TABLE_ATTRIBUTE_1
-					+ " ascii,"
-					+ DATA_TABLE_ATTRIBUTE_2
-					+ " timeuuid,"
-					+ DATA_TABLE_ATTRIBUTE_3
-					+ " blob,PRIMARY KEY ("
-					+ DATA_TABLE_ATTRIBUTE_1
-					+ ", "
-					+ DATA_TABLE_ATTRIBUTE_2
-					+ ")) WITH COMPACT STORAGE AND read_repair_chance = 0.0 AND dclocal_read_repair_chance = 0.1 AND gc_grace_seconds = 864000 AND bloom_filter_fp_chance = 0.01 AND caching = { 'keys' : 'ALL', 'rows_per_partition' : 'NONE' } AND comment = '' AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy' } AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.LZ4Compressor' } AND default_time_to_live = 0 AND speculative_retry = 'NONE' AND min_index_interval = 128 AND max_index_interval = 2048;");
-		}
-
-		TableMetadata registrationsTableMetadata = keyspaceMetadata
-				.getTable(REGISTRATIONS_TABLE);
-
-		if (registrationsTableMetadata == null) {
-			session.execute("CREATE TABLE " + KEYSPACE + "."
-					+ REGISTRATIONS_TABLE + " ("
-					+ REGISTRATIONS_TABLE_ATTRIBUTE_1 + " ascii PRIMARY KEY, "
-					+ REGISTRATIONS_TABLE_ATTRIBUTE_2 + " ascii, "
-					+ REGISTRATIONS_TABLE_ATTRIBUTE_3 + " ascii, "
-					+ REGISTRATIONS_TABLE_ATTRIBUTE_4 + " ascii, "
-					+ REGISTRATIONS_TABLE_ATTRIBUTE_5 + " ascii);");
-		}
 	}
 
 	private String getRowKey(URI sensor, URI property, URI feature,
@@ -798,5 +631,69 @@ public class Emrooz {
 		}
 
 	}
+
+	// private URI resolve(StatementPattern pattern,
+	// List<StatementPattern> patterns, Set<Statement> graph) {
+	// // Try to resolve resource subject by first getting the joined triple
+	// // patterns matching resource subject and then execute a SPARQL query
+	// // with the triple patterns over graph to resolve resource
+	//
+	// Set<StatementPattern> basicGraphPattern = new
+	// HashSet<StatementPattern>();
+	//
+	// Var findVar = pattern.getObjectVar();
+	//
+	// find(findVar, patterns, basicGraphPattern);
+	//
+	// GraphPattern gp = new GraphPattern();
+	//
+	// for (StatementPattern bgp : basicGraphPattern) {
+	// gp.addRequiredSP(bgp.getSubjectVar(), bgp.getPredicateVar(),
+	// bgp.getObjectVar());
+	// }
+	//
+	// TupleExpr query = new Projection(gp.buildTupleExpr(),
+	// new ProjectionElemList(new ProjectionElem(findVar.getName())));
+	//
+	// try {
+	// Repository repo = new SailRepository(new MemoryStore());
+	// repo.initialize();
+	//
+	// SailRepositoryConnection conn = (SailRepositoryConnection) repo
+	// .getConnection();
+	//
+	// for (Statement statement : graph) {
+	// conn.add(statement);
+	// }
+	//
+	// ParsedTupleQuery tp = new ParsedTupleQuery(query);
+	// SailTupleQuery q = new SailTupleQuery(tp, conn);
+	//
+	// TupleQueryResult r = q.evaluate();
+	//
+	// while (r.hasNext()) {
+	//
+	// }
+	//
+	// conn.close();
+	// } catch (RepositoryException | MalformedQueryException
+	// | QueryEvaluationException e) {
+	// e.printStackTrace();
+	// }
+	//
+	// return null;
+	// }
+
+	// private void find(Var s, List<StatementPattern> patterns,
+	// Set<StatementPattern> ret) {
+	// for (StatementPattern pattern : patterns) {
+	// if (!s.equals(pattern.getSubjectVar()))
+	// continue;
+	//
+	// ret.add(pattern);
+	//
+	// find(pattern.getObjectVar(), patterns, ret);
+	// }
+	// }
 
 }

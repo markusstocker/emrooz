@@ -5,11 +5,12 @@
 
 package fi.uef.envi.emrooz.examples;
 
-import java.util.List;
-
 import org.openrdf.query.BindingSet;
 
 import fi.uef.envi.emrooz.Emrooz;
+import fi.uef.envi.emrooz.query.QueryFactory;
+import fi.uef.envi.emrooz.query.ResultSet;
+import fi.uef.envi.emrooz.query.SensorObservationQuery;
 
 /**
  * <p>
@@ -31,7 +32,7 @@ import fi.uef.envi.emrooz.Emrooz;
 public class QuerySensorObservationsExample {
 
 	public static void main(String[] args) {
-		String query = "prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#>"
+		String sparql = "prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#>"
 				+ "prefix time: <http://www.w3.org/2006/time#>"
 				+ "prefix dul: <http://www.loa-cnr.it/ontologies/DUL.owl#>"
 				+ "select ?time ?value "
@@ -48,12 +49,18 @@ public class QuerySensorObservationsExample {
 
 		Emrooz emrooz = new Emrooz();
 
-		List<BindingSet> results = emrooz.getSensorObservations(query);
+		SensorObservationQuery query = QueryFactory
+				.createSensorObservationQuery(sparql);
 
-		for (BindingSet result : results) {
+		ResultSet results = emrooz.evaluate(query);
+
+		while (results.hasNext()) {
+			BindingSet result = results.next();
 			System.out.println(result.getValue("time") + " "
 					+ result.getValue("value"));
 		}
+
+		results.close();
 
 		emrooz.close();
 	}
