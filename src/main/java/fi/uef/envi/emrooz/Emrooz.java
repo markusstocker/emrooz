@@ -21,6 +21,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
+import org.openrdf.query.TupleQueryResultHandler;
 
 import com.carmatech.cassandra.TimeUUID;
 import com.datastax.driver.core.BoundStatement;
@@ -281,7 +282,15 @@ public class Emrooz {
 		return new fi.uef.envi.emrooz.query.ResultSet(query,
 				getSensorObservations(query.getSensorId(),
 						query.getPropertyId(), query.getFeatureOfInterestId(),
-						query.getTimeFrom(), query.getTimeTo()));
+						query.getTimeFrom(), query.getTimeTo()), null);
+	}
+
+	public void evaluate(SensorObservationQuery query,
+			TupleQueryResultHandler handler) {
+		new fi.uef.envi.emrooz.query.ResultSet(query, getSensorObservations(
+				query.getSensorId(), query.getPropertyId(),
+				query.getFeatureOfInterestId(), query.getTimeFrom(),
+				query.getTimeTo()), handler);
 	}
 
 	public void close() {

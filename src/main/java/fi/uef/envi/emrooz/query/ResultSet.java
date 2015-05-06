@@ -14,7 +14,10 @@ import org.openrdf.query.BindingSet;
 import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.QueryLanguage;
+import org.openrdf.query.TupleQuery;
 import org.openrdf.query.TupleQueryResult;
+import org.openrdf.query.TupleQueryResultHandler;
+import org.openrdf.query.TupleQueryResultHandlerException;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
@@ -42,6 +45,7 @@ public class ResultSet {
 
 	private SensorObservationQuery query;
 	private Set<Statement> statements;
+	private TupleQueryResultHandler handler;
 	private boolean isEmpty = false;
 	private Repository repo;
 	private RepositoryConnection conn;
@@ -51,14 +55,16 @@ public class ResultSet {
 	private static final Logger log = Logger.getLogger(ResultSet.class
 			.getName());
 
-	public ResultSet(SensorObservationQuery query, Set<Statement> statements) {
+	public ResultSet(SensorObservationQuery query, Set<Statement> statements,
+			TupleQueryResultHandler handler) {
 		this.query = query;
 		this.statements = statements;
+		this.handler = handler;
 
 		try {
 			initialize();
 		} catch (RepositoryException | MalformedQueryException
-				| QueryEvaluationException e) {
+				| QueryEvaluationException | TupleQueryResultHandlerException e) {
 			if (log.isLoggable(Level.SEVERE))
 				log.severe(e.getMessage());
 		}
@@ -112,7 +118,8 @@ public class ResultSet {
 	}
 
 	private void initialize() throws RepositoryException,
-			MalformedQueryException, QueryEvaluationException {
+			MalformedQueryException, QueryEvaluationException,
+			TupleQueryResultHandlerException {
 		if (query == null) {
 			if (log.isLoggable(Level.SEVERE))
 				log.severe("Failed to initialize result set [query = null]");
@@ -138,8 +145,15 @@ public class ResultSet {
 			conn.add(statement);
 		}
 
-		result = conn.prepareTupleQuery(QueryLanguage.SPARQL,
-				query.getQueryString()).evaluate();
+		TupleQuery tupleQuery = conn.prepareTupleQuery(QueryLanguage.SPARQL,
+				query.getQueryString());
+		
+		if (handler == null) {
+			result = tupleQuery.evaluate();
+			return;
+		}
+		
+		tupleQuery.evaluate(handler);
 	}
 
 }

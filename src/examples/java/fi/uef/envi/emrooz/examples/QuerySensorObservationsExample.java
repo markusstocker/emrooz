@@ -6,6 +6,7 @@
 package fi.uef.envi.emrooz.examples;
 
 import org.openrdf.query.BindingSet;
+import org.openrdf.query.resultio.sparqljson.SPARQLResultsJSONWriter;
 
 import fi.uef.envi.emrooz.Emrooz;
 import fi.uef.envi.emrooz.query.QueryFactory;
@@ -61,6 +62,11 @@ public class QuerySensorObservationsExample {
 		}
 
 		results.close();
+
+		/*
+		 * Alternatively, use a query result handler to write, e.g. JSON
+		 * emrooz.evaluate(query, new SPARQLResultsJSONWriter(System.out));
+		 */
 
 		emrooz.close();
 	}
