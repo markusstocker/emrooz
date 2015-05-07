@@ -5,6 +5,7 @@ v0.3.0
 * Implemented create* entity methods in RDF representer
 * Removed SensorObservationExtractor because obsolete
 * Introduced QueryFactory and ResultSet
+* Modularized Cassandra and Sesame request handling
 
 v0.2.0
 ======

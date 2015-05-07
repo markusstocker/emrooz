@@ -5,25 +5,16 @@
 
 package fi.uef.envi.emrooz;
 
-import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
-import org.openrdf.query.TupleQueryResultHandler;
 
-import com.carmatech.cassandra.TimeUUID;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.KeyspaceMetadata;
@@ -33,20 +24,22 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.TableMetadata;
 
+import fi.uef.envi.emrooz.cassandra.CassandraAdder;
+import fi.uef.envi.emrooz.cassandra.CassandraQueryHandler;
 import fi.uef.envi.emrooz.entity.TemporalEntityVisitor;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
 import fi.uef.envi.emrooz.entity.ssn.Property;
 import fi.uef.envi.emrooz.entity.ssn.Sensor;
 import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
 import fi.uef.envi.emrooz.entity.time.Instant;
+import fi.uef.envi.emrooz.query.ResultSet;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 import fi.uef.envi.emrooz.rdf.RDFEntityRepresenter;
-import fi.uef.envi.emrooz.utils.ConverterUtil;
+import fi.uef.envi.emrooz.sesame.SesameQueryHandler;
 import static fi.uef.envi.emrooz.EmroozOptions.HOST;
 import static fi.uef.envi.emrooz.EmroozOptions.KEYSPACE;
 import static fi.uef.envi.emrooz.EmroozOptions.DATA_TABLE;
 import static fi.uef.envi.emrooz.EmroozOptions.REGISTRATIONS_TABLE;
-import static fi.uef.envi.emrooz.EmroozOptions.ROWKEY_DATETIME_PATTERN;
 import static fi.uef.envi.emrooz.EmroozOptions.DATA_TABLE_ATTRIBUTE_1;
 import static fi.uef.envi.emrooz.EmroozOptions.DATA_TABLE_ATTRIBUTE_2;
 import static fi.uef.envi.emrooz.EmroozOptions.DATA_TABLE_ATTRIBUTE_3;
@@ -81,17 +74,15 @@ public class Emrooz {
 	private Map<String, Registration> registrations;
 	private Map<URI, Map<URI, Map<URI, String>>> registrationIdsMap;
 
-	private PreparedStatement sensorObservationInsertStatement;
-	private PreparedStatement sensorObservationSelectStatement;
 	private PreparedStatement registrationInsertStatement;
 	private String registrationSelectStatement;
-
-	private DateTimeFormatter dtfRowKey = DateTimeFormat
-			.forPattern(ROWKEY_DATETIME_PATTERN);
 
 	private DateTime instant = null;
 	private final TemporalEntityVisitor temporalEntityVisitor;
 	private final RDFEntityRepresenter representer;
+
+	private CassandraAdder cassandraAdder;
+	private PreparedStatement sensorObservationSelectStatement;
 
 	private static final Logger log = Logger.getLogger(Emrooz.class.getName());
 
@@ -129,16 +120,14 @@ public class Emrooz {
 
 		registrations();
 
-		this.sensorObservationInsertStatement = session.prepare("INSERT INTO "
-				+ KEYSPACE + "." + DATA_TABLE + " (" + DATA_TABLE_ATTRIBUTE_1
-				+ "," + DATA_TABLE_ATTRIBUTE_2 + "," + DATA_TABLE_ATTRIBUTE_3
-				+ ") VALUES (?, ?, ?)");
 		this.sensorObservationSelectStatement = session.prepare("SELECT "
 				+ DATA_TABLE_ATTRIBUTE_3 + " FROM " + KEYSPACE + "."
 				+ DATA_TABLE + " WHERE " + DATA_TABLE_ATTRIBUTE_1 + "=? AND "
 				+ DATA_TABLE_ATTRIBUTE_2 + ">=minTimeuuid(?) AND "
 				+ DATA_TABLE_ATTRIBUTE_2 + "<minTimeuuid(?)");
 
+		this.cassandraAdder = new CassandraAdder(registrations,
+				registrationIdsMap, session);
 	}
 
 	public String getHost() {
@@ -220,14 +209,8 @@ public class Emrooz {
 			return;
 		}
 
-		addSensorObservation(sensor.getId(), property.getId(), feature.getId(),
-				resultTime, statements);
-	}
-
-	public void addSensorObservation(URI sensor, URI property, URI feature,
-			DateTime resultTime, Set<Statement> statements) {
-		addSensorObservation(getRowKey(sensor, property, feature, resultTime),
-				resultTime, statements);
+		cassandraAdder.addSensorObservation(sensor.getId(), property.getId(),
+				feature.getId(), resultTime, statements);
 	}
 
 	public void addSensorObservation(Set<Statement> statements) {
@@ -274,24 +257,23 @@ public class Emrooz {
 			return;
 		}
 
-		addSensorObservation(sensor, property, feature, resultTime, statements);
+		cassandraAdder.addSensorObservation(sensor, property, feature,
+				resultTime, statements);
 	}
 
-	public fi.uef.envi.emrooz.query.ResultSet evaluate(
-			SensorObservationQuery query) {
-		return new fi.uef.envi.emrooz.query.ResultSet(query,
-				getSensorObservations(query.getSensorId(),
-						query.getPropertyId(), query.getFeatureOfInterestId(),
-						query.getTimeFrom(), query.getTimeTo()), null);
+	public ResultSet evaluate(SensorObservationQuery query) {
+		return new ResultSet(new SesameQueryHandler(new CassandraQueryHandler(
+				registrations, registrationIdsMap, session,
+				sensorObservationSelectStatement, query), query));
 	}
 
-	public void evaluate(SensorObservationQuery query,
-			TupleQueryResultHandler handler) {
-		new fi.uef.envi.emrooz.query.ResultSet(query, getSensorObservations(
-				query.getSensorId(), query.getPropertyId(),
-				query.getFeatureOfInterestId(), query.getTimeFrom(),
-				query.getTimeTo()), handler);
-	}
+	// public void evaluate(SensorObservationQuery query,
+	// TupleQueryResultHandler handler) {
+	// new fi.uef.envi.emrooz.query.ResultSet(query, getSensorObservations(
+	// query.getSensorId(), query.getPropertyId(),
+	// query.getFeatureOfInterestId(), query.getTimeFrom(),
+	// query.getTimeTo()), handler);
+	// }
 
 	public void close() {
 		cluster.close();
@@ -398,234 +380,6 @@ public class Emrooz {
 
 			m2.put(feature, id);
 		}
-	}
-
-	private void addSensorObservation(String rowKey, DateTime resultTime,
-			Set<Statement> columnValue) {
-		addSensorObservation(rowKey, TimeUUID.toUUID(resultTime), columnValue);
-	}
-
-	private void addSensorObservation(String rowKey, UUID resultTime,
-			Set<Statement> columnValue) {
-		addSensorObservation(rowKey, resultTime,
-				ConverterUtil.toByteArray(columnValue));
-	}
-
-	private void addSensorObservation(String rowKey, UUID columnName,
-			byte[] columnValue) {
-		if (rowKey == null || columnName == null || columnValue == null) {
-			if (log.isLoggable(Level.WARNING))
-				log.warning("At least one parameter is null (possibly the byte[] columnValue [rowKey = "
-						+ rowKey + "; columnName = " + columnName + "]");
-			return;
-		}
-
-		session.execute(new BoundStatement(sensorObservationInsertStatement)
-				.bind(rowKey, columnName, ByteBuffer.wrap(columnValue)));
-	}
-
-	private Set<Statement> getSensorObservations(URI sensor, URI property,
-			URI feature, DateTime timeFrom, DateTime timeTo) {
-		if (sensor == null || property == null || feature == null
-				|| timeFrom == null || timeTo == null) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe("At least one parameter is null; returned empty set [sensor = "
-						+ sensor
-						+ "; property = "
-						+ property
-						+ "; feature = "
-						+ feature
-						+ "; timeFrom = "
-						+ timeFrom
-						+ "; timeTo = "
-						+ timeTo + "]");
-
-			return Collections.emptySet();
-		}
-
-		String registrationId = getCachedRegistrationId(sensor, property,
-				feature);
-
-		if (registrationId == null) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe("Registration id not found in cache [sensor = "
-						+ sensor + "; propery = " + property + "; feature = "
-						+ feature + "]");
-
-			return null;
-		}
-
-		Registration registration = registrations.get(registrationId);
-
-		if (registration == null) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe("Registration not found [sensor = " + sensor
-						+ "; propery = " + property + "; feature = " + feature
-						+ "]");
-
-			return null;
-		}
-
-		Rollover rollover = registration.getRollover();
-
-		if (rollover == null) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe("Registration rollover is null [registration = "
-						+ registration + "]");
-
-			return null;
-		}
-
-		DateTime time = timeFrom;
-		Set<Statement> ret = new HashSet<Statement>();
-
-		while (time.isBefore(timeTo)) {
-			ret.addAll(getSensorObservations(
-					getRowKey(sensor, property, feature, time), time, timeTo));
-
-			if (rollover.equals(Rollover.YEAR))
-				time = time.year().roundFloorCopy().plusYears(1);
-			else if (rollover.equals(Rollover.MONTH))
-				time = time.monthOfYear().roundFloorCopy().plusMonths(1);
-			else if (rollover.equals(Rollover.DAY))
-				time = time.dayOfMonth().roundFloorCopy().plusDays(1);
-			else if (rollover.equals(Rollover.HOUR))
-				time = time.hourOfDay().roundFloorCopy().plusHours(1);
-			else if (rollover.equals(Rollover.MINUTE))
-				time = time.minuteOfHour().roundFloorCopy().plusMinutes(1);
-			else
-				throw new RuntimeException("Unsupported rollover [rollover = "
-						+ rollover + "]");
-		}
-
-		return Collections.unmodifiableSet(ret);
-	}
-
-	private Set<Statement> getSensorObservations(String rowKey,
-			DateTime timeFrom, DateTime timeTo) {
-		if (timeFrom == null || timeTo == null) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe("Parameters cannot be null; returned empty result set [timeFrom = "
-						+ timeFrom + "; timeTo = " + timeTo + "]");
-
-			return Collections.emptySet();
-		}
-
-		return getSensorObservations(rowKey, timeFrom.toDate(), timeTo.toDate());
-	}
-
-	private Set<Statement> getSensorObservations(String rowKey,
-			Date columnNameFrom, Date columnNameTo) {
-		if (rowKey == null || columnNameFrom == null || columnNameTo == null) {
-			if (log.isLoggable(Level.WARNING))
-				log.warning("Returned empty result set [rowKey = " + rowKey
-						+ "; columnNameFrom = " + columnNameFrom
-						+ "; columnNameTo = " + columnNameTo + "]");
-
-			return Collections.emptySet();
-		}
-
-		return ConverterUtil.toStatements(session.execute(new BoundStatement(
-				sensorObservationSelectStatement).bind(rowKey, columnNameFrom,
-				columnNameTo)));
-	}
-
-	private String getRowKey(URI sensor, URI property, URI feature,
-			DateTime time) {
-		if (sensor == null || property == null || feature == null
-				|| time == null) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe("Parameters cannot be null [sensor = " + sensor
-						+ "; propery = " + property + "; feature = " + feature
-						+ "; time = " + time + "]");
-
-			return null;
-		}
-
-		String registrationId = getCachedRegistrationId(sensor, property,
-				feature);
-
-		if (registrationId == null) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe("Registration id not found in cache [sensor = "
-						+ sensor + "; propery = " + property + "; feature = "
-						+ feature + "]");
-
-			return null;
-		}
-
-		Registration registration = registrations.get(registrationId);
-
-		if (registration == null) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe("Registration not found [sensor = " + sensor
-						+ "; propery = " + property + "; feature = " + feature
-						+ "]");
-
-			return null;
-		}
-
-		Rollover rollover = registration.getRollover();
-
-		if (rollover == null) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe("Registration rollover is null [registration = "
-						+ registration + "]");
-
-			return null;
-		}
-
-		if (rollover.equals(Rollover.YEAR))
-			time = time.year().roundFloorCopy();
-		else if (rollover.equals(Rollover.MONTH))
-			time = time.monthOfYear().roundFloorCopy();
-		else if (rollover.equals(Rollover.DAY))
-			time = time.dayOfMonth().roundFloorCopy();
-		else if (rollover.equals(Rollover.HOUR))
-			time = time.hourOfDay().roundFloorCopy();
-		else if (rollover.equals(Rollover.MINUTE))
-			time = time.minuteOfHour().roundFloorCopy();
-		else
-			throw new RuntimeException("Unsupported rollover [rollover = "
-					+ rollover + "]");
-
-		return registrationId + "-" + dtfRowKey.print(time);
-	}
-
-	private String getCachedRegistrationId(URI sensor, URI property, URI feature) {
-		Map<URI, Map<URI, String>> m1 = registrationIdsMap.get(sensor);
-
-		if (m1 == null) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe("Sensor not registered [sensor = " + sensor
-						+ "; registrationIdsMap = " + registrationIdsMap + "]");
-
-			return null;
-		}
-
-		Map<URI, String> m2 = m1.get(property);
-
-		if (m2 == null) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe("Property not registered [sensor = " + sensor
-						+ "; property = " + property
-						+ "; registrationIdsMap = " + registrationIdsMap + "]");
-
-			return null;
-		}
-
-		String ret = m2.get(feature);
-
-		if (ret == null) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe("Feature not registered [sensor = " + sensor
-						+ "; property = " + property + "; feature = " + feature
-						+ "; registrationIdsMap = " + registrationIdsMap + "]");
-
-			return null;
-		}
-
-		return ret;
 	}
 
 	private void connect() {

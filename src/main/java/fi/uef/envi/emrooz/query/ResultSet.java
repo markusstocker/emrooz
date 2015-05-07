@@ -5,24 +5,14 @@
 
 package fi.uef.envi.emrooz.query;
 
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.openrdf.model.Statement;
 import org.openrdf.query.BindingSet;
-import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.QueryEvaluationException;
-import org.openrdf.query.QueryLanguage;
-import org.openrdf.query.TupleQuery;
 import org.openrdf.query.TupleQueryResult;
-import org.openrdf.query.TupleQueryResultHandler;
-import org.openrdf.query.TupleQueryResultHandlerException;
-import org.openrdf.repository.Repository;
-import org.openrdf.repository.RepositoryConnection;
-import org.openrdf.repository.RepositoryException;
-import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.sail.memory.MemoryStore;
+
+import fi.uef.envi.emrooz.sesame.SesameQueryHandler;
 
 /**
  * <p>
@@ -43,37 +33,21 @@ import org.openrdf.sail.memory.MemoryStore;
 
 public class ResultSet {
 
-	private SensorObservationQuery query;
-	private Set<Statement> statements;
-	private TupleQueryResultHandler handler;
-	private boolean isEmpty = false;
-	private Repository repo;
-	private RepositoryConnection conn;
 	private TupleQueryResult result;
+	private SesameQueryHandler sesameQueryHandler;
+	private boolean isEmpty = false;
 	private BindingSet next;
 
 	private static final Logger log = Logger.getLogger(ResultSet.class
 			.getName());
 
-	public ResultSet(SensorObservationQuery query, Set<Statement> statements,
-			TupleQueryResultHandler handler) {
-		this.query = query;
-		this.statements = statements;
-		this.handler = handler;
-
-		try {
-			initialize();
-		} catch (RepositoryException | MalformedQueryException
-				| QueryEvaluationException | TupleQueryResultHandlerException e) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe(e.getMessage());
-		}
+	public ResultSet(SesameQueryHandler sesameQueryHandler) {
+		this.sesameQueryHandler = sesameQueryHandler;
+		this.result = sesameQueryHandler.evaluate();
 	}
 
 	public boolean hasNext() {
 		if (isEmpty)
-			return false;
-		if (result == null)
 			return false;
 
 		boolean hasNext = false;
@@ -99,61 +73,14 @@ public class ResultSet {
 
 	public void close() {
 		try {
-			try {
-				if (result != null)
-					result.close();
-			} catch (QueryEvaluationException e) {
-				if (log.isLoggable(Level.SEVERE))
-					log.severe(e.getMessage());
-			} finally {
-				if (conn != null)
-					conn.close();
-				if (repo != null)
-					repo.shutDown();
-			}
-		} catch (RepositoryException e) {
+			if (result != null)
+				result.close();
+		} catch (QueryEvaluationException e) {
 			if (log.isLoggable(Level.SEVERE))
 				log.severe(e.getMessage());
+		} finally {
+			sesameQueryHandler.close();
 		}
-	}
-
-	private void initialize() throws RepositoryException,
-			MalformedQueryException, QueryEvaluationException,
-			TupleQueryResultHandlerException {
-		if (query == null) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe("Failed to initialize result set [query = null]");
-			return;
-		}
-
-		if (statements == null) {
-			if (log.isLoggable(Level.WARNING))
-				log.warning("Cannot initialize result set [statements = null]");
-			return;
-		}
-
-		if (statements.isEmpty()) {
-			isEmpty = true;
-			return;
-		}
-
-		repo = new SailRepository(new MemoryStore());
-		repo.initialize();
-		conn = repo.getConnection();
-
-		for (Statement statement : statements) {
-			conn.add(statement);
-		}
-
-		TupleQuery tupleQuery = conn.prepareTupleQuery(QueryLanguage.SPARQL,
-				query.getQueryString());
-		
-		if (handler == null) {
-			result = tupleQuery.evaluate();
-			return;
-		}
-		
-		tupleQuery.evaluate(handler);
 	}
 
 }
