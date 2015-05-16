@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-package fi.uef.envi.emrooz.store;
+package fi.uef.envi.emrooz.sesame;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,14 +29,14 @@ import org.openrdf.repository.RepositoryException;
  * @author Markus Stocker
  */
 
-public class KnowledgeStore {
+public class SesameKnowledgeStore {
 
 	private Repository repository;
 	private RepositoryConnection connection;
 	
-	private static final Logger log = Logger.getLogger(KnowledgeStore.class.getName());
+	private static final Logger log = Logger.getLogger(SesameKnowledgeStore.class.getName());
 	
-	public KnowledgeStore(Repository repository) {
+	public SesameKnowledgeStore(Repository repository) {
 		if (repository == null)
 			throw new RuntimeException("[repository = null]");
 		

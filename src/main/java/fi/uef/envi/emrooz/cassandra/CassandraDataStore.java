@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-package fi.uef.envi.emrooz.store;
+package fi.uef.envi.emrooz.cassandra;
 
 /**
  * <p>
@@ -22,6 +22,6 @@ package fi.uef.envi.emrooz.store;
  * @author Markus Stocker
  */
 
-public class DataStore {
+public class CassandraDataStore {
 
 }
