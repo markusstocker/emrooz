@@ -5,12 +5,43 @@
 
 package fi.uef.envi.emrooz.sesame;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.openrdf.model.Statement;
+import org.openrdf.model.URI;
+import org.openrdf.model.Value;
+import org.openrdf.model.ValueFactory;
+import org.openrdf.model.vocabulary.RDF;
+import org.openrdf.query.BindingSet;
+import org.openrdf.query.GraphQuery;
+import org.openrdf.query.GraphQueryResult;
+import org.openrdf.query.MalformedQueryException;
+import org.openrdf.query.QueryEvaluationException;
+import org.openrdf.query.QueryLanguage;
+import org.openrdf.query.TupleQuery;
+import org.openrdf.query.TupleQueryResult;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
+import org.openrdf.repository.RepositoryResult;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFParseException;
+
+import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
+import fi.uef.envi.emrooz.entity.ssn.Frequency;
+import fi.uef.envi.emrooz.entity.ssn.MeasurementCapability;
+import fi.uef.envi.emrooz.entity.ssn.MeasurementProperty;
+import fi.uef.envi.emrooz.entity.ssn.Property;
+import fi.uef.envi.emrooz.entity.ssn.Sensor;
+import fi.uef.envi.emrooz.vocabulary.QUDTSchema;
+import fi.uef.envi.emrooz.vocabulary.QUDTUnit;
+import fi.uef.envi.emrooz.vocabulary.SSN;
 
 /**
  * <p>
@@ -33,15 +64,19 @@ public class SesameKnowledgeStore {
 
 	private Repository repository;
 	private RepositoryConnection connection;
-	
-	private static final Logger log = Logger.getLogger(SesameKnowledgeStore.class.getName());
-	
+	private Set<Sensor> sensors;
+	private ValueFactory vf;
+	private boolean includeInferred = false;
+
+	private static final Logger log = Logger
+			.getLogger(SesameKnowledgeStore.class.getName());
+
 	public SesameKnowledgeStore(Repository repository) {
 		if (repository == null)
 			throw new RuntimeException("[repository = null]");
-		
+
 		this.repository = repository;
-		
+
 		try {
 			this.repository.initialize();
 			this.connection = this.repository.getConnection();
@@ -49,6 +84,118 @@ public class SesameKnowledgeStore {
 			if (log.isLoggable(Level.SEVERE))
 				log.severe(e.getMessage());
 		}
+
+		this.vf = connection.getValueFactory();
+
+		loadSensors();
 	}
-	
+
+	public Set<Sensor> getSensors() {
+		return Collections.unmodifiableSet(sensors);
+	}
+
+	public void load(File file) {
+		load(file, null);
+	}
+
+	public void load(File file, String baseURI) {
+		load(file, baseURI, RDFFormat.RDFXML);
+	}
+
+	public void load(File file, String baseURI, RDFFormat format) {
+		try {
+			connection.add(file, baseURI, format);
+		} catch (RDFParseException | RepositoryException | IOException e) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe(e.getMessage());
+		}
+
+		loadSensors();
+	}
+
+	public void close() {
+		try {
+			connection.close();
+		} catch (RepositoryException e) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe(e.getMessage());
+		}
+	}
+
+	private void loadSensors() {
+		sensors = new HashSet<Sensor>();
+
+		String sparql = "prefix ssn: <"
+				+ SSN.ns
+				+ "#>"
+				+ "prefix qudt: <"
+				+ QUDTSchema.ns
+				+ "#>"
+				+ "prefix rdf: <"
+				+ RDF.NAMESPACE
+				+ ">"
+				+ "prefix unit: <"
+				+ QUDTUnit.ns
+				+ "#>"
+				+ "select ?sensorId ?propertyId ?featureId ?measCapabilityId ?measPropertyId ?valueId ?value "
+				+ "where {" + "?sensorId rdf:type ssn:Sensor ."
+				+ "?sensorId ssn:observes ?propertyId ."
+				+ "?propertyId rdf:type ssn:Property ."
+				+ "?propertyId ssn:isPropertyOf ?featureId ."
+				+ "?featureId rdf:type ssn:FeatureOfInterest ."
+				+ "?sensorId ssn:hasMeasurementCapability ?measCapabilityId ."
+				+ "?measCapabilityId rdf:type ssn:MeasurementCapability ."
+				+ "?capabilityId ssn:hasMeasurementProperty ?measPropertyId ."
+				+ "?measPropertyId rdf:type ssn:Frequency ."
+				+ "?measPropertyId ssn:hasValue ?valueId ."
+				+ "?valueId rdf:type qudt:QuantityValue ."
+				+ "?valueId qudt:unit unit:Hertz ."
+				+ "?valueId qudt:numericValue ?value ." + "}";
+
+		try {
+			TupleQuery query = connection.prepareTupleQuery(
+					QueryLanguage.SPARQL, sparql);
+			TupleQueryResult rs = query.evaluate();
+
+			while (rs.hasNext()) {
+				BindingSet bs = rs.next();
+
+				URI sensorId = _uri(bs.getValue("sensorId"));
+				URI propertyId = _uri(bs.getValue("propertyId"));
+				URI featureId = _uri(bs.getValue("featureId"));
+				URI measCapabilityId = _uri(bs.getValue("measCapabilityId"));
+				URI measPropertyId = _uri(bs.getValue("measPropertyId"));
+				URI propertyValueId = _uri(bs.getValue("valueId"));
+				Double value = Double.valueOf(bs.getValue("value")
+						.stringValue());
+
+				Sensor sensor = new Sensor(sensorId);
+				Property property = new Property(propertyId);
+				FeatureOfInterest feature = new FeatureOfInterest(featureId);
+				Frequency measProperty = new Frequency(measPropertyId);
+				MeasurementCapability measCapability = new MeasurementCapability(
+						measCapabilityId);
+
+				property.setPropertyOf(feature);
+				sensor.addMeasurementCapability(measCapability);
+				measCapability.addMeasurementProperty(measProperty);
+				sensor.setObservedProperty(property);
+
+				sensors.add(sensor);
+			}
+
+		} catch (RepositoryException | MalformedQueryException
+				| QueryEvaluationException e) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe(e.getMessage());
+		}
+
+		if (log.isLoggable(Level.INFO))
+			log.info("Loaded sensors {" + sensors + "}");
+	}
+
+	private URI _uri(Value value) {
+		return vf.createURI(value.stringValue());
+	}
+
 }

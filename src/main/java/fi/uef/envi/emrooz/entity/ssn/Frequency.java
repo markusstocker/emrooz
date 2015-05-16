@@ -7,13 +7,13 @@ package fi.uef.envi.emrooz.entity.ssn;
 
 import org.openrdf.model.URI;
 
-import fi.uef.envi.emrooz.entity.AbstractEntity;
 import fi.uef.envi.emrooz.entity.EntityVisitor;
+import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 
 /**
  * <p>
- * Title: Property
+ * Title: Frequency
  * </p>
  * <p>
  * Description:
@@ -28,24 +28,16 @@ import fi.uef.envi.emrooz.vocabulary.SSN;
  * @author Markus Stocker
  */
 
-public class Property extends AbstractEntity {
-
-	private FeatureOfInterest propertyOf;
-
-	public Property(URI id) {
-		this(id, SSN.Property);
+public class Frequency extends MeasurementProperty {
+	
+	private QuantityValue value;
+	
+	public Frequency(URI id) {
+		this(id, SSN.Frequency);
 	}
 
-	public Property(URI id, URI type) {
+	public Frequency(URI id, URI type) {
 		super(id, type);
-	}
-
-	public void setPropertyOf(FeatureOfInterest feature) {
-		this.propertyOf = feature;
-	}
-
-	public FeatureOfInterest getPropertyOf() {
-		return propertyOf;
 	}
 
 	public void accept(EntityVisitor visitor) {
@@ -57,10 +49,10 @@ public class Property extends AbstractEntity {
 	}
 
 	public boolean equals(Object obj) {
-		if (!(obj instanceof Property))
+		if (!(obj instanceof Frequency))
 			return false;
 
-		Property other = (Property) obj;
+		Frequency other = (Frequency) obj;
 
 		if (other.id.equals(id) && other.type.equals(type))
 			return true;
@@ -69,8 +61,7 @@ public class Property extends AbstractEntity {
 	}
 
 	public String toString() {
-		return "Property [id = " + id + "; type = " + type
-				+ "; isPropertyOf = " + propertyOf + "]";
+		return "Frequency [id = " + id + "; type = " + type + "]";
 	}
 
 }

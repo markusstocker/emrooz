@@ -54,6 +54,15 @@ public class SSN {
 	/** http://purl.oclc.org/NET/ssnx/ssn#ObservationValue */
 	public static final URI ObservationValue = _("ObservationValue");
 	
+	/** http://purl.oclc.org/NET/ssnx/ssn#MeasurementCapability */
+	public static final URI MeasurementCapability = _("MeasurementCapability");
+
+	/** http://purl.oclc.org/NET/ssnx/ssn#MeasurementProperty */
+	public static final URI MeasurementProperty = _("MeasurementProperty");
+	
+	/** http://purl.oclc.org/NET/ssnx/ssn#Frequency */
+	public static final URI Frequency = _("Frequency");
+
 	/** http://purl.oclc.org/NET/ssnx/ssn#featureOfInterest */
 	public static final URI featureOfInterest = _("featureOfInterest");
 
@@ -62,6 +71,9 @@ public class SSN {
 
 	/** http://purl.oclc.org/NET/ssnx/ssn#observedBy */
 	public static final URI observedBy = _("observedBy");
+	
+	/** http://purl.oclc.org/NET/ssnx/ssn#isPropertyOf */
+	public static final URI isPropertyOf = _("isPropertyOf");
 
 	/** http://purl.oclc.org/NET/ssnx/ssn#observationResultTime */
 	public static final URI observationResultTime = _("observationResultTime");

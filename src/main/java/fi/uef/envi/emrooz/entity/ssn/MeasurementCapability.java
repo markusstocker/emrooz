@@ -17,7 +17,7 @@ import fi.uef.envi.emrooz.vocabulary.SSN;
 
 /**
  * <p>
- * Title: Sensor
+ * Title: MeasurementCapability
  * </p>
  * <p>
  * Description:
@@ -32,38 +32,29 @@ import fi.uef.envi.emrooz.vocabulary.SSN;
  * @author Markus Stocker
  */
 
-public class Sensor extends AbstractEntity {
+public class MeasurementCapability extends AbstractEntity {
 
-	private Property observes;
-	private Set<MeasurementCapability> capabilities;
+	private Set<MeasurementProperty> properties;
 
-	public Sensor(URI id) {
-		this(id, SSN.Sensor);
+	public MeasurementCapability(URI id) {
+		this(id, SSN.MeasurementCapability);
 	}
 
-	public Sensor(URI id, URI type) {
+	public MeasurementCapability(URI id, URI type) {
 		super(id, type);
 
-		this.capabilities = new HashSet<MeasurementCapability>();
+		this.properties = new HashSet<MeasurementProperty>();
 	}
 
-	public void setObservedProperty(Property property) {
-		this.observes = property;
-	}
-
-	public void addMeasurementCapability(MeasurementCapability capability) {
-		if (capability == null)
+	public void addMeasurementProperty(MeasurementProperty property) {
+		if (property == null)
 			return;
 
-		capabilities.add(capability);
+		properties.add(property);
 	}
 
-	public Set<MeasurementCapability> getMeasurementCapabilities() {
-		return Collections.unmodifiableSet(capabilities);
-	}
-
-	public Property getObservedProperty() {
-		return observes;
+	public Set<MeasurementProperty> getMeasurementProperties() {
+		return Collections.unmodifiableSet(properties);
 	}
 
 	public void accept(EntityVisitor visitor) {
@@ -75,10 +66,10 @@ public class Sensor extends AbstractEntity {
 	}
 
 	public boolean equals(Object obj) {
-		if (!(obj instanceof Sensor))
+		if (!(obj instanceof MeasurementCapability))
 			return false;
 
-		Sensor other = (Sensor) obj;
+		MeasurementCapability other = (MeasurementCapability) obj;
 
 		if (other.id.equals(id) && other.type.equals(type))
 			return true;
@@ -87,8 +78,8 @@ public class Sensor extends AbstractEntity {
 	}
 
 	public String toString() {
-		return "Sensor [id = " + id + "; type = " + type + "; observes = "
-				+ observes + "; capabilities = " + capabilities + "]";
+		return "MeasurementCapability [id = " + id + "; type = " + type
+				+ "; properties = " + properties + "]";
 	}
 
 }
