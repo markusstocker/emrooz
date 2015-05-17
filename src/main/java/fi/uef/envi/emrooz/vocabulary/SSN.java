@@ -72,6 +72,9 @@ public class SSN {
 	/** http://purl.oclc.org/NET/ssnx/ssn#observedBy */
 	public static final URI observedBy = _("observedBy");
 	
+	/** http://purl.oclc.org/NET/ssnx/ssn#observes */
+	public static final URI observes = _("observes");
+	
 	/** http://purl.oclc.org/NET/ssnx/ssn#isPropertyOf */
 	public static final URI isPropertyOf = _("isPropertyOf");
 
@@ -80,6 +83,12 @@ public class SSN {
 
 	/** http://purl.oclc.org/NET/ssnx/ssn#observationResult */
 	public static final URI observationResult = _("observationResult");
+	
+	/** http://purl.oclc.org/NET/ssnx/ssn#hasMeasurementCapability */
+	public static final URI hasMeasurementCapability = _("hasMeasurementCapability");
+	
+	/** http://purl.oclc.org/NET/ssnx/ssn#hasMeasurementProperty */
+	public static final URI hasMeasurementProperty = _("hasMeasurementProperty");
 	
 	/** http://purl.oclc.org/NET/ssnx/ssn#hasValue */
 	public static final URI hasValue = _("hasValue");

@@ -8,6 +8,7 @@ package fi.uef.envi.emrooz.entity.ssn;
 import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.entity.EntityVisitor;
+import fi.uef.envi.emrooz.entity.MeasurementPropertyVisitor;
 import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 
@@ -29,18 +30,36 @@ import fi.uef.envi.emrooz.vocabulary.SSN;
  */
 
 public class Frequency extends MeasurementProperty {
-	
+
 	private QuantityValue value;
-	
+
 	public Frequency(URI id) {
-		this(id, SSN.Frequency);
+		this(id, SSN.Frequency, null);
+	}
+	
+	public Frequency(URI id, QuantityValue value) {
+		this(id, SSN.Frequency, value);
 	}
 
-	public Frequency(URI id, URI type) {
+	public Frequency(URI id, URI type, QuantityValue value) {
 		super(id, type);
+		
+		setQuantityValue(value);
+	}
+
+	public void setQuantityValue(QuantityValue value) {
+		this.value = value;
+	}
+
+	public QuantityValue getQuantityValue() {
+		return value;
 	}
 
 	public void accept(EntityVisitor visitor) {
+		visitor.visit(this);
+	}
+	
+	public void accept(MeasurementPropertyVisitor visitor) {
 		visitor.visit(this);
 	}
 
@@ -61,7 +80,8 @@ public class Frequency extends MeasurementProperty {
 	}
 
 	public String toString() {
-		return "Frequency [id = " + id + "; type = " + type + "]";
+		return "Frequency [id = " + id + "; type = " + type + "; value = "
+				+ value + "]";
 	}
 
 }

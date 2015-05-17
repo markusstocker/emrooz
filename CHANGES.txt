@@ -6,6 +6,8 @@ v0.3.0
 * Removed SensorObservationExtractor because obsolete
 * Introduced QueryFactory and ResultSet
 * Modularized Cassandra and Sesame request handling
+* Introduced data and knowledge stores
+* Sensor specifications now via the knowledge store
 
 v0.2.0
 ======

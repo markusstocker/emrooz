@@ -9,6 +9,7 @@ import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.entity.AbstractEntity;
 import fi.uef.envi.emrooz.entity.EntityVisitor;
+import fi.uef.envi.emrooz.entity.MeasurementPropertyVisitor;
 
 /**
  * <p>
@@ -32,9 +33,9 @@ public abstract class MeasurementProperty extends AbstractEntity {
 	public MeasurementProperty(URI id, URI type) {
 		super(id, type);
 	}
-
-	public void accept(EntityVisitor visitor) {
-		visitor.visit(this);
-	}
+	
+	public abstract void accept(EntityVisitor visitor);
+	
+	public abstract void accept(MeasurementPropertyVisitor visitor);
 
 }

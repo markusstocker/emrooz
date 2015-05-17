@@ -13,7 +13,7 @@ import fi.uef.envi.emrooz.vocabulary.QUDTSchema;
 
 /**
  * <p>
- * Title: QuantityValue
+ * Title: Unit
  * </p>
  * <p>
  * Description:
@@ -28,40 +28,10 @@ import fi.uef.envi.emrooz.vocabulary.QUDTSchema;
  * @author Markus Stocker
  */
 
-public class QuantityValue extends AbstractEntity {
+public class Unit extends AbstractEntity {
 
-	public Double value;
-	public Unit unit;
-
-	public QuantityValue(URI id) {
-		this(id, QUDTSchema.QuantityValue, null, null);
-	}
-
-	public QuantityValue(URI id, Double value, Unit unit) {
-		this(id, QUDTSchema.QuantityValue, value, unit);
-	}
-
-	public QuantityValue(URI id, URI type, Double value, Unit unit) {
-		super(id, type);
-
-		setNumericValue(value);
-		setUnit(unit);
-	}
-
-	public void setNumericValue(Double value) {
-		this.value = value;
-	}
-
-	public void setUnit(Unit unit) {
-		this.unit = unit;
-	}
-
-	public Double getNumericValue() {
-		return value;
-	}
-
-	public Unit getUnit() {
-		return unit;
+	public Unit(URI id) {
+		super(id, QUDTSchema.Unit);
 	}
 
 	@Override
@@ -79,7 +49,7 @@ public class QuantityValue extends AbstractEntity {
 		if (!(obj instanceof Unit))
 			return false;
 
-		QuantityValue other = (QuantityValue) obj;
+		Unit other = (Unit) obj;
 
 		if (other.id.equals(id) && other.type.equals(type))
 			return true;
@@ -89,8 +59,7 @@ public class QuantityValue extends AbstractEntity {
 
 	@Override
 	public String toString() {
-		return "QuantityValue [id = " + id + "; type = " + type + "; value = "
-				+ value + "; unit = " + unit + "]";
+		return "Unit [id = " + id + "; type = " + type + "]";
 	}
 
 }

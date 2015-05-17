@@ -6,12 +6,17 @@
 package fi.uef.envi.emrooz.examples;
 
 import org.openrdf.query.BindingSet;
-import org.openrdf.query.resultio.sparqljson.SPARQLResultsJSONWriter;
+import org.openrdf.repository.Repository;
+import org.openrdf.repository.sail.SailRepository;
+import org.openrdf.sail.memory.MemoryStore;
 
 import fi.uef.envi.emrooz.Emrooz;
+import fi.uef.envi.emrooz.cassandra.CassandraDataStore;
+import fi.uef.envi.emrooz.entity.EntityFactory;
 import fi.uef.envi.emrooz.query.QueryFactory;
 import fi.uef.envi.emrooz.query.ResultSet;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
+import fi.uef.envi.emrooz.sesame.SesameKnowledgeStore;
 
 /**
  * <p>
@@ -48,7 +53,16 @@ public class QuerySensorObservationsExample {
 				+ "filter (?time >= \"2015-04-21T00:00:00.000+03:00\"^^xsd:dateTime && ?time < \"2015-04-21T02:00:00.000+03:00\"^^xsd:dateTime)"
 				+ "} order by desc (?time)";
 
-		Emrooz emrooz = new Emrooz();
+		EntityFactory f = EntityFactory.getInstance("http://example.org#");
+
+		Repository r = new SailRepository(new MemoryStore());
+		SesameKnowledgeStore ks = new SesameKnowledgeStore(r);
+
+		CassandraDataStore ds = new CassandraDataStore();
+
+		Emrooz emrooz = new Emrooz(ks, ds);
+
+		ks.register(f.createSensor("thermometer", "temperature", "air", 1.0));
 
 		SensorObservationQuery query = QueryFactory
 				.createSensorObservationQuery(sparql);
@@ -62,11 +76,6 @@ public class QuerySensorObservationsExample {
 		}
 
 		results.close();
-
-		/*
-		 * Alternatively, use a query result handler to write, e.g. JSON
-		 * emrooz.evaluate(query, new SPARQLResultsJSONWriter(System.out));
-		 */
 
 		emrooz.close();
 	}

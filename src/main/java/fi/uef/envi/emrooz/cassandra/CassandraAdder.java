@@ -13,7 +13,6 @@ import static fi.uef.envi.emrooz.EmroozOptions.KEYSPACE;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -21,7 +20,6 @@ import java.util.logging.Logger;
 
 import org.joda.time.DateTime;
 import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.binary.BinaryRDFWriter;
@@ -31,7 +29,7 @@ import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 
-import fi.uef.envi.emrooz.Registration;
+import fi.uef.envi.emrooz.entity.ssn.Sensor;
 
 /**
  * <p>
@@ -58,11 +56,7 @@ public class CassandraAdder extends CassandraRequestHandler {
 	private static final Logger log = Logger.getLogger(CassandraAdder.class
 			.getName());
 
-	public CassandraAdder(Map<String, Registration> registrations,
-			Map<URI, Map<URI, Map<URI, String>>> registrationIdsMap,
-			Session session) {
-		super(registrations, registrationIdsMap);
-
+	public CassandraAdder(Session session) {
 		if (session == null)
 			throw new NullPointerException("[session = null]");
 
@@ -73,10 +67,10 @@ public class CassandraAdder extends CassandraRequestHandler {
 						+ "," + DATA_TABLE_ATTRIBUTE_3 + ") VALUES (?, ?, ?)");
 	}
 
-	public void addSensorObservation(URI sensor, URI property, URI feature,
-			DateTime resultTime, Set<Statement> statements) {
-		addSensorObservation(getRowKey(sensor, property, feature, resultTime),
-				resultTime, statements);
+	public void addSensorObservation(Sensor specification, DateTime resultTime,
+			Set<Statement> statements) {
+		addSensorObservation(getRowKey(specification, resultTime), resultTime,
+				statements);
 	}
 
 	private void addSensorObservation(String rowKey, DateTime resultTime,

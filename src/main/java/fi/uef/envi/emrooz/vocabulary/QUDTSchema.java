@@ -35,6 +35,9 @@ public class QUDTSchema {
 	/** http://qudt.org/schema/qudt#QuantityValue */
 	public static final URI QuantityValue = _("QuantityValue");
 	
+	/** http://qudt.org/schema/qudt#Unit */
+	public static final URI Unit = _("Unit");
+	
 	/** http://qudt.org/schema/qudt#unit **/
 	public static final URI unit = _("unit");
 	

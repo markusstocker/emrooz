@@ -40,14 +40,4 @@ public class EmroozOptions {
 	
 	public final static String DATA_TABLE_ATTRIBUTE_3 = "value";
 	
-	public final static String REGISTRATIONS_TABLE_ATTRIBUTE_1 = "id";
-	
-	public final static String REGISTRATIONS_TABLE_ATTRIBUTE_2 = "sensor";
-	
-	public final static String REGISTRATIONS_TABLE_ATTRIBUTE_3 = "property";
-	
-	public final static String REGISTRATIONS_TABLE_ATTRIBUTE_4 = "feature";
-	
-	public final static String REGISTRATIONS_TABLE_ATTRIBUTE_5 = "rollover";
-	
 }

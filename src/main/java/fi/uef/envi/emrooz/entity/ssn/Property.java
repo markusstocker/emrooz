@@ -30,22 +30,32 @@ import fi.uef.envi.emrooz.vocabulary.SSN;
 
 public class Property extends AbstractEntity {
 
-	private FeatureOfInterest propertyOf;
+	private FeatureOfInterest feature;
 
 	public Property(URI id) {
 		this(id, SSN.Property);
+	}
+
+	public Property(URI id, FeatureOfInterest feature) {
+		this(id, SSN.Property, feature);
 	}
 
 	public Property(URI id, URI type) {
 		super(id, type);
 	}
 
+	public Property(URI id, URI type, FeatureOfInterest feature) {
+		super(id, type);
+
+		setPropertyOf(feature);
+	}
+
 	public void setPropertyOf(FeatureOfInterest feature) {
-		this.propertyOf = feature;
+		this.feature = feature;
 	}
 
 	public FeatureOfInterest getPropertyOf() {
-		return propertyOf;
+		return feature;
 	}
 
 	public void accept(EntityVisitor visitor) {
@@ -69,8 +79,8 @@ public class Property extends AbstractEntity {
 	}
 
 	public String toString() {
-		return "Property [id = " + id + "; type = " + type
-				+ "; isPropertyOf = " + propertyOf + "]";
+		return "Property [id = " + id + "; type = " + type + "; feature = "
+				+ feature + "]";
 	}
 
 }

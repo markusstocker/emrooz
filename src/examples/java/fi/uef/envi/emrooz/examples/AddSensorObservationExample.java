@@ -5,9 +5,14 @@
 
 package fi.uef.envi.emrooz.examples;
 
+import org.openrdf.repository.Repository;
+import org.openrdf.repository.sail.SailRepository;
+import org.openrdf.sail.memory.MemoryStore;
+
 import fi.uef.envi.emrooz.Emrooz;
+import fi.uef.envi.emrooz.cassandra.CassandraDataStore;
 import fi.uef.envi.emrooz.entity.EntityFactory;
-import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
+import fi.uef.envi.emrooz.sesame.SesameKnowledgeStore;
 
 /**
  * <p>
@@ -29,21 +34,22 @@ import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
 public class AddSensorObservationExample {
 
 	public static void main(String[] args) {
-		Emrooz emrooz = new Emrooz();
-
 		EntityFactory f = EntityFactory.getInstance("http://example.org#");
 
-		SensorObservation observation = f.createSensorObservation(
-				"thermometer", "temperature", "air", 7.6,
-				"2015-04-21T01:00:00.000+03:00");
+		Repository r = new SailRepository(new MemoryStore());
+		SesameKnowledgeStore ks = new SesameKnowledgeStore(r);
 
-		// Make sure to have register the sensor
-		emrooz.add(observation);
+		CassandraDataStore ds = new CassandraDataStore();
 
-		observation = f.createSensorObservation("thermometer", "temperature",
-				"air", 7.4, "2015-04-21T01:30:00.000+03:00");
+		Emrooz emrooz = new Emrooz(ks, ds);
 
-		emrooz.add(observation);
+		ks.register(f.createSensor("thermometer", "temperature", "air", 1.0));
+
+		emrooz.add(f.createSensorObservation("thermometer", "temperature",
+				"air", 7.6, "2015-04-21T01:00:00.000+03:00"));
+
+		emrooz.add(f.createSensorObservation("thermometer", "temperature",
+				"air", 7.4, "2015-04-21T01:30:00.000+03:00"));
 
 		emrooz.close();
 	}

@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,8 +21,8 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 
-import fi.uef.envi.emrooz.Registration;
 import fi.uef.envi.emrooz.Rollover;
+import fi.uef.envi.emrooz.entity.ssn.Sensor;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 
 /**
@@ -46,27 +45,27 @@ import fi.uef.envi.emrooz.query.SensorObservationQuery;
 public class CassandraQueryHandler extends CassandraRequestHandler {
 
 	private Session session;
-	private SensorObservationQuery query;
 	private PreparedStatement sensorObservationSelectStatement;
+	private Sensor specification;
+	private SensorObservationQuery query;
 
 	private static final Logger log = Logger
 			.getLogger(CassandraQueryHandler.class.getName());
 
-	public CassandraQueryHandler(Map<String, Registration> registrations,
-			Map<URI, Map<URI, Map<URI, String>>> registrationIdsMap,
-			Session session,
+	public CassandraQueryHandler(Session session,
 			PreparedStatement sensorObservationSelectStatement,
-			SensorObservationQuery query) {
-		super(registrations, registrationIdsMap);
-
+			Sensor specification, SensorObservationQuery query) {
 		if (session == null)
 			throw new NullPointerException("[session = null]");
 		if (sensorObservationSelectStatement == null)
 			throw new NullPointerException(
 					"[sensorObservationSelectStatement = null]");
+		if (specification == null)
+			throw new NullPointerException("[specification = null]");
 
 		this.session = session;
 		this.sensorObservationSelectStatement = sensorObservationSelectStatement;
+		this.specification = specification;
 		this.query = query;
 	}
 
@@ -95,35 +94,12 @@ public class CassandraQueryHandler extends CassandraRequestHandler {
 			return Collections.emptySet();
 		}
 
-		String registrationId = getCachedRegistrationId(sensor, property,
-				feature);
-
-		if (registrationId == null) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe("Registration id not found in cache [sensor = "
-						+ sensor + "; propery = " + property + "; feature = "
-						+ feature + "]");
-
-			return Collections.emptySet();
-		}
-
-		Registration registration = registrations.get(registrationId);
-
-		if (registration == null) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe("Registration not found [sensor = " + sensor
-						+ "; propery = " + property + "; feature = " + feature
-						+ "]");
-
-			return Collections.emptySet();
-		}
-
-		Rollover rollover = registration.getRollover();
+		Rollover rollover = getRollover(specification);
 
 		if (rollover == null) {
 			if (log.isLoggable(Level.SEVERE))
-				log.severe("Registration rollover is null [registration = "
-						+ registration + "]");
+				log.severe("Registration rollover is null [specification = "
+						+ specification + "]");
 
 			return Collections.emptySet();
 		}
@@ -133,7 +109,7 @@ public class CassandraQueryHandler extends CassandraRequestHandler {
 
 		while (time.isBefore(timeTo)) {
 			Iterator<Row> it = getSensorObservations(
-					getRowKey(sensor, property, feature, time), time, timeTo);
+					getRowKey(specification, time), time, timeTo);
 
 			if (it != null)
 				ret.add(it);
@@ -184,5 +160,5 @@ public class CassandraQueryHandler extends CassandraRequestHandler {
 				new BoundStatement(sensorObservationSelectStatement).bind(
 						rowKey, columnNameFrom, columnNameTo)).iterator();
 	}
-	
+
 }

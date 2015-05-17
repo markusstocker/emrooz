@@ -36,21 +36,29 @@ public class MeasurementCapability extends AbstractEntity {
 
 	private Set<MeasurementProperty> properties;
 
-	public MeasurementCapability(URI id) {
-		this(id, SSN.MeasurementCapability);
+	public MeasurementCapability(URI id, MeasurementProperty... properties) {
+		this(id, SSN.MeasurementCapability, properties);
 	}
 
-	public MeasurementCapability(URI id, URI type) {
+	public MeasurementCapability(URI id, URI type,
+			MeasurementProperty... properties) {
 		super(id, type);
 
 		this.properties = new HashSet<MeasurementProperty>();
+
+		addMeasurementProperty(properties);
 	}
 
-	public void addMeasurementProperty(MeasurementProperty property) {
-		if (property == null)
+	public void addMeasurementProperty(MeasurementProperty... properties) {
+		if (properties == null)
 			return;
 
-		properties.add(property);
+		for (MeasurementProperty property : properties) {
+			if (property == null)
+				continue;
+
+			this.properties.add(property);
+		}
 	}
 
 	public Set<MeasurementProperty> getMeasurementProperties() {

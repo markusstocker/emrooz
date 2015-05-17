@@ -34,28 +34,46 @@ import fi.uef.envi.emrooz.vocabulary.SSN;
 
 public class Sensor extends AbstractEntity {
 
-	private Property observes;
+	private Property property;
 	private Set<MeasurementCapability> capabilities;
 
 	public Sensor(URI id) {
-		this(id, SSN.Sensor);
+		this(id, SSN.Sensor, null);
 	}
 
 	public Sensor(URI id, URI type) {
 		super(id, type);
+	}
 
+	public Sensor(URI id, Property property,
+			MeasurementCapability... capabilities) {
+		this(id, SSN.Sensor, property, capabilities);
+	}
+
+	public Sensor(URI id, URI type, Property property,
+			MeasurementCapability... capabilities) {
+		super(id, type);
+
+		this.property = property;
 		this.capabilities = new HashSet<MeasurementCapability>();
+
+		addMeasurementCapability(capabilities);
 	}
 
 	public void setObservedProperty(Property property) {
-		this.observes = property;
+		this.property = property;
 	}
 
-	public void addMeasurementCapability(MeasurementCapability capability) {
-		if (capability == null)
+	public void addMeasurementCapability(MeasurementCapability... capabilities) {
+		if (capabilities == null)
 			return;
 
-		capabilities.add(capability);
+		for (MeasurementCapability capability : capabilities) {
+			if (capability == null)
+				continue;
+
+			this.capabilities.add(capability);
+		}
 	}
 
 	public Set<MeasurementCapability> getMeasurementCapabilities() {
@@ -63,7 +81,7 @@ public class Sensor extends AbstractEntity {
 	}
 
 	public Property getObservedProperty() {
-		return observes;
+		return property;
 	}
 
 	public void accept(EntityVisitor visitor) {
@@ -87,8 +105,8 @@ public class Sensor extends AbstractEntity {
 	}
 
 	public String toString() {
-		return "Sensor [id = " + id + "; type = " + type + "; observes = "
-				+ observes + "; capabilities = " + capabilities + "]";
+		return "Sensor [id = " + id + "; type = " + type + "; property = "
+				+ property + "; capabilities = " + capabilities + "]";
 	}
 
 }

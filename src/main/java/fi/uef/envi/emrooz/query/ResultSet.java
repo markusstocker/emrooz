@@ -41,6 +41,10 @@ public class ResultSet {
 	private static final Logger log = Logger.getLogger(ResultSet.class
 			.getName());
 
+	private ResultSet() {
+		isEmpty = true;
+	}
+	
 	public ResultSet(SesameQueryHandler sesameQueryHandler) {
 		this.sesameQueryHandler = sesameQueryHandler;
 		this.result = sesameQueryHandler.evaluate();
@@ -81,6 +85,10 @@ public class ResultSet {
 		} finally {
 			sesameQueryHandler.close();
 		}
+	}
+	
+	public static ResultSet empty() {
+		return new ResultSet();
 	}
 
 }

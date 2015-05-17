@@ -6,10 +6,10 @@
 package fi.uef.envi.emrooz.entity;
 
 import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
+import fi.uef.envi.emrooz.entity.qudt.Unit;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
 import fi.uef.envi.emrooz.entity.ssn.Frequency;
 import fi.uef.envi.emrooz.entity.ssn.MeasurementCapability;
-import fi.uef.envi.emrooz.entity.ssn.MeasurementProperty;
 import fi.uef.envi.emrooz.entity.ssn.ObservationValue;
 import fi.uef.envi.emrooz.entity.ssn.ObservationValueDouble;
 import fi.uef.envi.emrooz.entity.ssn.Property;
@@ -54,8 +54,6 @@ public interface EntityVisitor {
 	
 	public void visit(MeasurementCapability entity);
 	
-	public void visit(MeasurementProperty entity);
-	
 	public void visit(Frequency entity);
 	
 	public void visit(TemporalEntity entity);
@@ -63,5 +61,7 @@ public interface EntityVisitor {
 	public void visit(Instant entity);
 	
 	public void visit(QuantityValue entity);
+	
+	public void visit(Unit entity);
 	
 }

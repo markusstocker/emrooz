@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
+import org.openrdf.model.Literal;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
@@ -22,9 +23,15 @@ import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.model.vocabulary.XMLSchema;
 
+import fi.uef.envi.emrooz.entity.MeasurementPropertyVisitor;
 import fi.uef.envi.emrooz.entity.ObservationValueVisitor;
 import fi.uef.envi.emrooz.entity.TemporalEntityVisitor;
+import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
+import fi.uef.envi.emrooz.entity.qudt.Unit;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
+import fi.uef.envi.emrooz.entity.ssn.Frequency;
+import fi.uef.envi.emrooz.entity.ssn.MeasurementCapability;
+import fi.uef.envi.emrooz.entity.ssn.MeasurementProperty;
 import fi.uef.envi.emrooz.entity.ssn.ObservationValue;
 import fi.uef.envi.emrooz.entity.ssn.ObservationValueDouble;
 import fi.uef.envi.emrooz.entity.ssn.Property;
@@ -34,6 +41,7 @@ import fi.uef.envi.emrooz.entity.ssn.SensorOutput;
 import fi.uef.envi.emrooz.entity.time.Instant;
 import fi.uef.envi.emrooz.entity.time.TemporalEntity;
 import fi.uef.envi.emrooz.vocabulary.DUL;
+import fi.uef.envi.emrooz.vocabulary.QUDTSchema;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 import fi.uef.envi.emrooz.vocabulary.Time;
 
@@ -58,6 +66,7 @@ public class RDFEntityRepresenter {
 
 	private Set<Statement> statements;
 	private final ObservationValueVisitor observationValueVisitor;
+	private final MeasurementPropertyVisitor measurementPropertyVisitor;
 	private final TemporalEntityVisitor temporalEntityVisitor;
 	private final static ValueFactory vf = ValueFactoryImpl.getInstance();
 	private final static DateTimeFormatter dtf = ISODateTimeFormat.dateTime()
@@ -67,11 +76,15 @@ public class RDFEntityRepresenter {
 
 	public RDFEntityRepresenter() {
 		observationValueVisitor = new RepresenterObservationValueVisitor();
+		measurementPropertyVisitor = new RepresenterMeasurementPropertyVisitor();
 		temporalEntityVisitor = new RepresenterTemporalEntityVisitor();
 	}
 
 	public Set<Statement> createRepresentation(SensorObservation observation) {
 		Set<Statement> ret = new HashSet<Statement>();
+
+		if (observation == null)
+			return Collections.unmodifiableSet(ret);
 
 		Sensor sensor = observation.getSensor();
 		Property property = observation.getProperty();
@@ -131,8 +144,27 @@ public class RDFEntityRepresenter {
 	public Set<Statement> createRepresentation(Sensor sensor) {
 		Set<Statement> ret = new HashSet<Statement>();
 
-		ret.add(_statement(sensor.getId(), RDF.TYPE, SSN.Sensor));
-		ret.add(_statement(sensor.getId(), RDF.TYPE, sensor.getType()));
+		if (sensor == null)
+			return Collections.unmodifiableSet(ret);
+
+		URI sensorId = sensor.getId();
+
+		ret.add(_statement(sensorId, RDF.TYPE, SSN.Sensor));
+		ret.add(_statement(sensorId, RDF.TYPE, sensor.getType()));
+
+		Property property = sensor.getObservedProperty();
+
+		if (property != null) {
+			ret.add(_statement(sensorId, SSN.observes, property.getId()));
+			ret.addAll(createRepresentation(property));
+		}
+
+		for (MeasurementCapability capability : sensor
+				.getMeasurementCapabilities()) {
+			ret.add(_statement(sensorId, SSN.hasMeasurementCapability,
+					capability.getId()));
+			ret.addAll(createRepresentation(capability));
+		}
 
 		return Collections.unmodifiableSet(ret);
 	}
@@ -151,11 +183,100 @@ public class RDFEntityRepresenter {
 		return new Sensor(id, _getType(id, SSN.Sensor, statements));
 	}
 
+	public Set<Statement> createRepresentation(MeasurementCapability capability) {
+		Set<Statement> ret = new HashSet<Statement>();
+
+		if (capability == null)
+			return Collections.unmodifiableSet(ret);
+
+		URI capabilityId = capability.getId();
+
+		ret.add(_statement(capabilityId, RDF.TYPE, SSN.MeasurementCapability));
+		ret.add(_statement(capabilityId, RDF.TYPE, capability.getType()));
+
+		Set<MeasurementProperty> properties = capability
+				.getMeasurementProperties();
+
+		for (MeasurementProperty property : properties) {
+			ret.add(_statement(capabilityId, SSN.hasMeasurementProperty,
+					property.getId()));
+			ret.addAll(createRepresentation(property));
+		}
+
+		return Collections.unmodifiableSet(ret);
+	}
+
+	public Set<Statement> createRepresentation(MeasurementProperty property) {
+		if (property == null)
+			return Collections.emptySet();
+
+		statements = new HashSet<Statement>();
+
+		property.accept(measurementPropertyVisitor);
+
+		return Collections.unmodifiableSet(statements);
+	}
+
+	public Set<Statement> createRepresentation(Frequency frequency) {
+		Set<Statement> ret = new HashSet<Statement>();
+
+		if (frequency == null)
+			return Collections.unmodifiableSet(ret);
+
+		URI frequencyId = frequency.getId();
+
+		ret.add(_statement(frequencyId, RDF.TYPE, SSN.Frequency));
+		ret.add(_statement(frequencyId, RDF.TYPE, frequency.getType()));
+
+		QuantityValue value = frequency.getQuantityValue();
+
+		if (value != null) {
+			ret.add(_statement(frequencyId, SSN.hasValue, value.getId()));
+			ret.addAll(createRepresentation(value));
+		}
+
+		return Collections.unmodifiableSet(ret);
+	}
+
+	public Set<Statement> createRepresentation(QuantityValue value) {
+		Set<Statement> ret = new HashSet<Statement>();
+
+		if (value == null)
+			return Collections.unmodifiableSet(ret);
+
+		URI valueId = value.getId();
+
+		ret.add(_statement(valueId, RDF.TYPE, QUDTSchema.QuantityValue));
+		ret.add(_statement(valueId, RDF.TYPE, value.getType()));
+		ret.add(_statement(valueId, QUDTSchema.numericValue,
+				_literal(value.getNumericValue())));
+
+		Unit unit = value.getUnit();
+
+		if (unit != null) {
+			ret.add(_statement(valueId, QUDTSchema.unit, unit.getId()));
+		}
+
+		return Collections.unmodifiableSet(ret);
+	}
+
 	public Set<Statement> createRepresentation(Property property) {
 		Set<Statement> ret = new HashSet<Statement>();
 
-		ret.add(_statement(property.getId(), RDF.TYPE, SSN.Property));
-		ret.add(_statement(property.getId(), RDF.TYPE, property.getType()));
+		if (property == null)
+			return Collections.unmodifiableSet(ret);
+
+		URI propertyId = property.getId();
+		
+		ret.add(_statement(propertyId, RDF.TYPE, SSN.Property));
+		ret.add(_statement(propertyId, RDF.TYPE, property.getType()));
+		
+		FeatureOfInterest feature = property.getPropertyOf();
+		
+		if (feature != null) {
+			ret.add(_statement(propertyId, SSN.isPropertyOf, feature.getId()));
+			ret.addAll(createRepresentation(feature));
+		}
 
 		return Collections.unmodifiableSet(ret);
 	}
@@ -176,6 +297,9 @@ public class RDFEntityRepresenter {
 
 	public Set<Statement> createRepresentation(FeatureOfInterest feature) {
 		Set<Statement> ret = new HashSet<Statement>();
+
+		if (feature == null)
+			return Collections.unmodifiableSet(ret);
 
 		ret.add(_statement(feature.getId(), RDF.TYPE, SSN.FeatureOfInterest));
 		ret.add(_statement(feature.getId(), RDF.TYPE, feature.getType()));
@@ -200,6 +324,9 @@ public class RDFEntityRepresenter {
 
 	public Set<Statement> createRepresentation(SensorOutput result) {
 		Set<Statement> ret = new HashSet<Statement>();
+
+		if (result == null)
+			return Collections.unmodifiableSet(ret);
 
 		URI id = result.getId();
 
@@ -230,6 +357,9 @@ public class RDFEntityRepresenter {
 	}
 
 	public Set<Statement> createRepresentation(ObservationValue value) {
+		if (value == null)
+			return Collections.emptySet();
+
 		statements = new HashSet<Statement>();
 
 		value.accept(observationValueVisitor);
@@ -243,6 +373,9 @@ public class RDFEntityRepresenter {
 
 	public Set<Statement> createRepresentation(ObservationValueDouble value) {
 		Set<Statement> ret = new HashSet<Statement>();
+
+		if (value == null)
+			return Collections.unmodifiableSet(ret);
 
 		URI id = value.getId();
 
@@ -287,6 +420,9 @@ public class RDFEntityRepresenter {
 	}
 
 	public Set<Statement> createRepresentation(TemporalEntity resultTime) {
+		if (resultTime == null)
+			return Collections.emptySet();
+
 		statements = new HashSet<Statement>();
 
 		resultTime.accept(temporalEntityVisitor);
@@ -300,6 +436,9 @@ public class RDFEntityRepresenter {
 
 	public Set<Statement> createRepresentation(Instant instant) {
 		Set<Statement> ret = new HashSet<Statement>();
+
+		if (instant == null)
+			return Collections.unmodifiableSet(ret);
 
 		URI id = instant.getId();
 
@@ -342,6 +481,10 @@ public class RDFEntityRepresenter {
 		return new Instant(id, _getType(id, Time.Instant, statements), value);
 	}
 
+	private static Literal _literal(Double value) {
+		return vf.createLiteral(value);
+	}
+
 	private static Statement _statement(URI s, URI p, Value o) {
 		return vf.createStatement(s, p, o);
 	}
@@ -375,6 +518,16 @@ public class RDFEntityRepresenter {
 
 		@Override
 		public void visit(ObservationValueDouble entity) {
+			statements.addAll(createRepresentation(entity));
+		}
+
+	}
+
+	private class RepresenterMeasurementPropertyVisitor implements
+			MeasurementPropertyVisitor {
+
+		@Override
+		public void visit(Frequency entity) {
 			statements.addAll(createRepresentation(entity));
 		}
 
