@@ -72,6 +72,15 @@ public class EntityFactory {
 						frequency, createUnit(QUDTUnit.Hertz)))));
 	}
 
+	public Sensor createSensor(URI sensor, URI property, URI feature,
+			Double frequency) {
+		return createSensor(
+				sensor,
+				createProperty(property, createFeatureOfInterest(feature)),
+				createMeasurementCapability(createFrequency(createQuantityValue(
+						frequency, createUnit(QUDTUnit.Hertz)))));
+	}
+
 	public Sensor createSensor(String fragment) {
 		return createSensor(vf.createURI(ns + fragment));
 	}
