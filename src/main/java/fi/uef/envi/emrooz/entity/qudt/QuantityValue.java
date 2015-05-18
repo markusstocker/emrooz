@@ -71,20 +71,53 @@ public class QuantityValue extends AbstractEntity {
 
 	@Override
 	public int hashCode() {
-		return 31 * (id.hashCode() + type.hashCode());
+		final int prime = 31;
+		int result = 1;
+
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + ((value == null) ? 0 : value.hashCode());
+		result = prime * result + ((unit == null) ? 0 : unit.hashCode());
+
+		return result;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof Unit))
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
 			return false;
 
 		QuantityValue other = (QuantityValue) obj;
 
-		if (other.id.equals(id) && other.type.equals(type))
-			return true;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
 
-		return false;
+		if (type == null) {
+			if (other.type != null)
+				return false;
+		} else if (!type.equals(other.type))
+			return false;
+		
+		if (value == null) {
+			if (other.value != null)
+				return false;
+		} else if (!value.equals(other.value))
+			return false;
+		
+		if (unit == null) {
+			if (other.unit != null)
+				return false;
+		} else if (!unit.equals(other.unit))
+			return false;
+
+		return true;
 	}
 
 	@Override

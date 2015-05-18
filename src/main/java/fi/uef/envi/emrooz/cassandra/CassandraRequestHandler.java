@@ -65,7 +65,6 @@ public abstract class CassandraRequestHandler {
 			if (log.isLoggable(Level.SEVERE))
 				log.severe("Parameters cannot be null [specification = "
 						+ specification + "; time = " + time + "]");
-
 			return null;
 		}
 

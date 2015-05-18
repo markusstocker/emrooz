@@ -43,19 +43,38 @@ public class FeatureOfInterest extends AbstractEntity {
 	}
 
 	public int hashCode() {
-		return 31 * (id.hashCode() + type.hashCode());
+		final int prime = 31;
+		int result = 1;
+
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
+
+		return result;
 	}
 
 	public boolean equals(Object obj) {
-		if (!(obj instanceof FeatureOfInterest))
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
 			return false;
 
 		FeatureOfInterest other = (FeatureOfInterest) obj;
 
-		if (other.id.equals(id) && other.type.equals(type))
-			return true;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
 
-		return false;
+		if (type == null) {
+			if (other.type != null)
+				return false;
+		} else if (!type.equals(other.type))
+			return false;
+
+		return true;
 	}
 
 	public String toString() {

@@ -41,7 +41,7 @@ public class Property extends AbstractEntity {
 	}
 
 	public Property(URI id, URI type) {
-		super(id, type);
+		this(id, type, null);
 	}
 
 	public Property(URI id, URI type, FeatureOfInterest feature) {
@@ -63,19 +63,45 @@ public class Property extends AbstractEntity {
 	}
 
 	public int hashCode() {
-		return 31 * (id.hashCode() + type.hashCode());
+		final int prime = 31;
+		int result = 1;
+
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + ((feature == null) ? 0 : feature.hashCode());
+
+		return result;
 	}
 
 	public boolean equals(Object obj) {
-		if (!(obj instanceof Property))
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
 			return false;
 
 		Property other = (Property) obj;
 
-		if (other.id.equals(id) && other.type.equals(type))
-			return true;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
 
-		return false;
+		if (type == null) {
+			if (other.type != null)
+				return false;
+		} else if (!type.equals(other.type))
+			return false;
+
+		if (feature == null) {
+			if (other.feature != null)
+				return false;
+		} else if (!feature.equals(other.feature))
+			return false;
+
+		return true;
 	}
 
 	public String toString() {

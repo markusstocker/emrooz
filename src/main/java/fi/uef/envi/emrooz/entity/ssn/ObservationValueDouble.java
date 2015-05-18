@@ -67,20 +67,45 @@ public class ObservationValueDouble extends ObservationValue {
 	}
 
 	public int hashCode() {
-		return 31 * (id.hashCode() + type.hashCode() + value.hashCode());
+		final int prime = 31;
+		int result = 1;
+
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + ((value == null) ? 0 : value.hashCode());
+
+		return result;
 	}
 
 	public boolean equals(Object obj) {
-		if (!(obj instanceof ObservationValueDouble))
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
 			return false;
 
 		ObservationValueDouble other = (ObservationValueDouble) obj;
 
-		if (other.id.equals(id) && other.type.equals(type)
-				&& other.value.equals(value))
-			return true;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
 
-		return false;
+		if (type == null) {
+			if (other.type != null)
+				return false;
+		} else if (!type.equals(other.type))
+			return false;
+		
+		if (value == null) {
+			if (other.value != null)
+				return false;
+		} else if (!value.equals(other.value))
+			return false;
+
+		return true;
 	}
 
 	public String toString() {

@@ -125,47 +125,76 @@ public class SensorObservation extends AbstractEntity {
 	}
 
 	public int hashCode() {
-		int base = id.hashCode() + type.hashCode() + sensor.hashCode()
-				+ property.hashCode() + feature.hashCode();
+		final int prime = 31;
+		int result = 1;
 
-		if (result != null)
-			base += result.hashCode();
-		
-		if (resultTime != null)
-			base += resultTime.hashCode();
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + ((sensor == null) ? 0 : sensor.hashCode());
+		result = prime * result
+				+ ((property == null) ? 0 : property.hashCode());
+		result = prime * result + ((feature == null) ? 0 : feature.hashCode());
+		result = prime * result
+				+ ((this.result == null) ? 0 : this.result.hashCode());
+		result = prime * result
+				+ ((resultTime == null) ? 0 : resultTime.hashCode());
 
-		return 31 * base;
+		return result;
 	}
 
 	public boolean equals(Object obj) {
-		if (!(obj instanceof SensorObservation))
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
 			return false;
 
 		SensorObservation other = (SensorObservation) obj;
 
-		if (other.id.equals(id) && other.type.equals(type)
-				&& other.sensor.equals(sensor)
-				&& other.property.equals(property)
-				&& other.feature.equals(feature)) {
-			if ((other.result == null && result == null)
-					&& (other.resultTime == null && resultTime == null))
-				return true;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
 
-			if (other.result == null && result == null) {
-				if (other.resultTime.equals(resultTime))
-					return true;
-			}
+		if (type == null) {
+			if (other.type != null)
+				return false;
+		} else if (!type.equals(other.type))
+			return false;
 
-			if ((other.resultTime == null && resultTime == null))
-				if (other.result.equals(result))
-					return true;
+		if (sensor == null) {
+			if (other.sensor != null)
+				return false;
+		} else if (!sensor.equals(other.sensor))
+			return false;
+		
+		if (property == null) {
+			if (other.property != null)
+				return false;
+		} else if (!property.equals(other.property))
+			return false;
+		
+		if (feature == null) {
+			if (other.feature != null)
+				return false;
+		} else if (!feature.equals(other.feature))
+			return false;
+		
+		if (result == null) {
+			if (other.result != null)
+				return false;
+		} else if (!result.equals(other.result))
+			return false;
+		
+		if (resultTime == null) {
+			if (other.resultTime != null)
+				return false;
+		} else if (!resultTime.equals(other.resultTime))
+			return false;
 
-			if (other.result.equals(result)
-					&& other.resultTime.equals(resultTime))
-				return true;
-		}
-
-		return false;
+		return true;
 	}
 
 	public String toString() {
