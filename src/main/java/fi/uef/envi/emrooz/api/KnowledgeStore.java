@@ -5,6 +5,7 @@
 
 package fi.uef.envi.emrooz.api;
 
+import java.io.File;
 import java.util.Set;
 
 import org.openrdf.model.Statement;
@@ -32,6 +33,8 @@ import fi.uef.envi.emrooz.query.SensorObservationQuery;
 
 public interface KnowledgeStore {
 
+	public void load(File file);
+	
 	public void addSensor(Sensor sensor);
 
 	public Set<Sensor> getSensors();

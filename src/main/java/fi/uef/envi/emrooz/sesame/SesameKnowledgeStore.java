@@ -119,6 +119,7 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 		}
 	}
 
+	@Override
 	public void load(File file) {
 		load(file, null);
 	}

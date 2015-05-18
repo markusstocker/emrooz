@@ -12,6 +12,7 @@ import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
 
 import fi.uef.envi.emrooz.Emrooz;
+import fi.uef.envi.emrooz.api.KnowledgeStore;
 import fi.uef.envi.emrooz.api.ResultSet;
 import fi.uef.envi.emrooz.cassandra.CassandraDataStore;
 import fi.uef.envi.emrooz.entity.EntityFactory;
@@ -57,7 +58,7 @@ public class QuerySensorObservationsExample {
 		EntityFactory f = EntityFactory.getInstance("http://example.org#");
 
 		Repository r = new SailRepository(new MemoryStore());
-		SesameKnowledgeStore ks = new SesameKnowledgeStore(r);
+		KnowledgeStore ks = new SesameKnowledgeStore(r);
 		ks.addSensor(f.createSensor("thermometer", "temperature", "air", 1.0));
 
 		Emrooz emrooz = new Emrooz(ks, new CassandraDataStore());

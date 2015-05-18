@@ -82,6 +82,10 @@ public class Emrooz {
 		add(representer.createSensorObservation(statements));
 	}
 
+	public void add(Sensor sensor) {
+		ks.addSensor(sensor);
+	}
+	
 	public void add(SensorObservation observation) {
 		if (observation == null)
 			return;

@@ -11,6 +11,7 @@ import org.openrdf.repository.Repository;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
 
+import fi.uef.envi.emrooz.api.KnowledgeStore;
 import fi.uef.envi.emrooz.entity.EntityFactory;
 import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.qudt.Unit;
@@ -48,7 +49,7 @@ public class SensorRegistrationExample {
 		// http://rdf4j.org/sesame/2.8/docs/programming.docbook?view#section-repository-api
 		// Example: new SailRepository(new MemoryStore(new File("/tmp/ks")))
 		Repository r = new SailRepository(new MemoryStore());
-		SesameKnowledgeStore ks = new SesameKnowledgeStore(r);
+		KnowledgeStore ks = new SesameKnowledgeStore(r);
 
 		// Loads this KB, which may contain sensor specifications
 		ks.load(new File("src/examples/resources/kb.rdf"));
