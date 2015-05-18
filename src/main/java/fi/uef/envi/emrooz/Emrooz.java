@@ -14,7 +14,9 @@ import java.util.logging.Logger;
 import org.joda.time.DateTime;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
+import org.openrdf.query.BindingSet;
 
+import fi.uef.envi.emrooz.api.BindingResultSet;
 import fi.uef.envi.emrooz.cassandra.CassandraDataStore;
 import fi.uef.envi.emrooz.entity.TemporalEntityVisitor;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
@@ -23,7 +25,6 @@ import fi.uef.envi.emrooz.entity.ssn.Sensor;
 import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
 import fi.uef.envi.emrooz.entity.time.Instant;
 import fi.uef.envi.emrooz.entity.time.TemporalEntity;
-import fi.uef.envi.emrooz.query.ResultSet;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 import fi.uef.envi.emrooz.rdf.RDFEntityRepresenter;
 import fi.uef.envi.emrooz.sesame.SesameKnowledgeStore;
@@ -156,15 +157,14 @@ public class Emrooz {
 		ds.addSensorObservation(specification, resultTime, statements);
 	}
 
-	public ResultSet evaluate(SensorObservationQuery query) {
+	public BindingResultSet evaluate(SensorObservationQuery query) {
 		URI sensorId = query.getSensorId();
 
 		if (sensorId == null) {
 			if (log.isLoggable(Level.WARNING))
 				log.warning("No specified sensor in query [query = " + query
 						+ "]");
-
-			return ResultSet.empty();
+			return new EmptyBindingResultSet();
 		}
 
 		URI propertyId = query.getPropertyId();
@@ -173,8 +173,7 @@ public class Emrooz {
 			if (log.isLoggable(Level.WARNING))
 				log.warning("No specified property in query [query = " + query
 						+ "]");
-
-			return ResultSet.empty();
+			return new EmptyBindingResultSet();
 		}
 
 		URI featureId = query.getFeatureOfInterestId();
@@ -183,8 +182,7 @@ public class Emrooz {
 			if (log.isLoggable(Level.WARNING))
 				log.warning("No specified feature in query [query = " + query
 						+ "]");
-
-			return ResultSet.empty();
+			return new EmptyBindingResultSet();
 		}
 
 		Sensor specification = getSpecification(sensorId, propertyId, featureId);
@@ -194,11 +192,11 @@ public class Emrooz {
 				log.warning("No specification found [sensorId = " + sensorId
 						+ "; propertyId = " + propertyId + "; featureId = "
 						+ featureId + "]");
-			return ResultSet.empty();
+			return new EmptyBindingResultSet();
 		}
 
-		return new ResultSet(ks.createQueryHandler(
-				ds.createQueryHandler(specification, query), query));
+		return ks.createQueryHandler(
+				ds.createQueryHandler(specification, query), query).evaluate();
 	}
 
 	// public void evaluate(SensorObservationQuery query,
@@ -320,6 +318,25 @@ public class Emrooz {
 		@Override
 		public void visit(Instant entity) {
 			instant = entity.getValue();
+		}
+
+	}
+
+	private class EmptyBindingResultSet implements BindingResultSet {
+
+		@Override
+		public boolean hasNext() {
+			return false;
+		}
+
+		@Override
+		public BindingSet next() {
+			return null;
+		}
+
+		@Override
+		public void close() {
+			// Nothing to close
 		}
 
 	}

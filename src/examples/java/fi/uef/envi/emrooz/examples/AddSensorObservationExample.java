@@ -43,7 +43,7 @@ public class AddSensorObservationExample {
 
 		Emrooz emrooz = new Emrooz(ks, ds);
 
-		ks.register(f.createSensor("thermometer", "temperature", "air", 1.0));
+		ks.addSensor(f.createSensor("thermometer", "temperature", "air", 1.0));
 
 		emrooz.add(f.createSensorObservation("thermometer", "temperature",
 				"air", 7.6, "2015-04-21T01:00:00.000+03:00"));

@@ -5,6 +5,10 @@
 
 package fi.uef.envi.emrooz.cassandra;
 
+import static fi.uef.envi.emrooz.EmroozOptions.DATA_TABLE_ATTRIBUTE_3;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -14,14 +18,24 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.joda.time.DateTime;
+import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandlerException;
+import org.openrdf.rio.RDFParseException;
+import org.openrdf.rio.RDFParser;
+import org.openrdf.rio.Rio;
+import org.openrdf.rio.helpers.StatementCollector;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.utils.Bytes;
 
 import fi.uef.envi.emrooz.Rollover;
+import fi.uef.envi.emrooz.api.QueryHandler;
+import fi.uef.envi.emrooz.api.StatementResultSet;
 import fi.uef.envi.emrooz.entity.ssn.Sensor;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 
@@ -42,7 +56,8 @@ import fi.uef.envi.emrooz.query.SensorObservationQuery;
  * @author Markus Stocker
  */
 
-public class CassandraQueryHandler extends CassandraRequestHandler {
+public class CassandraQueryHandler extends CassandraRequestHandler implements
+		QueryHandler<Statement> {
 
 	private Session session;
 	private PreparedStatement sensorObservationSelectStatement;
@@ -62,6 +77,8 @@ public class CassandraQueryHandler extends CassandraRequestHandler {
 					"[sensorObservationSelectStatement = null]");
 		if (specification == null)
 			throw new NullPointerException("[specification = null]");
+		if (query == null)
+			throw new NullPointerException("[query = null]");
 
 		this.session = session;
 		this.sensorObservationSelectStatement = sensorObservationSelectStatement;
@@ -69,13 +86,19 @@ public class CassandraQueryHandler extends CassandraRequestHandler {
 		this.query = query;
 	}
 
-	public Set<Iterator<Row>> evaluate() {
+	@Override
+	public StatementResultSet evaluate() {
 		return getSensorObservations(query.getSensorId(),
 				query.getPropertyId(), query.getFeatureOfInterestId(),
 				query.getTimeFrom(), query.getTimeTo());
 	}
 
-	private Set<Iterator<Row>> getSensorObservations(URI sensor, URI property,
+	@Override
+	public void close() {
+		// Nothing to close
+	}
+
+	private StatementResultSet getSensorObservations(URI sensor, URI property,
 			URI feature, DateTime timeFrom, DateTime timeTo) {
 		if (sensor == null || property == null || feature == null
 				|| timeFrom == null || timeTo == null) {
@@ -90,8 +113,7 @@ public class CassandraQueryHandler extends CassandraRequestHandler {
 						+ timeFrom
 						+ "; timeTo = "
 						+ timeTo + "]");
-
-			return Collections.emptySet();
+			return CassandraStatementResultSet.empty();
 		}
 
 		Rollover rollover = getRollover(specification);
@@ -100,19 +122,18 @@ public class CassandraQueryHandler extends CassandraRequestHandler {
 			if (log.isLoggable(Level.SEVERE))
 				log.severe("Registration rollover is null [specification = "
 						+ specification + "]");
-
-			return Collections.emptySet();
+			return CassandraStatementResultSet.empty();
 		}
 
 		DateTime time = timeFrom;
-		Set<Iterator<Row>> ret = new HashSet<Iterator<Row>>();
+		Set<Iterator<Row>> results = new HashSet<Iterator<Row>>();
 
 		while (time.isBefore(timeTo)) {
 			Iterator<Row> it = getSensorObservations(
 					getRowKey(specification, time), time, timeTo);
 
 			if (it != null)
-				ret.add(it);
+				results.add(it);
 
 			if (rollover.equals(Rollover.YEAR))
 				time = time.year().roundFloorCopy().plusYears(1);
@@ -129,7 +150,7 @@ public class CassandraQueryHandler extends CassandraRequestHandler {
 						+ rollover + "]");
 		}
 
-		return Collections.unmodifiableSet(ret);
+		return new CassandraStatementResultSet(results.iterator());
 	}
 
 	private Iterator<Row> getSensorObservations(String rowKey,
@@ -159,6 +180,85 @@ public class CassandraQueryHandler extends CassandraRequestHandler {
 		return session.execute(
 				new BoundStatement(sensorObservationSelectStatement).bind(
 						rowKey, columnNameFrom, columnNameTo)).iterator();
+	}
+
+	private static class CassandraStatementResultSet implements
+			StatementResultSet {
+
+		private Iterator<Iterator<Row>> results;
+		private Iterator<Statement> statements;
+
+		private CassandraStatementResultSet() {
+			this(null);
+		}
+
+		private CassandraStatementResultSet(Iterator<Iterator<Row>> results) {
+			if (results == null)
+				results = Collections.emptyIterator();
+
+			this.results = results;
+
+			nextStatementIterator();
+		}
+
+		@Override
+		public boolean hasNext() {
+			return statements.hasNext();
+		}
+
+		@Override
+		public Statement next() {
+			return statements.next();
+		}
+
+		@Override
+		public void close() {
+			// Nothing to close
+		}
+
+		public static CassandraStatementResultSet empty() {
+			return new CassandraStatementResultSet();
+		}
+
+		private void nextStatementIterator() {
+			if (!results.hasNext()) {
+				statements = Collections.emptyIterator();
+				return; // There are no results
+			}
+
+			statements = toStatements(results.next());
+
+			if (!statements.hasNext())
+				// The statements may be an empty iterator, continue till there
+				// is a non-empty statement iterator or there are no more
+				// results
+				nextStatementIterator();
+		}
+
+		private Iterator<Statement> toStatements(Iterator<Row> iterator) {
+			if (!iterator.hasNext()) {
+				return Collections.emptyIterator();
+			}
+
+			Set<Statement> ret = new HashSet<Statement>();
+			RDFParser rdfParser = Rio.createParser(RDFFormat.BINARY);
+			StatementCollector collector = new StatementCollector(ret);
+			rdfParser.setRDFHandler(collector);
+
+			try {
+				while (iterator.hasNext()) {
+					rdfParser.parse(
+							new ByteArrayInputStream(Bytes.getArray(iterator
+									.next().getBytes(DATA_TABLE_ATTRIBUTE_3))),
+							null);
+				}
+			} catch (RDFParseException | RDFHandlerException | IOException e) {
+				e.printStackTrace();
+			}
+
+			return Collections.unmodifiableSet(ret).iterator();
+		}
+
 	}
 
 }

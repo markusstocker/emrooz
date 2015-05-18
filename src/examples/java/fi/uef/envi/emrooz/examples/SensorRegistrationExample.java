@@ -54,9 +54,9 @@ public class SensorRegistrationExample {
 		ks.load(new File("src/examples/resources/kb.rdf"));
 
 		// Load sensor specifications programmatically
-		ks.register(sensor1());
-		ks.register(sensor2());
-		ks.register(sensor3());
+		ks.addSensor(sensor1());
+		ks.addSensor(sensor2());
+		ks.addSensor(sensor3());
 
 		ks.close();
 	}

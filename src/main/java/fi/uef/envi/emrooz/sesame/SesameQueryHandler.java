@@ -5,18 +5,11 @@
 
 package fi.uef.envi.emrooz.sesame;
 
-import static fi.uef.envi.emrooz.EmroozOptions.DATA_TABLE_ATTRIBUTE_3;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.openrdf.model.Statement;
+import org.openrdf.query.BindingSet;
 import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.QueryLanguage;
@@ -26,18 +19,11 @@ import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFHandlerException;
-import org.openrdf.rio.RDFParseException;
-import org.openrdf.rio.RDFParser;
-import org.openrdf.rio.Rio;
-import org.openrdf.rio.helpers.StatementCollector;
 import org.openrdf.sail.memory.MemoryStore;
 
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.utils.Bytes;
-
-import fi.uef.envi.emrooz.cassandra.CassandraQueryHandler;
+import fi.uef.envi.emrooz.api.BindingResultSet;
+import fi.uef.envi.emrooz.api.QueryHandler;
+import fi.uef.envi.emrooz.api.ResultSet;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 
 /**
@@ -57,23 +43,22 @@ import fi.uef.envi.emrooz.query.SensorObservationQuery;
  * @author Markus Stocker
  */
 
-public class SesameQueryHandler {
+public class SesameQueryHandler implements QueryHandler<BindingSet> {
 
 	private Repository repo;
 	private RepositoryConnection conn;
-	private TupleQueryResult result;
-	private CassandraQueryHandler cassandraQueryHandler;
+	private QueryHandler<Statement> other;
 	private SensorObservationQuery query;
 
 	private static final Logger log = Logger.getLogger(SesameQueryHandler.class
 			.getName());
 
-	public SesameQueryHandler(CassandraQueryHandler cassandraQueryHandler,
+	public SesameQueryHandler(QueryHandler<Statement> other,
 			SensorObservationQuery query) {
-		if (cassandraQueryHandler == null)
-			throw new RuntimeException("[cassandraQueryHandler = null]");
+		if (other == null)
+			throw new RuntimeException("[other = null]");
 
-		this.cassandraQueryHandler = cassandraQueryHandler;
+		this.other = other;
 		this.query = query;
 
 		try {
@@ -86,29 +71,26 @@ public class SesameQueryHandler {
 		}
 	}
 
-	public TupleQueryResult evaluate() {
+	@Override
+	public BindingResultSet evaluate() {
 		try {
-			Set<Iterator<Row>> iterators = cassandraQueryHandler.evaluate();
+			ResultSet<Statement> rs = other.evaluate();
 
-			for (Iterator<Row> iterator : iterators) {
-				conn.add(getStatements(iterator));
+			while (rs.hasNext()) {
+				conn.add(rs.next());
 			}
 
 			TupleQuery tupleQuery = conn.prepareTupleQuery(
 					QueryLanguage.SPARQL, query.getQueryString());
 
-			result = tupleQuery.evaluate();
+			return new SesameBindingResultSet(tupleQuery.evaluate());
 		} catch (QueryEvaluationException | RepositoryException
 				| MalformedQueryException e) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe(e.getMessage());
+			throw new RuntimeException(e);
 		}
-
-		// tupleQuery.evaluate(handler);
-
-		return result;
 	}
 
+	@Override
 	public void close() {
 		try {
 			conn.close();
@@ -119,23 +101,41 @@ public class SesameQueryHandler {
 		}
 	}
 
-	private Set<Statement> getStatements(Iterator<Row> iterator) {
-		Set<Statement> ret = new HashSet<Statement>();
-		RDFParser rdfParser = Rio.createParser(RDFFormat.BINARY);
-		StatementCollector collector = new StatementCollector(ret);
-		rdfParser.setRDFHandler(collector);
+	private class SesameBindingResultSet implements BindingResultSet {
 
-		try {
-			while (iterator.hasNext()) {
-				rdfParser.parse(
-						new ByteArrayInputStream(Bytes.getArray(iterator.next()
-								.getBytes(DATA_TABLE_ATTRIBUTE_3))), null);
-			}
-		} catch (RDFParseException | RDFHandlerException | IOException e) {
-			e.printStackTrace();
+		private TupleQueryResult result;
+
+		public SesameBindingResultSet(TupleQueryResult result) {
+			this.result = result;
 		}
 
-		return Collections.unmodifiableSet(ret);
+		@Override
+		public boolean hasNext() {
+			try {
+				return result.hasNext();
+			} catch (QueryEvaluationException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		@Override
+		public BindingSet next() {
+			try {
+				return result.next();
+			} catch (QueryEvaluationException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		@Override
+		public void close() {
+			try {
+				result.close();
+			} catch (QueryEvaluationException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
 	}
 
 }

@@ -26,6 +26,7 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.TableMetadata;
 
+import fi.uef.envi.emrooz.api.DataStore;
 import fi.uef.envi.emrooz.entity.ssn.Sensor;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 
@@ -46,7 +47,7 @@ import fi.uef.envi.emrooz.query.SensorObservationQuery;
  * @author Markus Stocker
  */
 
-public class CassandraDataStore {
+public class CassandraDataStore implements DataStore {
 
 	private Cluster cluster;
 	private Session session;
@@ -82,6 +83,7 @@ public class CassandraDataStore {
 		this.cassandraAdder = new CassandraAdder(session);
 	}
 
+	@Override
 	public void addSensorObservation(Sensor specification, DateTime resultTime,
 			Set<Statement> statements) {
 		if (specification == null || resultTime == null) {
@@ -103,12 +105,14 @@ public class CassandraDataStore {
 				statements);
 	}
 
+	@Override
 	public CassandraQueryHandler createQueryHandler(Sensor specification,
 			SensorObservationQuery query) {
 		return new CassandraQueryHandler(session,
 				sensorObservationSelectStatement, specification, query);
 	}
 
+	@Override
 	public void close() {
 		session.close();
 		cluster.close();

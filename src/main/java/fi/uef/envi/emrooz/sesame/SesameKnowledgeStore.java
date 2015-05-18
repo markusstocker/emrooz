@@ -30,7 +30,8 @@ import org.openrdf.repository.RepositoryException;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFParseException;
 
-import fi.uef.envi.emrooz.cassandra.CassandraQueryHandler;
+import fi.uef.envi.emrooz.api.KnowledgeStore;
+import fi.uef.envi.emrooz.api.QueryHandler;
 import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.qudt.Unit;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
@@ -61,7 +62,7 @@ import fi.uef.envi.emrooz.vocabulary.SSN;
  * @author Markus Stocker
  */
 
-public class SesameKnowledgeStore {
+public class SesameKnowledgeStore implements KnowledgeStore {
 
 	private Repository repository;
 	private RepositoryConnection connection;
@@ -92,12 +93,30 @@ public class SesameKnowledgeStore {
 		loadSensors();
 	}
 
-	public void register(Sensor sensor) {
+	@Override
+	public void addSensor(Sensor sensor) {
 		load(representer.createRepresentation(sensor));
 	}
 
+	@Override
 	public Set<Sensor> getSensors() {
 		return Collections.unmodifiableSet(sensors);
+	}
+
+	@Override
+	public SesameQueryHandler createQueryHandler(QueryHandler<Statement> other,
+			SensorObservationQuery query) {
+		return new SesameQueryHandler(other, query);
+	}
+
+	@Override
+	public void close() {
+		try {
+			connection.close();
+		} catch (RepositoryException e) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe(e.getMessage());
+		}
 	}
 
 	public void load(File file) {
@@ -133,21 +152,6 @@ public class SesameKnowledgeStore {
 		}
 
 		loadSensors();
-	}
-
-	public SesameQueryHandler createQueryHandler(
-			CassandraQueryHandler cassandraQueryHandler,
-			SensorObservationQuery query) {
-		return new SesameQueryHandler(cassandraQueryHandler, query);
-	}
-
-	public void close() {
-		try {
-			connection.close();
-		} catch (RepositoryException e) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe(e.getMessage());
-		}
 	}
 
 	private void loadSensors() {

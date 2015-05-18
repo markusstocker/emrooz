@@ -11,10 +11,10 @@ import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
 
 import fi.uef.envi.emrooz.Emrooz;
+import fi.uef.envi.emrooz.api.BindingResultSet;
 import fi.uef.envi.emrooz.cassandra.CassandraDataStore;
 import fi.uef.envi.emrooz.entity.EntityFactory;
 import fi.uef.envi.emrooz.query.QueryFactory;
-import fi.uef.envi.emrooz.query.ResultSet;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 import fi.uef.envi.emrooz.sesame.SesameKnowledgeStore;
 
@@ -62,12 +62,12 @@ public class QuerySensorObservationsExample {
 
 		Emrooz emrooz = new Emrooz(ks, ds);
 
-		ks.register(f.createSensor("thermometer", "temperature", "air", 1.0));
+		ks.addSensor(f.createSensor("thermometer", "temperature", "air", 1.0));
 
 		SensorObservationQuery query = QueryFactory
 				.createSensorObservationQuery(sparql);
 
-		ResultSet results = emrooz.evaluate(query);
+		BindingResultSet results = emrooz.evaluate(query);
 
 		while (results.hasNext()) {
 			BindingSet result = results.next();
