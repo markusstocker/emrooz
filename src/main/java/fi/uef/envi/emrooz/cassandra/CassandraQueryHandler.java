@@ -35,8 +35,9 @@ import com.datastax.driver.core.utils.Bytes;
 
 import fi.uef.envi.emrooz.Rollover;
 import fi.uef.envi.emrooz.api.QueryHandler;
-import fi.uef.envi.emrooz.api.StatementResultSet;
+import fi.uef.envi.emrooz.api.ResultSet;
 import fi.uef.envi.emrooz.entity.ssn.Sensor;
+import fi.uef.envi.emrooz.query.EmptyResultSet;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 
 /**
@@ -87,7 +88,7 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 	}
 
 	@Override
-	public StatementResultSet evaluate() {
+	public ResultSet<Statement> evaluate() {
 		return getSensorObservations(query.getSensorId(),
 				query.getPropertyId(), query.getFeatureOfInterestId(),
 				query.getTimeFrom(), query.getTimeTo());
@@ -98,8 +99,8 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 		// Nothing to close
 	}
 
-	private StatementResultSet getSensorObservations(URI sensor, URI property,
-			URI feature, DateTime timeFrom, DateTime timeTo) {
+	private ResultSet<Statement> getSensorObservations(URI sensor,
+			URI property, URI feature, DateTime timeFrom, DateTime timeTo) {
 		if (sensor == null || property == null || feature == null
 				|| timeFrom == null || timeTo == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -113,7 +114,7 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 						+ timeFrom
 						+ "; timeTo = "
 						+ timeTo + "]");
-			return CassandraStatementResultSet.empty();
+			return new EmptyResultSet<Statement>();
 		}
 
 		Rollover rollover = getRollover(specification);
@@ -122,7 +123,7 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 			if (log.isLoggable(Level.SEVERE))
 				log.severe("Registration rollover is null [specification = "
 						+ specification + "]");
-			return CassandraStatementResultSet.empty();
+			return new EmptyResultSet<Statement>();
 		}
 
 		DateTime time = timeFrom;
@@ -183,21 +184,13 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 	}
 
 	private static class CassandraStatementResultSet implements
-			StatementResultSet {
+			ResultSet<Statement> {
 
 		private Iterator<Iterator<Row>> results;
 		private Iterator<Statement> statements;
 
-		private CassandraStatementResultSet() {
-			this(null);
-		}
-
 		private CassandraStatementResultSet(Iterator<Iterator<Row>> results) {
-			if (results == null)
-				results = Collections.emptyIterator();
-
 			this.results = results;
-
 			nextStatementIterator();
 		}
 
@@ -214,10 +207,6 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 		@Override
 		public void close() {
 			// Nothing to close
-		}
-
-		public static CassandraStatementResultSet empty() {
-			return new CassandraStatementResultSet();
 		}
 
 		private void nextStatementIterator() {

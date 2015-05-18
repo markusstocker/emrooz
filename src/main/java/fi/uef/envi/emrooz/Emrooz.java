@@ -16,8 +16,9 @@ import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.query.BindingSet;
 
-import fi.uef.envi.emrooz.api.BindingResultSet;
-import fi.uef.envi.emrooz.cassandra.CassandraDataStore;
+import fi.uef.envi.emrooz.api.DataStore;
+import fi.uef.envi.emrooz.api.KnowledgeStore;
+import fi.uef.envi.emrooz.api.ResultSet;
 import fi.uef.envi.emrooz.entity.TemporalEntityVisitor;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
 import fi.uef.envi.emrooz.entity.ssn.Property;
@@ -25,9 +26,9 @@ import fi.uef.envi.emrooz.entity.ssn.Sensor;
 import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
 import fi.uef.envi.emrooz.entity.time.Instant;
 import fi.uef.envi.emrooz.entity.time.TemporalEntity;
+import fi.uef.envi.emrooz.query.EmptyResultSet;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 import fi.uef.envi.emrooz.rdf.RDFEntityRepresenter;
-import fi.uef.envi.emrooz.sesame.SesameKnowledgeStore;
 
 /**
  * <p>
@@ -48,8 +49,8 @@ import fi.uef.envi.emrooz.sesame.SesameKnowledgeStore;
 
 public class Emrooz {
 
-	private SesameKnowledgeStore ks;
-	private CassandraDataStore ds;
+	private KnowledgeStore ks;
+	private DataStore ds;
 
 	private Map<URI, Map<URI, Map<URI, Sensor>>> sensors;
 
@@ -59,7 +60,7 @@ public class Emrooz {
 
 	private static final Logger log = Logger.getLogger(Emrooz.class.getName());
 
-	public Emrooz(SesameKnowledgeStore ks, CassandraDataStore ds) {
+	public Emrooz(KnowledgeStore ks, DataStore ds) {
 		if (ks == null)
 			throw new NullPointerException(
 					"Knowledge store cannot be null [ks = null]");
@@ -157,14 +158,14 @@ public class Emrooz {
 		ds.addSensorObservation(specification, resultTime, statements);
 	}
 
-	public BindingResultSet evaluate(SensorObservationQuery query) {
+	public ResultSet<BindingSet> evaluate(SensorObservationQuery query) {
 		URI sensorId = query.getSensorId();
 
 		if (sensorId == null) {
 			if (log.isLoggable(Level.WARNING))
 				log.warning("No specified sensor in query [query = " + query
 						+ "]");
-			return new EmptyBindingResultSet();
+			return new EmptyResultSet<BindingSet>();
 		}
 
 		URI propertyId = query.getPropertyId();
@@ -173,7 +174,7 @@ public class Emrooz {
 			if (log.isLoggable(Level.WARNING))
 				log.warning("No specified property in query [query = " + query
 						+ "]");
-			return new EmptyBindingResultSet();
+			return new EmptyResultSet<BindingSet>();
 		}
 
 		URI featureId = query.getFeatureOfInterestId();
@@ -182,7 +183,7 @@ public class Emrooz {
 			if (log.isLoggable(Level.WARNING))
 				log.warning("No specified feature in query [query = " + query
 						+ "]");
-			return new EmptyBindingResultSet();
+			return new EmptyResultSet<BindingSet>();
 		}
 
 		Sensor specification = getSpecification(sensorId, propertyId, featureId);
@@ -192,7 +193,7 @@ public class Emrooz {
 				log.warning("No specification found [sensorId = " + sensorId
 						+ "; propertyId = " + propertyId + "; featureId = "
 						+ featureId + "]");
-			return new EmptyBindingResultSet();
+			return new EmptyResultSet<BindingSet>();
 		}
 
 		return ks.createQueryHandler(
@@ -318,25 +319,6 @@ public class Emrooz {
 		@Override
 		public void visit(Instant entity) {
 			instant = entity.getValue();
-		}
-
-	}
-
-	private class EmptyBindingResultSet implements BindingResultSet {
-
-		@Override
-		public boolean hasNext() {
-			return false;
-		}
-
-		@Override
-		public BindingSet next() {
-			return null;
-		}
-
-		@Override
-		public void close() {
-			// Nothing to close
 		}
 
 	}

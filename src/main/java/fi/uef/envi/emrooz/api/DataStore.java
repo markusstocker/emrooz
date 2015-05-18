@@ -35,9 +35,9 @@ public interface DataStore {
 	public void addSensorObservation(Sensor specification, DateTime resultTime,
 			Set<Statement> statements);
 
-	public QueryHandler<?> createQueryHandler(Sensor specification,
+	public QueryHandler<Statement> createQueryHandler(Sensor specification,
 			SensorObservationQuery query);
-	
+
 	public void close();
-	
+
 }

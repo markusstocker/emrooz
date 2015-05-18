@@ -21,7 +21,6 @@ import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
 
-import fi.uef.envi.emrooz.api.BindingResultSet;
 import fi.uef.envi.emrooz.api.QueryHandler;
 import fi.uef.envi.emrooz.api.ResultSet;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
@@ -72,7 +71,7 @@ public class SesameQueryHandler implements QueryHandler<BindingSet> {
 	}
 
 	@Override
-	public BindingResultSet evaluate() {
+	public ResultSet<BindingSet> evaluate() {
 		try {
 			ResultSet<Statement> rs = other.evaluate();
 
@@ -101,7 +100,7 @@ public class SesameQueryHandler implements QueryHandler<BindingSet> {
 		}
 	}
 
-	private class SesameBindingResultSet implements BindingResultSet {
+	private class SesameBindingResultSet implements ResultSet<BindingSet> {
 
 		private TupleQueryResult result;
 
