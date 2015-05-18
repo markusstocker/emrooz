@@ -5,6 +5,7 @@
 
 package fi.uef.envi.emrooz.examples;
 
+import org.openrdf.model.Value;
 import org.openrdf.query.BindingSet;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.sail.SailRepository;
@@ -57,12 +58,9 @@ public class QuerySensorObservationsExample {
 
 		Repository r = new SailRepository(new MemoryStore());
 		SesameKnowledgeStore ks = new SesameKnowledgeStore(r);
-
-		CassandraDataStore ds = new CassandraDataStore();
-
-		Emrooz emrooz = new Emrooz(ks, ds);
-
 		ks.addSensor(f.createSensor("thermometer", "temperature", "air", 1.0));
+
+		Emrooz emrooz = new Emrooz(ks, new CassandraDataStore());
 
 		SensorObservationQuery query = QueryFactory
 				.createSensorObservationQuery(sparql);
@@ -71,8 +69,11 @@ public class QuerySensorObservationsExample {
 
 		while (results.hasNext()) {
 			BindingSet result = results.next();
-			System.out.println(result.getValue("time") + " "
-					+ result.getValue("value"));
+			
+			Value time = result.getValue("time");
+			Value value = result.getValue("value");
+
+			System.out.println(time + " " + value);
 		}
 
 		results.close();
