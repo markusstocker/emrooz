@@ -5,11 +5,6 @@
 
 package fi.uef.envi.emrooz.cassandra;
 
-import static fi.uef.envi.emrooz.EmroozOptions.DATA_TABLE_ATTRIBUTE_3;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -20,18 +15,11 @@ import java.util.logging.Logger;
 import org.joda.time.DateTime;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFHandlerException;
-import org.openrdf.rio.RDFParseException;
-import org.openrdf.rio.RDFParser;
-import org.openrdf.rio.Rio;
-import org.openrdf.rio.helpers.StatementCollector;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.utils.Bytes;
 
 import fi.uef.envi.emrooz.Rollover;
 import fi.uef.envi.emrooz.api.QueryHandler;
@@ -151,7 +139,7 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 						+ rollover + "]");
 		}
 
-		return new CassandraStatementResultSet(results.iterator());
+		return new CassandraResultSet(results.iterator());
 	}
 
 	private Iterator<Row> getSensorObservations(String rowKey,
@@ -181,73 +169,6 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 		return session.execute(
 				new BoundStatement(sensorObservationSelectStatement).bind(
 						rowKey, columnNameFrom, columnNameTo)).iterator();
-	}
-
-	private static class CassandraStatementResultSet implements
-			ResultSet<Statement> {
-
-		private Iterator<Iterator<Row>> results;
-		private Iterator<Statement> statements;
-
-		private CassandraStatementResultSet(Iterator<Iterator<Row>> results) {
-			this.results = results;
-			nextStatementIterator();
-		}
-
-		@Override
-		public boolean hasNext() {
-			return statements.hasNext();
-		}
-
-		@Override
-		public Statement next() {
-			return statements.next();
-		}
-
-		@Override
-		public void close() {
-			// Nothing to close
-		}
-
-		private void nextStatementIterator() {
-			if (!results.hasNext()) {
-				statements = Collections.emptyIterator();
-				return; // There are no results
-			}
-
-			statements = toStatements(results.next());
-
-			if (!statements.hasNext())
-				// The statements may be an empty iterator, continue till there
-				// is a non-empty statement iterator or there are no more
-				// results
-				nextStatementIterator();
-		}
-
-		private Iterator<Statement> toStatements(Iterator<Row> iterator) {
-			if (!iterator.hasNext()) {
-				return Collections.emptyIterator();
-			}
-
-			Set<Statement> ret = new HashSet<Statement>();
-			RDFParser rdfParser = Rio.createParser(RDFFormat.BINARY);
-			StatementCollector collector = new StatementCollector(ret);
-			rdfParser.setRDFHandler(collector);
-
-			try {
-				while (iterator.hasNext()) {
-					rdfParser.parse(
-							new ByteArrayInputStream(Bytes.getArray(iterator
-									.next().getBytes(DATA_TABLE_ATTRIBUTE_3))),
-							null);
-				}
-			} catch (RDFParseException | RDFHandlerException | IOException e) {
-				e.printStackTrace();
-			}
-
-			return Collections.unmodifiableSet(ret).iterator();
-		}
-
 	}
 
 }
