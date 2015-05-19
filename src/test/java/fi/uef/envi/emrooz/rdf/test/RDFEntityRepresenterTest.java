@@ -21,7 +21,11 @@ import org.joda.time.DateTime;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 
+import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
+import fi.uef.envi.emrooz.entity.qudt.Unit;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
+import fi.uef.envi.emrooz.entity.ssn.Frequency;
+import fi.uef.envi.emrooz.entity.ssn.MeasurementCapability;
 import fi.uef.envi.emrooz.entity.ssn.ObservationValueDouble;
 import fi.uef.envi.emrooz.entity.ssn.Property;
 import fi.uef.envi.emrooz.entity.ssn.Sensor;
@@ -136,4 +140,35 @@ public class RDFEntityRepresenterTest {
 		assertNotEquals(statementsE, statementsA);
 		assertNotEquals(observationE, observationA);
 	}
+
+	@Test
+	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testSensor.csv")
+	public void testSensor(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI propertyId,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI featureId,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI measCapaId,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI measPropId,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI valueId,
+			@ConvertParam(value = ParamsConverterTest.StringToDoubleConverter.class) Double value,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI unitId,
+			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
+			String assertType) {
+		Sensor sensorA = new Sensor(id, new Property(propertyId,
+				new FeatureOfInterest(featureId)), new MeasurementCapability(
+				measCapaId, new Frequency(measPropId, new QuantityValue(
+						valueId, value, new Unit(unitId)))));
+		Set<Statement> statementsA = representer.createRepresentation(sensorA);
+		Sensor sensorE = representer.createSensor(statementsE);
+
+		if (assertType.equals("assertEquals")) {
+			assertEquals(statementsE, statementsA);
+			assertEquals(sensorE, sensorA);
+			return;
+		}
+
+		assertNotEquals(statementsE, statementsA);
+		assertNotEquals(sensorE, sensorA);
+	}
+
 }

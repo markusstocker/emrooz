@@ -123,6 +123,12 @@ public class Sensor extends AbstractEntity {
 				return false;
 		} else if (!type.equals(other.type))
 			return false;
+		
+		if (property == null) {
+			if (other.property != null)
+				return false;
+		} else if (!property.equals(other.property))
+			return false;
 
 		if (!capabilities.equals(other.capabilities))
 			return false;

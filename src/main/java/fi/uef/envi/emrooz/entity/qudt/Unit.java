@@ -31,7 +31,11 @@ import fi.uef.envi.emrooz.vocabulary.QUDTSchema;
 public class Unit extends AbstractEntity {
 
 	public Unit(URI id) {
-		super(id, QUDTSchema.Unit);
+		this(id, QUDTSchema.Unit);
+	}
+
+	public Unit(URI id, URI type) {
+		super(id, type);
 	}
 
 	@Override
@@ -72,7 +76,7 @@ public class Unit extends AbstractEntity {
 				return false;
 		} else if (!type.equals(other.type))
 			return false;
-		
+
 		return true;
 	}
 

@@ -125,7 +125,6 @@ public class RDFEntityRepresenter {
 			if (log.isLoggable(Level.SEVERE))
 				log.severe("Failed to extract observation id [id = null; statements = "
 						+ statements + "]");
-
 			return null;
 		}
 
@@ -176,11 +175,34 @@ public class RDFEntityRepresenter {
 			if (log.isLoggable(Level.SEVERE))
 				log.severe("Failed to extract sensor id [id = null; statements = "
 						+ statements + "]");
-
 			return null;
 		}
 
-		return new Sensor(id, _getType(id, SSN.Sensor, statements));
+		Sensor ret = new Sensor(id, _getType(id, SSN.Sensor, statements));
+
+		Property property = createProperty(_matchSubject(
+				_getObjectId(id, SSN.observes, statements), statements));
+
+		if (property != null) {
+			ret.setObservedProperty(property);
+
+			FeatureOfInterest feature = createFeatureOfInterest(_matchSubject(
+					_getObjectId(property.getId(), SSN.isPropertyOf, statements),
+					statements));
+
+			if (feature != null)
+				property.setPropertyOf(feature);
+		}
+
+		Set<URI> measurementCapabilityIds = _getObjectIds(id,
+				SSN.hasMeasurementCapability, statements);
+
+		for (URI measurementCapabilityId : measurementCapabilityIds) {
+			ret.addMeasurementCapability(createMeasurementCapability(_matchSubject(
+					measurementCapabilityId, statements)));
+		}
+
+		return ret;
 	}
 
 	public Set<Statement> createRepresentation(MeasurementCapability capability) {
@@ -206,6 +228,31 @@ public class RDFEntityRepresenter {
 		return Collections.unmodifiableSet(ret);
 	}
 
+	public MeasurementCapability createMeasurementCapability(
+			Set<Statement> statements) {
+		URI id = _getId(SSN.MeasurementCapability, statements);
+
+		if (id == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to extract measurement capability id [id = null; statements = "
+						+ statements + "]");
+			return null;
+		}
+
+		MeasurementCapability ret = new MeasurementCapability(id, _getType(id,
+				SSN.MeasurementCapability, statements));
+
+		Set<URI> measurementPropertyIds = _getObjectIds(id,
+				SSN.hasMeasurementProperty, statements);
+
+		for (URI measurementPropertyId : measurementPropertyIds) {
+			ret.addMeasurementProperty(createMeasurementProperty(_matchSubject(
+					measurementPropertyId, statements)));
+		}
+
+		return ret;
+	}
+
 	public Set<Statement> createRepresentation(MeasurementProperty property) {
 		if (property == null)
 			return Collections.emptySet();
@@ -217,6 +264,34 @@ public class RDFEntityRepresenter {
 		return Collections.unmodifiableSet(statements);
 	}
 
+	public MeasurementProperty createMeasurementProperty(
+			Set<Statement> statements) {
+		URI id = _getId(SSN.MeasurementProperty, statements);
+
+		if (id == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to extract measurement property id [id = null; statements = "
+						+ statements + "]");
+			return null;
+		}
+
+		URI type = _getType(id, SSN.MeasurementProperty, statements);
+
+		if (type.equals(SSN.Frequency))
+			return createFrequency(statements);
+
+		if (log.isLoggable(Level.WARNING))
+			log.warning("Failed to create measurement property, unrecognized type [id = "
+					+ id
+					+ "; type = "
+					+ type
+					+ "; statements = "
+					+ statements
+					+ "]");
+
+		return null;
+	}
+
 	public Set<Statement> createRepresentation(Frequency frequency) {
 		Set<Statement> ret = new HashSet<Statement>();
 
@@ -225,6 +300,7 @@ public class RDFEntityRepresenter {
 
 		URI frequencyId = frequency.getId();
 
+		ret.add(_statement(frequencyId, RDF.TYPE, SSN.MeasurementProperty));
 		ret.add(_statement(frequencyId, RDF.TYPE, SSN.Frequency));
 		ret.add(_statement(frequencyId, RDF.TYPE, frequency.getType()));
 
@@ -236,6 +312,28 @@ public class RDFEntityRepresenter {
 		}
 
 		return Collections.unmodifiableSet(ret);
+	}
+
+	public Frequency createFrequency(Set<Statement> statements) {
+		URI id = _getId(SSN.Frequency, statements);
+
+		if (id == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to extract frequency id [id = null; statements = "
+						+ statements + "]");
+			return null;
+		}
+
+		Frequency ret = new Frequency(id);
+
+		QuantityValue value = createQuantityValue(_matchSubject(
+				_getObjectId(id, SSN.hasValue, statements), statements));
+
+		if (value != null) {
+			ret.setQuantityValue(value);
+		}
+
+		return ret;
 	}
 
 	public Set<Statement> createRepresentation(QuantityValue value) {
@@ -255,9 +353,82 @@ public class RDFEntityRepresenter {
 
 		if (unit != null) {
 			ret.add(_statement(valueId, QUDTSchema.unit, unit.getId()));
+			ret.addAll(createRepresentation(unit));
 		}
 
 		return Collections.unmodifiableSet(ret);
+	}
+
+	public QuantityValue createQuantityValue(Set<Statement> statements) {
+		URI id = _getId(QUDTSchema.QuantityValue, statements);
+
+		if (id == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to extract quantity value id [id = null; statements = "
+						+ statements + "]");
+			return null;
+		}
+
+		QuantityValue ret = new QuantityValue(id);
+
+		Double value = null;
+
+		for (Statement statement : statements) {
+			if (statement.getSubject().equals(id)
+					&& statement.getPredicate().equals(QUDTSchema.numericValue)) {
+				value = Double.valueOf(statement.getObject().stringValue());
+				break;
+			}
+		}
+
+		if (value == null) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("Failed to extract quantity value [value = null; statements = "
+						+ statements + "]");
+		} else {
+			ret.setNumericValue(value);
+		}
+
+		Unit unit = createUnit(_matchSubject(
+				_getObjectId(id, QUDTSchema.unit, statements), statements));
+
+		if (unit == null) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("Failed to extract unit [unit = null; statements = "
+						+ statements + "]");
+		} else {
+			ret.setUnit(unit);
+		}
+
+		return ret;
+	}
+
+	public Set<Statement> createRepresentation(Unit unit) {
+		Set<Statement> ret = new HashSet<Statement>();
+
+		if (unit == null)
+			return Collections.unmodifiableSet(ret);
+
+		URI unitId = unit.getId();
+
+		ret.add(_statement(unitId, RDF.TYPE, QUDTSchema.Unit));
+		ret.add(_statement(unitId, RDF.TYPE, unit.getType()));
+
+		return Collections.unmodifiableSet(ret);
+	}
+
+	public Unit createUnit(Set<Statement> statements) {
+		URI id = _getId(QUDTSchema.Unit, statements);
+
+		if (id == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to extract unit id [id = null; statements = "
+						+ statements + "]");
+
+			return null;
+		}
+
+		return new Unit(id, _getType(id, QUDTSchema.Unit, statements));
 	}
 
 	public Set<Statement> createRepresentation(Property property) {
@@ -267,12 +438,12 @@ public class RDFEntityRepresenter {
 			return Collections.unmodifiableSet(ret);
 
 		URI propertyId = property.getId();
-		
+
 		ret.add(_statement(propertyId, RDF.TYPE, SSN.Property));
 		ret.add(_statement(propertyId, RDF.TYPE, property.getType()));
-		
+
 		FeatureOfInterest feature = property.getPropertyOf();
-		
+
 		if (feature != null) {
 			ret.add(_statement(propertyId, SSN.isPropertyOf, feature.getId()));
 			ret.addAll(createRepresentation(feature));
@@ -511,6 +682,50 @@ public class RDFEntityRepresenter {
 		}
 
 		return type;
+	}
+
+	private static URI _getObjectId(URI subject, URI predicate,
+			Set<Statement> statements) {
+		for (Statement statement : statements) {
+			if (statement.getSubject().equals(subject)
+					&& statement.getPredicate().equals(predicate))
+				return vf.createURI(statement.getObject().stringValue());
+		}
+
+		return null;
+	}
+
+	private static Set<URI> _getObjectIds(URI subject, URI predicate,
+			Set<Statement> statements) {
+		Set<URI> ret = new HashSet<URI>();
+
+		for (Statement statement : statements) {
+			if (statement.getSubject().equals(subject)
+					&& statement.getPredicate().equals(predicate))
+				ret.add(vf.createURI(statement.getObject().stringValue()));
+		}
+
+		return Collections.unmodifiableSet(ret);
+	}
+
+	private static Set<Statement> _matchSubject(URI subject,
+			Set<Statement> statements) {
+		if (statements.isEmpty())
+			return Collections.emptySet();
+
+		Set<Statement> ret = new HashSet<Statement>();
+
+		for (Statement statement : statements) {
+			if (statement.getSubject().equals(subject)) {
+				ret.add(statement);
+				Value object = statement.getObject();
+				if (object instanceof URI)
+					ret.addAll(_matchSubject(
+							vf.createURI(object.stringValue()), statements));
+			}
+		}
+
+		return Collections.unmodifiableSet(ret);
 	}
 
 	private class RepresenterObservationValueVisitor implements
