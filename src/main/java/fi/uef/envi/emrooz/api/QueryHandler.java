@@ -5,6 +5,8 @@
 
 package fi.uef.envi.emrooz.api;
 
+import org.openrdf.query.TupleQueryResultHandler;
+
 /**
  * <p>
  * Title: QueryHandler
@@ -23,8 +25,10 @@ package fi.uef.envi.emrooz.api;
  */
 
 public interface QueryHandler<T> {
-
+	
 	public ResultSet<T> evaluate();
+	
+	public void evaluate(TupleQueryResultHandler handler);
 	
 	public void close();
 	

@@ -11,6 +11,8 @@ import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.QueryLanguage;
 import org.openrdf.query.TupleQuery;
+import org.openrdf.query.TupleQueryResultHandler;
+import org.openrdf.query.TupleQueryResultHandlerException;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
@@ -65,18 +67,19 @@ public class SesameQueryHandler implements QueryHandler<BindingSet> {
 	@Override
 	public ResultSet<BindingSet> evaluate() {
 		try {
-			ResultSet<Statement> rs = other.evaluate();
-
-			while (rs.hasNext()) {
-				conn.add(rs.next());
-			}
-
-			TupleQuery tupleQuery = conn.prepareTupleQuery(
-					QueryLanguage.SPARQL, query.getQueryString());
-
-			return new SesameResultSet(tupleQuery.evaluate());
+			return new SesameResultSet(getTupleQuery().evaluate());
 		} catch (QueryEvaluationException | RepositoryException
 				| MalformedQueryException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public void evaluate(TupleQueryResultHandler handler) {
+		try {
+			getTupleQuery().evaluate(handler);
+		} catch (QueryEvaluationException | RepositoryException
+				| MalformedQueryException | TupleQueryResultHandlerException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -89,6 +92,18 @@ public class SesameQueryHandler implements QueryHandler<BindingSet> {
 		} catch (RepositoryException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private TupleQuery getTupleQuery() throws RepositoryException,
+			MalformedQueryException {
+		ResultSet<Statement> rs = other.evaluate();
+
+		while (rs.hasNext()) {
+			conn.add(rs.next());
+		}
+
+		return conn.prepareTupleQuery(QueryLanguage.SPARQL,
+				query.getQueryString());
 	}
 
 }

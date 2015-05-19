@@ -15,9 +15,11 @@ import org.joda.time.DateTime;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.query.BindingSet;
+import org.openrdf.query.TupleQueryResultHandler;
 
 import fi.uef.envi.emrooz.api.DataStore;
 import fi.uef.envi.emrooz.api.KnowledgeStore;
+import fi.uef.envi.emrooz.api.QueryHandler;
 import fi.uef.envi.emrooz.api.ResultSet;
 import fi.uef.envi.emrooz.entity.TemporalEntityVisitor;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
@@ -85,7 +87,7 @@ public class Emrooz {
 	public void add(Sensor sensor) {
 		ks.addSensor(sensor);
 	}
-	
+
 	public void add(SensorObservation observation) {
 		if (observation == null)
 			return;
@@ -163,13 +165,38 @@ public class Emrooz {
 	}
 
 	public ResultSet<BindingSet> evaluate(SensorObservationQuery query) {
+		QueryHandler<BindingSet> qh = createQueryHandler(query);
+
+		if (qh == null)
+			return new EmptyResultSet<BindingSet>();
+
+		return qh.evaluate();
+	}
+
+	public void evaluate(SensorObservationQuery query,
+			TupleQueryResultHandler handler) {
+		QueryHandler<BindingSet> qh = createQueryHandler(query);
+
+		if (qh == null)
+			return;
+
+		qh.evaluate(handler);
+	}
+
+	public void close() {
+		ks.close();
+		ds.close();
+	}
+
+	private QueryHandler<BindingSet> createQueryHandler(
+			SensorObservationQuery query) {
 		URI sensorId = query.getSensorId();
 
 		if (sensorId == null) {
 			if (log.isLoggable(Level.WARNING))
 				log.warning("No specified sensor in query [query = " + query
 						+ "]");
-			return new EmptyResultSet<BindingSet>();
+			return null;
 		}
 
 		URI propertyId = query.getPropertyId();
@@ -178,7 +205,7 @@ public class Emrooz {
 			if (log.isLoggable(Level.WARNING))
 				log.warning("No specified property in query [query = " + query
 						+ "]");
-			return new EmptyResultSet<BindingSet>();
+			return null;
 		}
 
 		URI featureId = query.getFeatureOfInterestId();
@@ -187,7 +214,7 @@ public class Emrooz {
 			if (log.isLoggable(Level.WARNING))
 				log.warning("No specified feature in query [query = " + query
 						+ "]");
-			return new EmptyResultSet<BindingSet>();
+			return null;
 		}
 
 		Sensor specification = getSpecification(sensorId, propertyId, featureId);
@@ -197,24 +224,11 @@ public class Emrooz {
 				log.warning("No specification found [sensorId = " + sensorId
 						+ "; propertyId = " + propertyId + "; featureId = "
 						+ featureId + "]");
-			return new EmptyResultSet<BindingSet>();
+			return null;
 		}
 
 		return ks.createQueryHandler(
-				ds.createQueryHandler(specification, query), query).evaluate();
-	}
-
-	// public void evaluate(SensorObservationQuery query,
-	// TupleQueryResultHandler handler) {
-	// new fi.uef.envi.emrooz.query.ResultSet(query, getSensorObservations(
-	// query.getSensorId(), query.getPropertyId(),
-	// query.getFeatureOfInterestId(), query.getTimeFrom(),
-	// query.getTimeTo()), handler);
-	// }
-
-	public void close() {
-		ks.close();
-		ds.close();
+				ds.createQueryHandler(specification, query), query);
 	}
 
 	private void sensors() {

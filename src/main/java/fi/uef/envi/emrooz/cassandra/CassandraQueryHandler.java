@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 import org.joda.time.DateTime;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
+import org.openrdf.query.TupleQueryResultHandler;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
@@ -80,6 +81,12 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 		return getSensorObservations(query.getSensorId(),
 				query.getPropertyId(), query.getFeatureOfInterestId(),
 				query.getTimeFrom(), query.getTimeTo());
+	}
+
+	@Override
+	public void evaluate(TupleQueryResultHandler handler) {
+		throw new UnsupportedOperationException(
+				"Query evaluation with result handler not supported");
 	}
 
 	@Override
