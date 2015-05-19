@@ -1,0 +1,4 @@
+http://example.org#f1,http://purl.oclc.org/NET/ssnx/ssn#Frequency,http://example.org#qv1,http://qudt.org/schema/qudt#QuantityValue,1.0,http://qudt.org/vocab/unit#Hertz,http://example.org#f1,http://purl.oclc.org/NET/ssnx/ssn#Frequency,http://example.org#qv1,http://qudt.org/schema/qudt#QuantityValue,1.0,http://qudt.org/vocab/unit#Hertz,assertEquals
+http://example.org#f1,,http://example.org#qv1,,1.0,http://qudt.org/vocab/unit#Hertz,http://example.org#f1,,http://example.org#qv1,,1.0,http://qudt.org/vocab/unit#Hertz,assertEquals
+http://example.org#f1,,http://example.org#qv1,,1.0,http://qudt.org/vocab/unit#Hertz,http://example.org#f1,,http://example.org#qv1,,2.0,http://qudt.org/vocab/unit#Hertz,assertNotEquals
+http://example.org#f1,,http://example.org#qv1,,1.0,http://qudt.org/vocab/unit#Hertz,http://example.org#f1,,http://example.org#qv1,,1.0,http://example.org#Hertz,assertNotEquals
