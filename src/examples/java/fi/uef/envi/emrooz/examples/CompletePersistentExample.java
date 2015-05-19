@@ -73,6 +73,8 @@ public class CompletePersistentExample {
 				+ "filter (?time >= \"2015-05-18T00:00:30.000+03:00\"^^xsd:dateTime && ?time < \"2015-05-18T00:00:35.000+03:00\"^^xsd:dateTime)"
 				+ "} order by asc (?time)";
 
+		System.out.println("== QUERY ==");
+		
 		long start = System.currentTimeMillis();
 
 		e.evaluate(QueryFactory.createSensorObservationQuery(sparql),
@@ -91,6 +93,8 @@ public class CompletePersistentExample {
 
 		DateTime now = dtf.parseDateTime("2015-05-18T00:00:00.000+03:00");
 
+		System.out.println("== ADD ==");
+		
 		long start = System.currentTimeMillis();
 
 		for (int i = 0; i < 120; i++) {
