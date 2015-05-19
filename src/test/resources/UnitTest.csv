@@ -1,0 +1,3 @@
+http://example.org#u1,http://example.org#u1,assertEquals
+http://example.org#u1,http://example.org#u2,assertNotEquals
+http://qudt.org/vocab/unit#Hertz,http://qudt.org/vocab/unit#Hertz,assertEquals

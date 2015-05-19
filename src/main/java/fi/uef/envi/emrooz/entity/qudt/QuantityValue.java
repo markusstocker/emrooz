@@ -34,7 +34,11 @@ public class QuantityValue extends AbstractEntity {
 	public Unit unit;
 
 	public QuantityValue(URI id) {
-		this(id, QUDTSchema.QuantityValue, null, null);
+		this(id, QUDTSchema.QuantityValue);
+	}
+
+	public QuantityValue(URI id, URI type) {
+		this(id, type, null, null);
 	}
 
 	public QuantityValue(URI id, Double value, Unit unit) {
@@ -104,13 +108,13 @@ public class QuantityValue extends AbstractEntity {
 				return false;
 		} else if (!type.equals(other.type))
 			return false;
-		
+
 		if (value == null) {
 			if (other.value != null)
 				return false;
 		} else if (!value.equals(other.value))
 			return false;
-		
+
 		if (unit == null) {
 			if (other.unit != null)
 				return false;
