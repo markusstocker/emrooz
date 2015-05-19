@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
@@ -95,7 +96,24 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 
 	@Override
 	public void addSensor(Sensor sensor) {
-		load(representer.createRepresentation(sensor));
+		URI sensorId = sensor.getId();
+
+		try {
+			if (!connection.hasStatement(sensorId, RDF.TYPE, SSN.Sensor, false,
+					new Resource[] {})) {
+				load(representer.createRepresentation(sensor));
+				return;
+			}
+		} catch (RepositoryException e) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to check if sensor exists in knowledge store [sensor = "
+						+ sensor + "]");
+		}
+
+		if (log.isLoggable(Level.INFO)) {
+			log.info("Sensor already exists in knowledge store [sensor = "
+					+ sensor + "]");
+		}
 	}
 
 	@Override
@@ -178,7 +196,7 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 				+ "?featureId rdf:type ssn:FeatureOfInterest ."
 				+ "?sensorId ssn:hasMeasurementCapability ?measCapabilityId ."
 				+ "?measCapabilityId rdf:type ssn:MeasurementCapability ."
-				+ "?capabilityId ssn:hasMeasurementProperty ?measPropertyId ."
+				+ "?measCapabilityId ssn:hasMeasurementProperty ?measPropertyId ."
 				+ "?measPropertyId rdf:type ssn:Frequency ."
 				+ "?measPropertyId ssn:hasValue ?valueId ."
 				+ "?valueId rdf:type qudt:QuantityValue ."
@@ -192,7 +210,7 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 
 			while (rs.hasNext()) {
 				BindingSet bs = rs.next();
-
+				
 				URI sensorId = _uri(bs.getValue("sensorId"));
 				URI propertyId = _uri(bs.getValue("propertyId"));
 				URI featureId = _uri(bs.getValue("featureId"));
