@@ -25,7 +25,7 @@ import fi.uef.envi.emrooz.vocabulary.QUDTUnit;
 
 /**
  * <p>
- * Title: SensorRegistrationExample
+ * Title: SensorSpecificationExample
  * </p>
  * <p>
  * Description:
@@ -40,7 +40,7 @@ import fi.uef.envi.emrooz.vocabulary.QUDTUnit;
  * @author Markus Stocker
  */
 
-public class SensorRegistrationExample {
+public class SensorSpecificationExample {
 
 	static EntityFactory f = EntityFactory.getInstance("http://example.org#");
 
