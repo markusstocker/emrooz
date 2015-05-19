@@ -51,7 +51,7 @@ public class SensorObservationTest {
 
 	@Test
 	@FileParameters("src/test/resources/SensorObservationTest.csv")
-	public void testSensorObservations(
+	public void testSensorObservation(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI sensorId1,

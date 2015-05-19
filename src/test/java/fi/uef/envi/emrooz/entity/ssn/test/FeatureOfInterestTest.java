@@ -41,7 +41,7 @@ public class FeatureOfInterestTest {
 
 	@Test
 	@FileParameters("src/test/resources/FeatureOfInterestTest.csv")
-	public void testFeaturesOfInterest(
+	public void testFeatureOfInterest(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id2,

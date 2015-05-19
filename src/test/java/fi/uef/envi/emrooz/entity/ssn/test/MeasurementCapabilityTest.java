@@ -45,7 +45,7 @@ public class MeasurementCapabilityTest {
 
 	@Test
 	@FileParameters("src/test/resources/MeasurementCapabilityTest.csv")
-	public void testQuantityValue(
+	public void testMeasurementCapability(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI measPropId1,

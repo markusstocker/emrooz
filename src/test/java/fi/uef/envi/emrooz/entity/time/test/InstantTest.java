@@ -44,7 +44,7 @@ public class InstantTest {
 
 	@Test
 	@FileParameters("src/test/resources/InstantTest.csv")
-	public void testInstants(
+	public void testInstant(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type1,
 			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime value1,

@@ -41,7 +41,7 @@ public class PropertyTest {
 
 	@Test
 	@FileParameters("src/test/resources/PropertyTest.csv")
-	public void testProperties(
+	public void testProperty(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id2,

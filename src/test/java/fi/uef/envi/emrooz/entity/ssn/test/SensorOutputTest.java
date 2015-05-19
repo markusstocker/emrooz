@@ -44,7 +44,7 @@ public class SensorOutputTest {
 
 	@Test
 	@FileParameters("src/test/resources/SensorOutputTest.csv")
-	public void testSensorOutputs(
+	public void testSensorOutput(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id2,

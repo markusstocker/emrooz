@@ -44,7 +44,7 @@ public class FrequencyTest {
 
 	@Test
 	@FileParameters("src/test/resources/FrequencyTest.csv")
-	public void testQuantityValue(
+	public void testFrequency(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI valueId1,

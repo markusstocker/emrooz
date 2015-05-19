@@ -43,7 +43,7 @@ public class ObservationValueDoubleTest {
 
 	@Test
 	@FileParameters("src/test/resources/ObservationValueDoubleTest.csv")
-	public void testObservationValuesDouble(
+	public void testObservationValueDouble(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type1,
 			@ConvertParam(value = ParamsConverterTest.StringToDoubleConverter.class) Double value1,
