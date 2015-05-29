@@ -13,6 +13,7 @@ import org.openrdf.query.QueryLanguage;
 import org.openrdf.query.TupleQuery;
 import org.openrdf.query.TupleQueryResultHandler;
 import org.openrdf.query.TupleQueryResultHandlerException;
+import org.openrdf.query.parser.ParsedQuery;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
@@ -21,7 +22,6 @@ import org.openrdf.sail.memory.MemoryStore;
 
 import fi.uef.envi.emrooz.api.QueryHandler;
 import fi.uef.envi.emrooz.api.ResultSet;
-import fi.uef.envi.emrooz.query.SensorObservationQuery;
 
 /**
  * <p>
@@ -45,12 +45,13 @@ public class SesameQueryHandler implements QueryHandler<BindingSet> {
 	private Repository repo;
 	private RepositoryConnection conn;
 	private QueryHandler<Statement> other;
-	private SensorObservationQuery query;
+	private ParsedQuery query;
 
-	public SesameQueryHandler(QueryHandler<Statement> other,
-			SensorObservationQuery query) {
+	public SesameQueryHandler(QueryHandler<Statement> other, ParsedQuery query) {
 		if (other == null)
 			throw new RuntimeException("[other = null]");
+		if (query == null)
+			throw new RuntimeException("[query = null]");
 
 		this.other = other;
 		this.query = query;
@@ -103,7 +104,7 @@ public class SesameQueryHandler implements QueryHandler<BindingSet> {
 		}
 
 		return conn.prepareTupleQuery(QueryLanguage.SPARQL,
-				query.getQueryString());
+				query.getSourceString());
 	}
 
 }

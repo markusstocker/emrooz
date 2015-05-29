@@ -5,6 +5,7 @@
 
 package fi.uef.envi.emrooz.api;
 
+import java.util.Map;
 import java.util.Set;
 
 import org.joda.time.DateTime;
@@ -35,8 +36,8 @@ public interface DataStore {
 	public void addSensorObservation(Sensor specification, DateTime resultTime,
 			Set<Statement> statements);
 
-	public QueryHandler<Statement> createQueryHandler(Sensor specification,
-			SensorObservationQuery query);
+	public QueryHandler<Statement> createQueryHandler(
+			Map<SensorObservationQuery, Sensor> queries);
 
 	public void close();
 

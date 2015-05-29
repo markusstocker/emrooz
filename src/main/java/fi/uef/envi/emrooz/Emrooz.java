@@ -16,6 +16,7 @@ import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.TupleQueryResultHandler;
+import org.openrdf.query.parser.ParsedQuery;
 
 import fi.uef.envi.emrooz.api.DataStore;
 import fi.uef.envi.emrooz.api.KnowledgeStore;
@@ -29,7 +30,9 @@ import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
 import fi.uef.envi.emrooz.entity.time.Instant;
 import fi.uef.envi.emrooz.entity.time.TemporalEntity;
 import fi.uef.envi.emrooz.query.EmptyResultSet;
+import fi.uef.envi.emrooz.query.QueryFactory;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
+import fi.uef.envi.emrooz.query.SensorObservationQueryRewriter;
 import fi.uef.envi.emrooz.rdf.RDFEntityRepresenter;
 
 /**
@@ -59,6 +62,7 @@ public class Emrooz {
 	private DateTime instant = null;
 	private final TemporalEntityVisitor temporalEntityVisitor;
 	private final RDFEntityRepresenter representer;
+	private SensorObservationQueryRewriter sensorObservationQueryRewriter;
 
 	private static final Logger log = Logger.getLogger(Emrooz.class.getName());
 
@@ -76,6 +80,8 @@ public class Emrooz {
 		this.sensors = new HashMap<URI, Map<URI, Map<URI, Sensor>>>();
 		this.temporalEntityVisitor = new EmroozTemporalEntityVisitor();
 		this.representer = new RDFEntityRepresenter();
+		this.sensorObservationQueryRewriter = new SensorObservationQueryRewriter(
+				ks);
 
 		sensors();
 	}
@@ -164,8 +170,26 @@ public class Emrooz {
 		ds.addSensorObservation(specification, resultTime, statements);
 	}
 
-	public ResultSet<BindingSet> evaluate(SensorObservationQuery query) {
-		QueryHandler<BindingSet> qh = createQueryHandler(query);
+	public ResultSet<BindingSet> evaluate(String query) {
+		return evaluate(QueryFactory.createParsedQuery(query));
+	}
+
+	public void evaluate(String query, TupleQueryResultHandler handler) {
+		evaluate(QueryFactory.createParsedQuery(query), handler);
+	}
+
+	private ResultSet<BindingSet> evaluate(ParsedQuery query) {
+		return evaluate(query, QueryFactory.createSensorObservationQuery(query));
+	}
+
+	private void evaluate(ParsedQuery query, TupleQueryResultHandler handler) {
+		evaluate(query, QueryFactory.createSensorObservationQuery(query),
+				handler);
+	}
+
+	private ResultSet<BindingSet> evaluate(ParsedQuery original,
+			SensorObservationQuery query) {
+		QueryHandler<BindingSet> qh = createQueryHandler(original, query);
 
 		if (qh == null)
 			return new EmptyResultSet<BindingSet>();
@@ -173,9 +197,9 @@ public class Emrooz {
 		return qh.evaluate();
 	}
 
-	public void evaluate(SensorObservationQuery query,
+	private void evaluate(ParsedQuery original, SensorObservationQuery query,
 			TupleQueryResultHandler handler) {
-		QueryHandler<BindingSet> qh = createQueryHandler(query);
+		QueryHandler<BindingSet> qh = createQueryHandler(original, query);
 
 		if (qh == null)
 			return;
@@ -188,47 +212,72 @@ public class Emrooz {
 		ds.close();
 	}
 
-	private QueryHandler<BindingSet> createQueryHandler(
+	private QueryHandler<BindingSet> createQueryHandler(ParsedQuery original,
 			SensorObservationQuery query) {
-		URI sensorId = query.getSensorId();
+		if (log.isLoggable(Level.INFO))
+			log.info("Query [query = " + query + "; original = "
+					+ original.getSourceString() + "]");
 
-		if (sensorId == null) {
+		Map<SensorObservationQuery, Sensor> queriesMap = new HashMap<SensorObservationQuery, Sensor>();
+		Set<SensorObservationQuery> rewrittenQueries = sensorObservationQueryRewriter
+				.rewrite(query);
+
+		if (rewrittenQueries.isEmpty()) {
 			if (log.isLoggable(Level.WARNING))
-				log.warning("No specified sensor in query [query = " + query
+				log.warning("Rewritten queries is empty [query = " + query
 						+ "]");
+
 			return null;
 		}
 
-		URI propertyId = query.getPropertyId();
+		if (log.isLoggable(Level.INFO))
+			log.info("Rewritten queries (" + rewrittenQueries.size()
+					+ ") [rewrittenQueries = " + rewrittenQueries + "]");
 
-		if (propertyId == null) {
-			if (log.isLoggable(Level.WARNING))
-				log.warning("No specified property in query [query = " + query
-						+ "]");
-			return null;
+		for (SensorObservationQuery rewrittenQuery : rewrittenQueries) {
+			URI sensorId = rewrittenQuery.getSensorId();
+
+			if (sensorId == null) {
+				if (log.isLoggable(Level.WARNING))
+					log.warning("No specified sensor in rewrittenQuery [rewrittenQuery = "
+							+ rewrittenQuery + "]");
+				return null;
+			}
+
+			URI propertyId = rewrittenQuery.getPropertyId();
+
+			if (propertyId == null) {
+				if (log.isLoggable(Level.WARNING))
+					log.warning("No specified property in rewrittenQuery [rewrittenQuery = "
+							+ rewrittenQuery + "]");
+				return null;
+			}
+
+			URI featureId = rewrittenQuery.getFeatureOfInterestId();
+
+			if (featureId == null) {
+				if (log.isLoggable(Level.WARNING))
+					log.warning("No specified feature in rewrittenQuery [rewrittenQuery = "
+							+ rewrittenQuery + "]");
+				return null;
+			}
+
+			Sensor specification = getSpecification(sensorId, propertyId,
+					featureId);
+
+			if (specification == null) {
+				if (log.isLoggable(Level.WARNING))
+					log.warning("No specification found [sensorId = "
+							+ sensorId + "; propertyId = " + propertyId
+							+ "; featureId = " + featureId + "]");
+				return null;
+			}
+
+			queriesMap.put(rewrittenQuery, specification);
 		}
 
-		URI featureId = query.getFeatureOfInterestId();
-
-		if (featureId == null) {
-			if (log.isLoggable(Level.WARNING))
-				log.warning("No specified feature in query [query = " + query
-						+ "]");
-			return null;
-		}
-
-		Sensor specification = getSpecification(sensorId, propertyId, featureId);
-
-		if (specification == null) {
-			if (log.isLoggable(Level.WARNING))
-				log.warning("No specification found [sensorId = " + sensorId
-						+ "; propertyId = " + propertyId + "; featureId = "
-						+ featureId + "]");
-			return null;
-		}
-
-		return ks.createQueryHandler(
-				ds.createQueryHandler(specification, query), query);
+		return ks.createQueryHandler(ds.createQueryHandler(queriesMap),
+				original);
 	}
 
 	private void sensors() {

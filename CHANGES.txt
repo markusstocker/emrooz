@@ -8,6 +8,7 @@ v0.3.0
 * Modularized Cassandra and Sesame request handling
 * Introduced data and knowledge stores
 * Sensor specifications now via the knowledge store
+* Implemented query rewriting to support variable sensorId, propertyId, and featureId
 
 v0.2.0
 ======

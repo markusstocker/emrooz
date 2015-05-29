@@ -5,9 +5,11 @@
 
 package fi.uef.envi.emrooz.cassandra;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,7 +28,6 @@ import fi.uef.envi.emrooz.Rollover;
 import fi.uef.envi.emrooz.api.QueryHandler;
 import fi.uef.envi.emrooz.api.ResultSet;
 import fi.uef.envi.emrooz.entity.ssn.Sensor;
-import fi.uef.envi.emrooz.query.EmptyResultSet;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 
 /**
@@ -51,36 +52,25 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 
 	private Session session;
 	private PreparedStatement sensorObservationSelectStatement;
-	private Sensor specification;
-	private SensorObservationQuery query;
+	private Map<SensorObservationQuery, Sensor> queries;
 
 	private static final Logger log = Logger
 			.getLogger(CassandraQueryHandler.class.getName());
 
 	public CassandraQueryHandler(Session session,
 			PreparedStatement sensorObservationSelectStatement,
-			Sensor specification, SensorObservationQuery query) {
+			Map<SensorObservationQuery, Sensor> queries) {
 		if (session == null)
 			throw new NullPointerException("[session = null]");
 		if (sensorObservationSelectStatement == null)
 			throw new NullPointerException(
 					"[sensorObservationSelectStatement = null]");
-		if (specification == null)
-			throw new NullPointerException("[specification = null]");
-		if (query == null)
-			throw new NullPointerException("[query = null]");
+		if (queries == null)
+			throw new NullPointerException("[queries = null]");
 
 		this.session = session;
 		this.sensorObservationSelectStatement = sensorObservationSelectStatement;
-		this.specification = specification;
-		this.query = query;
-	}
-
-	@Override
-	public ResultSet<Statement> evaluate() {
-		return getSensorObservations(query.getSensorId(),
-				query.getPropertyId(), query.getFeatureOfInterestId(),
-				query.getTimeFrom(), query.getTimeTo());
+		this.queries = queries;
 	}
 
 	@Override
@@ -94,22 +84,38 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 		// Nothing to close
 	}
 
-	private ResultSet<Statement> getSensorObservations(URI sensor,
-			URI property, URI feature, DateTime timeFrom, DateTime timeTo) {
-		if (sensor == null || property == null || feature == null
+	@Override
+	public ResultSet<Statement> evaluate() {
+		Set<Iterator<Row>> results = new HashSet<Iterator<Row>>();
+	
+		for (Map.Entry<SensorObservationQuery, Sensor> entry : queries.entrySet()) {
+			results.addAll(getSensorObservations(entry.getKey(), entry.getValue()));
+		}
+
+		return new CassandraResultSet(results.iterator());
+	}
+	
+	private Set<Iterator<Row>> getSensorObservations(SensorObservationQuery query, Sensor specification) {
+		URI sensorId = query.getSensorId();
+		URI propertyId = query.getPropertyId();
+		URI featureId = query.getFeatureOfInterestId();
+		DateTime timeFrom = query.getTimeFrom();
+		DateTime timeTo = query.getTimeTo();
+		
+		if (sensorId == null || propertyId == null || featureId == null
 				|| timeFrom == null || timeTo == null) {
 			if (log.isLoggable(Level.SEVERE))
-				log.severe("At least one parameter is null; returned empty set [sensor = "
-						+ sensor
-						+ "; property = "
-						+ property
-						+ "; feature = "
-						+ feature
+				log.severe("At least one parameter is null; returned empty set [sensorId = "
+						+ sensorId
+						+ "; propertyId = "
+						+ propertyId
+						+ "; featureId = "
+						+ featureId
 						+ "; timeFrom = "
 						+ timeFrom
 						+ "; timeTo = "
 						+ timeTo + "]");
-			return new EmptyResultSet<Statement>();
+			return Collections.emptySet();
 		}
 
 		Rollover rollover = getRollover(specification);
@@ -118,7 +124,7 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 			if (log.isLoggable(Level.SEVERE))
 				log.severe("Registration rollover is null [specification = "
 						+ specification + "]");
-			return new EmptyResultSet<Statement>();
+			return Collections.emptySet();
 		}
 
 		DateTime time = timeFrom;
@@ -145,8 +151,8 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 				throw new RuntimeException("Unsupported rollover [rollover = "
 						+ rollover + "]");
 		}
-
-		return new CassandraResultSet(results.iterator());
+	
+		return Collections.unmodifiableSet(results);
 	}
 
 	private Iterator<Row> getSensorObservations(String rowKey,

@@ -10,9 +10,9 @@ import java.util.Set;
 
 import org.openrdf.model.Statement;
 import org.openrdf.query.BindingSet;
+import org.openrdf.query.parser.ParsedQuery;
 
 import fi.uef.envi.emrooz.entity.ssn.Sensor;
-import fi.uef.envi.emrooz.query.SensorObservationQuery;
 
 /**
  * <p>
@@ -34,13 +34,13 @@ import fi.uef.envi.emrooz.query.SensorObservationQuery;
 public interface KnowledgeStore {
 
 	public void load(File file);
-	
+
 	public void addSensor(Sensor sensor);
 
 	public Set<Sensor> getSensors();
 
 	public QueryHandler<BindingSet> createQueryHandler(
-			QueryHandler<Statement> other, SensorObservationQuery query);
+			QueryHandler<Statement> other, ParsedQuery query);
 
 	public void close();
 

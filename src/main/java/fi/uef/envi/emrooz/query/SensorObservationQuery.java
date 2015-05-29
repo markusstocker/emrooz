@@ -10,14 +10,13 @@ import java.util.List;
 import org.joda.time.DateTime;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
-import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.query.algebra.TupleExpr;
 import org.openrdf.query.algebra.Var;
 import org.openrdf.query.algebra.helpers.StatementPatternCollector;
 import org.openrdf.query.parser.ParsedQuery;
-import org.openrdf.query.parser.sparql.SPARQLParser;
 
+import fi.uef.envi.emrooz.api.Query;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 import fi.uef.envi.emrooz.vocabulary.Time;
 
@@ -38,25 +37,19 @@ import fi.uef.envi.emrooz.vocabulary.Time;
  * @author Markus Stocker
  */
 
-public class SensorObservationQuery {
+public class SensorObservationQuery implements Query {
 
-	private String queryString;
 	private URI sensorId;
 	private URI propertyId;
 	private URI featureId;
 	private DateTime timeFrom;
 	private DateTime timeTo;
 
-	private static SPARQLParser parser = new SPARQLParser();
 	private static StatementPatternCollector collector = new StatementPatternCollector();
 	private static SparqlQueryModelVisitor visitor = new SparqlQueryModelVisitor();
 
 	private SensorObservationQuery() {
 
-	}
-
-	public String getQueryString() {
-		return queryString;
 	}
 
 	public URI getSensorId() {
@@ -79,8 +72,15 @@ public class SensorObservationQuery {
 		return timeTo;
 	}
 
-	private void setQueryString(String query) {
-		this.queryString = query;
+	public boolean isFullySpecified() {
+		if (sensorId == null)
+			return false;
+		if (propertyId == null)
+			return false;
+		if (featureId == null)
+			return false;
+
+		return true;
 	}
 
 	private void setSensorId(URI id) {
@@ -103,21 +103,24 @@ public class SensorObservationQuery {
 		this.timeTo = time;
 	}
 
-	public static SensorObservationQuery parse(String queryString) {
+	public static SensorObservationQuery create(URI sensorId, URI propertyId,
+			URI featureId, DateTime timeFrom, DateTime timeTo) {
 		SensorObservationQuery ret = new SensorObservationQuery();
 
-		if (queryString == null) {
-			throw new RuntimeException("Cannot parse query, query is null");
-		}
+		ret.setSensorId(sensorId);
+		ret.setPropertyId(propertyId);
+		ret.setFeatureOfInterestId(featureId);
+		ret.setTimeFrom(timeFrom);
+		ret.setTimeTo(timeTo);
 
-		ret.setQueryString(queryString);
+		return ret;
+	}
 
-		ParsedQuery query;
+	public static SensorObservationQuery create(ParsedQuery query) {
+		SensorObservationQuery ret = new SensorObservationQuery();
 
-		try {
-			query = parser.parseQuery(queryString, null);
-		} catch (MalformedQueryException e) {
-			throw new RuntimeException(e);
+		if (query == null) {
+			throw new RuntimeException("[query = null]");
 		}
 
 		TupleExpr expr = query.getTupleExpr();
@@ -167,22 +170,10 @@ public class SensorObservationQuery {
 			}
 		}
 
-		if (sensorId == null)
-			throw new RuntimeException(
-					"Cannot parse query, failed to determine sensor [sensorId = null; queryString = "
-							+ queryString + "]");
-		if (propertyId == null)
-			throw new RuntimeException(
-					"Cannot parse query, failed to determine property [propertyId = null; queryString = "
-							+ queryString + "]");
-		if (featureId == null)
-			throw new RuntimeException(
-					"Cannot parse query, failed to determine feature [featureId = null; queryString = "
-							+ queryString + "]");
 		if (inXSDDateTimeVar == null)
 			throw new RuntimeException(
-					"Cannot parse query, failed to determine XSD date time variable [inXSDDateTimeVar = null; queryString = "
-							+ queryString + "]");
+					"Cannot create query, failed to determine XSD date time variable [inXSDDateTimeVar = null; queryString = "
+							+ query + "]");
 
 		visitor.setInXSDDateTimeVar(inXSDDateTimeVar);
 
@@ -197,12 +188,12 @@ public class SensorObservationQuery {
 
 		if (timeFrom == null)
 			throw new RuntimeException(
-					"Cannot parse query, failed to determine time interval [timeFrom = null; queryString = "
-							+ queryString + "]");
+					"Cannot create query, failed to determine time interval [timeFrom = null; queryString = "
+							+ query + "]");
 		if (timeTo == null)
 			throw new RuntimeException(
-					"Cannot parse query, failed to determine time interval [timeTo = null; queryString = "
-							+ queryString + "]");
+					"Cannot create query, failed to determine time interval [timeTo = null; queryString = "
+							+ query + "]");
 
 		ret.setSensorId(sensorId);
 		ret.setPropertyId(propertyId);
@@ -211,5 +202,74 @@ public class SensorObservationQuery {
 		ret.setTimeTo(timeTo);
 
 		return ret;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+
+		result = prime * result
+				+ ((sensorId == null) ? 0 : sensorId.hashCode());
+		result = prime * result
+				+ ((propertyId == null) ? 0 : propertyId.hashCode());
+		result = prime * result
+				+ ((featureId == null) ? 0 : featureId.hashCode());
+		result = prime * result
+				+ ((timeFrom == null) ? 0 : timeFrom.hashCode());
+		result = prime * result + ((timeTo == null) ? 0 : timeTo.hashCode());
+
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+
+		SensorObservationQuery other = (SensorObservationQuery) obj;
+
+		if (sensorId == null) {
+			if (other.sensorId != null)
+				return false;
+		} else if (!sensorId.equals(other.sensorId))
+			return false;
+
+		if (propertyId == null) {
+			if (other.propertyId != null)
+				return false;
+		} else if (!propertyId.equals(other.propertyId))
+			return false;
+
+		if (featureId == null) {
+			if (other.featureId != null)
+				return false;
+		} else if (!featureId.equals(other.featureId))
+			return false;
+
+		if (timeFrom == null) {
+			if (other.timeFrom != null)
+				return false;
+		} else if (!timeFrom.equals(other.timeFrom))
+			return false;
+
+		if (timeTo == null) {
+			if (other.timeTo != null)
+				return false;
+		} else if (!timeTo.equals(other.timeTo))
+			return false;
+
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "SensorObservationQuery [sensorId = " + sensorId
+				+ "; propertyId = " + propertyId + "; featureId = " + featureId
+				+ "; timeFrom = " + timeFrom + "; timeTo = " + timeTo + "]";
 	}
 }

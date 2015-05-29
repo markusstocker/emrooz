@@ -18,7 +18,6 @@ import org.openrdf.sail.memory.MemoryStore;
 import fi.uef.envi.emrooz.Emrooz;
 import fi.uef.envi.emrooz.cassandra.CassandraDataStore;
 import fi.uef.envi.emrooz.entity.EntityFactory;
-import fi.uef.envi.emrooz.query.QueryFactory;
 import fi.uef.envi.emrooz.sesame.SesameKnowledgeStore;
 
 /**
@@ -74,13 +73,14 @@ public class CompletePersistentExample {
 				+ "} order by asc (?time)";
 
 		System.out.println("== QUERY ==");
-		
+
 		long start = System.currentTimeMillis();
 
-		e.evaluate(QueryFactory.createSensorObservationQuery(sparql),
-				new SPARQLResultsTSVWriter(System.out)); // There are also CSV,
-															// JSON, and XML
-															// writers
+		e.evaluate(sparql, new SPARQLResultsTSVWriter(System.out)); // There are
+																	// also CSV,
+																	// JSON, and
+																	// XML
+																	// writers
 
 		long end = System.currentTimeMillis();
 
@@ -94,7 +94,7 @@ public class CompletePersistentExample {
 		DateTime now = dtf.parseDateTime("2015-05-18T00:00:00.000+03:00");
 
 		System.out.println("== ADD ==");
-		
+
 		long start = System.currentTimeMillis();
 
 		for (int i = 0; i < 120; i++) {

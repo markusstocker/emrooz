@@ -25,6 +25,7 @@ import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.QueryLanguage;
 import org.openrdf.query.TupleQuery;
 import org.openrdf.query.TupleQueryResult;
+import org.openrdf.query.parser.ParsedQuery;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
@@ -40,7 +41,6 @@ import fi.uef.envi.emrooz.entity.ssn.Frequency;
 import fi.uef.envi.emrooz.entity.ssn.MeasurementCapability;
 import fi.uef.envi.emrooz.entity.ssn.Property;
 import fi.uef.envi.emrooz.entity.ssn.Sensor;
-import fi.uef.envi.emrooz.query.SensorObservationQuery;
 import fi.uef.envi.emrooz.rdf.RDFEntityRepresenter;
 import fi.uef.envi.emrooz.vocabulary.QUDTSchema;
 import fi.uef.envi.emrooz.vocabulary.QUDTUnit;
@@ -123,7 +123,7 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 
 	@Override
 	public SesameQueryHandler createQueryHandler(QueryHandler<Statement> other,
-			SensorObservationQuery query) {
+			ParsedQuery query) {
 		return new SesameQueryHandler(other, query);
 	}
 

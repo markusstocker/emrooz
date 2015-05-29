@@ -12,6 +12,7 @@ import static fi.uef.envi.emrooz.EmroozOptions.DATA_TABLE_ATTRIBUTE_3;
 import static fi.uef.envi.emrooz.EmroozOptions.HOST;
 import static fi.uef.envi.emrooz.EmroozOptions.KEYSPACE;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -106,10 +107,10 @@ public class CassandraDataStore implements DataStore {
 	}
 
 	@Override
-	public CassandraQueryHandler createQueryHandler(Sensor specification,
-			SensorObservationQuery query) {
+	public CassandraQueryHandler createQueryHandler(
+			Map<SensorObservationQuery, Sensor> queries) {
 		return new CassandraQueryHandler(session,
-				sensorObservationSelectStatement, specification, query);
+				sensorObservationSelectStatement, queries);
 	}
 
 	@Override

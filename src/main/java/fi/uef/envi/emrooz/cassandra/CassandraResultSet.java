@@ -51,11 +51,13 @@ public class CassandraResultSet implements ResultSet<Statement> {
 
 	public CassandraResultSet(Iterator<Iterator<Row>> results) {
 		this.results = results;
-		nextStatementIterator();
+		this.statements = Collections.emptyIterator();
 	}
 
 	@Override
 	public boolean hasNext() {
+		getStatementIterator();
+
 		return statements.hasNext();
 	}
 
@@ -69,16 +71,15 @@ public class CassandraResultSet implements ResultSet<Statement> {
 		// Nothing to close
 	}
 
-	private void nextStatementIterator() {
-		if (!results.hasNext()) {
-			statements = Collections.emptyIterator();
+	private void getStatementIterator() {
+		if (!results.hasNext())
 			return;
+
+		if (!statements.hasNext()) {
+			statements = toStatements(results.next());
+			if (!statements.hasNext())
+				getStatementIterator();
 		}
-
-		statements = toStatements(results.next());
-
-		if (!statements.hasNext())
-			nextStatementIterator();
 	}
 
 	private Iterator<Statement> toStatements(Iterator<Row> iterator) {
