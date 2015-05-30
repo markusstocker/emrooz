@@ -60,17 +60,17 @@ public class CompletePersistentExample {
 		String sparql = "prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#>"
 				+ "prefix time: <http://www.w3.org/2006/time#>"
 				+ "prefix dul: <http://www.loa-cnr.it/ontologies/DUL.owl#>"
-				+ "select ?time ?value "
+				+ "select ?sensor ?property ?time ?value "
 				+ "where {"
 				+ "["
-				+ "ssn:observedBy <http://example.org#aThermometer> ;"
-				+ "ssn:observedProperty <http://example.org#temperature> ;"
+				+ "ssn:observedBy ?sensor ;"
+				+ "ssn:observedProperty ?property ;"
 				+ "ssn:featureOfInterest <http://example.org#air> ;"
 				+ "ssn:observationResultTime [ time:inXSDDateTime ?time ] ;"
 				+ "ssn:observationResult [ ssn:hasValue [ dul:hasRegionDataValue ?value ] ]"
 				+ "]"
 				+ "filter (?time >= \"2015-05-18T00:00:30.000+03:00\"^^xsd:dateTime && ?time < \"2015-05-18T00:00:35.000+03:00\"^^xsd:dateTime)"
-				+ "} order by asc (?time)";
+				+ "} order by ?sensor asc (?time)";
 
 		System.out.println("== QUERY ==");
 
@@ -89,6 +89,7 @@ public class CompletePersistentExample {
 
 	private static void add() {
 		e.add(f.createSensor("aThermometer", "temperature", "air", 1.0));
+		e.add(f.createSensor("aHygrometer", "humidity", "air", 1.0));
 		e.add(f.createSensor("aAccelerometer", "vibration", "pavement", 1.0));
 
 		DateTime now = dtf.parseDateTime("2015-05-18T00:00:00.000+03:00");
@@ -101,6 +102,8 @@ public class CompletePersistentExample {
 			e.add(f.createSensorObservation("aThermometer", "temperature",
 					"air", r.nextDouble(),
 					ISODateTimeFormat.dateTime().print(now.plusSeconds(i))));
+			e.add(f.createSensorObservation("aHygrometer", "humidity",
+					"air", r.nextDouble(), dtf.print(now.plusSeconds(i))));
 			e.add(f.createSensorObservation("aAccelerometer", "vibration",
 					"pavement", r.nextDouble(), dtf.print(now.plusSeconds(i))));
 		}
