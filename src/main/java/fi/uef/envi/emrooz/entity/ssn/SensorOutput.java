@@ -12,7 +12,7 @@ import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.entity.AbstractEntity;
 import fi.uef.envi.emrooz.entity.EntityVisitor;
-import fi.uef.envi.emrooz.vocabulary.SSN;
+import static fi.uef.envi.emrooz.vocabulary.SSN.SensorOutput;
 
 /**
  * <p>
@@ -39,11 +39,11 @@ public class SensorOutput extends AbstractEntity {
 			.getName());
 
 	public SensorOutput(URI id) {
-		this(id, SSN.SensorOutput);
+		this(id, SensorOutput);
 	}
 
 	public SensorOutput(URI id, ObservationValue value) {
-		this(id, SSN.SensorOutput, value);
+		this(id, SensorOutput, value);
 	}
 
 	public SensorOutput(URI id, URI type) {
@@ -53,6 +53,8 @@ public class SensorOutput extends AbstractEntity {
 	public SensorOutput(URI id, URI type, ObservationValue value) {
 		super(id, type);
 
+		addType(SensorOutput);
+		
 		if (value != null)
 			setValue(value);
 	}
@@ -80,6 +82,7 @@ public class SensorOutput extends AbstractEntity {
 
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + types.hashCode();
 		result = prime * result + ((value == null) ? 0 : value.hashCode());
 
 		return result;
@@ -107,6 +110,9 @@ public class SensorOutput extends AbstractEntity {
 		} else if (!type.equals(other.type))
 			return false;
 
+		if (!types.equals(other.types))
+			return false;
+
 		if (value == null) {
 			if (other.value != null)
 				return false;
@@ -117,8 +123,8 @@ public class SensorOutput extends AbstractEntity {
 	}
 
 	public String toString() {
-		return "SensorOutput [id = " + id + "; type = " + type + "; value = "
-				+ value + "]";
+		return "SensorOutput [id = " + id + "; type = " + type + "; types = "
+				+ types + "; value = " + value + "]";
 	}
 
 }

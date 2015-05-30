@@ -1,0 +1,5 @@
+http://qudt.org/vocab/unit#Hertz,http://qudt.org/schema/qudt#Unit,(http://qudt.org/vocab/unit#Hertz http://www.w3.org/1999/02/22-rdf-syntax-ns#type http://qudt.org/schema/qudt#Unit),assertEquals
+http://qudt.org/vocab/unit#Hertz,,(http://qudt.org/vocab/unit#Hertz http://www.w3.org/1999/02/22-rdf-syntax-ns#type http://qudt.org/schema/qudt#Unit),assertEquals
+http://qudt.org/vocab/unit#Hertz,http://example.org#Unit,(http://qudt.org/vocab/unit#Hertz http://www.w3.org/1999/02/22-rdf-syntax-ns#type http://qudt.org/schema/qudt#Unit);(http://qudt.org/vocab/unit#Hertz http://www.w3.org/1999/02/22-rdf-syntax-ns#type http://example.org#Unit),assertEquals
+http://qudt.org/vocab/unit#Hertz,http://qudt.org/schema/qudt#Unit,(http://example.org#Hertz http://www.w3.org/1999/02/22-rdf-syntax-ns#type http://qudt.org/schema/qudt#Unit),assertNotEquals
+http://qudt.org/vocab/unit#Hertz,,(http://qudt.org/vocab/unit#Hertz http://www.w3.org/1999/02/22-rdf-syntax-ns#type http://example.org#Unit),assertNotEquals

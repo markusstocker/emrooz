@@ -34,6 +34,9 @@ import fi.uef.envi.emrooz.entity.ssn.SensorOutput;
 import fi.uef.envi.emrooz.entity.time.Instant;
 import fi.uef.envi.emrooz.rdf.RDFEntityRepresenter;
 import fi.uef.envi.emrooz.test.ParamsConverterTest;
+import fi.uef.envi.emrooz.vocabulary.QUDTSchema;
+import fi.uef.envi.emrooz.vocabulary.SSN;
+import fi.uef.envi.emrooz.vocabulary.Time;
 
 /**
  * <p>
@@ -62,13 +65,173 @@ public class RDFEntityRepresenterTest {
 	}
 
 	@Test
+	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testProperty.csv")
+	public void testProperty(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
+			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
+			String assertType) {
+		if (type == null)
+			type = SSN.Property;
+
+		Property propertyA = new Property(id, type);
+		Set<Statement> statementsA = representer
+				.createRepresentation(propertyA);
+		Property propertyE = representer.createProperty(statementsE);
+
+		if (assertType.equals("assertEquals")) {
+			assertEquals(statementsE, statementsA);
+			assertEquals(propertyE, propertyA);
+			return;
+		}
+
+		assertNotEquals(statementsE, statementsA);
+		assertNotEquals(propertyE, propertyA);
+	}
+
+	@Test
+	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testFeatureOfInterest.csv")
+	public void testFeatureOfInterest(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
+			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
+			String assertType) {
+		if (type == null)
+			type = SSN.FeatureOfInterest;
+
+		FeatureOfInterest featureA = new FeatureOfInterest(id, type);
+		Set<Statement> statementsA = representer.createRepresentation(featureA);
+		FeatureOfInterest featureE = representer
+				.createFeatureOfInterest(statementsE);
+
+		if (assertType.equals("assertEquals")) {
+			assertEquals(statementsE, statementsA);
+			assertEquals(featureE, featureA);
+			return;
+		}
+
+		assertNotEquals(statementsE, statementsA);
+		assertNotEquals(featureE, featureA);
+	}
+
+	@Test
+	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testSensorOutput.csv")
+	public void testSensorOutput(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI valueId,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI valueType,
+			@ConvertParam(value = ParamsConverterTest.StringToDoubleConverter.class) Double value,
+			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
+			String assertType) {
+		if (type == null)
+			type = SSN.SensorOutput;
+		if (valueType == null)
+			valueType = SSN.ObservationValue;
+
+		SensorOutput outputA = new SensorOutput(id, type,
+				new ObservationValueDouble(valueId, valueType, value));
+		Set<Statement> statementsA = representer.createRepresentation(outputA);
+		SensorOutput outputE = representer.createSensorOutput(statementsE);
+
+		if (assertType.equals("assertEquals")) {
+			assertEquals(statementsE, statementsA);
+			assertEquals(outputE, outputA);
+			return;
+		}
+
+		assertNotEquals(statementsE, statementsA);
+		assertNotEquals(outputE, outputA);
+	}
+
+	@Test
+	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testFrequency.csv")
+	public void testFrequency(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI valueId,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI valueType,
+			@ConvertParam(value = ParamsConverterTest.StringToDoubleConverter.class) Double value,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI unitId,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI unitType,
+			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
+			String assertType) {
+		if (type == null)
+			type = SSN.Frequency;
+		if (valueType == null)
+			valueType = QUDTSchema.QuantityValue;
+		if (unitType == null)
+			unitType = QUDTSchema.Unit;
+
+		Frequency frequencyA = new Frequency(id, type, new QuantityValue(
+				valueId, valueType, value, new Unit(unitId, unitType)));
+		Set<Statement> statementsA = representer
+				.createRepresentation(frequencyA);
+		Frequency frequencyE = representer.createFrequency(statementsE);
+
+		if (assertType.equals("assertEquals")) {
+			assertEquals(statementsE, statementsA);
+			assertEquals(frequencyE, frequencyA);
+			return;
+		}
+
+		assertNotEquals(statementsE, statementsA);
+		assertNotEquals(frequencyE, frequencyA);
+	}
+
+	@Test
+	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testMeasurementCapability.csv")
+	public void testMeasurementCapability(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI measPropId,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI measPropType,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI valueId,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI valueType,
+			@ConvertParam(value = ParamsConverterTest.StringToDoubleConverter.class) Double value,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI unitId,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI unitType,
+			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
+			String assertType) {
+		if (type == null)
+			type = SSN.MeasurementCapability;
+		if (measPropType == null)
+			measPropType = SSN.Frequency;
+		if (valueType == null)
+			valueType = QUDTSchema.QuantityValue;
+		if (unitType == null)
+			unitType = QUDTSchema.Unit;
+
+		MeasurementCapability capabilityA = new MeasurementCapability(id, type,
+				new Frequency(measPropId, measPropType, new QuantityValue(
+						valueId, valueType, value, new Unit(unitId, unitType))));
+		Set<Statement> statementsA = representer
+				.createRepresentation(capabilityA);
+		MeasurementCapability capabilityE = representer
+				.createMeasurementCapability(statementsE);
+
+		if (assertType.equals("assertEquals")) {
+			assertEquals(statementsE, statementsA);
+			assertEquals(capabilityE, capabilityA);
+			return;
+		}
+
+		assertNotEquals(statementsE, statementsA);
+		assertNotEquals(capabilityE, capabilityA);
+	}
+
+	@Test
 	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testInstant.csv")
 	public void testInstant(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
 			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime value,
 			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
 			String assertType) {
-		Instant instantA = new Instant(id, value);
+		if (type == null)
+			type = Time.Instant;
+
+		Instant instantA = new Instant(id, type, value);
 		Set<Statement> statementsA = representer.createRepresentation(instantA);
 		Instant instantE = representer.createInstant(statementsE);
 
@@ -169,6 +332,60 @@ public class RDFEntityRepresenterTest {
 
 		assertNotEquals(statementsE, statementsA);
 		assertNotEquals(sensorE, sensorA);
+	}
+
+	@Test
+	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testQuantityValue.csv")
+	public void testQuantityValue(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
+			@ConvertParam(value = ParamsConverterTest.StringToDoubleConverter.class) Double value,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI unitId,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI unitType,
+			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
+			String assertType) {
+		if (type == null)
+			type = QUDTSchema.QuantityValue;
+		if (unitType == null)
+			unitType = QUDTSchema.Unit;
+
+		QuantityValue valueA = new QuantityValue(id, type, value, new Unit(
+				unitId, unitType));
+		Set<Statement> statementsA = representer.createRepresentation(valueA);
+		QuantityValue valueE = representer.createQuantityValue(statementsE);
+
+		if (assertType.equals("assertEquals")) {
+			assertEquals(statementsE, statementsA);
+			assertEquals(valueE, valueA);
+			return;
+		}
+
+		assertNotEquals(statementsE, statementsA);
+		assertNotEquals(valueE, valueA);
+	}
+
+	@Test
+	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testUnit.csv")
+	public void testUnit(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
+			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
+			String assertType) {
+		if (type == null)
+			type = QUDTSchema.Unit;
+
+		Unit unitA = new Unit(id, type);
+		Set<Statement> statementsA = representer.createRepresentation(unitA);
+		Unit unitE = representer.createUnit(statementsE);
+
+		if (assertType.equals("assertEquals")) {
+			assertEquals(statementsE, statementsA);
+			assertEquals(unitE, unitA);
+			return;
+		}
+
+		assertNotEquals(statementsE, statementsA);
+		assertNotEquals(unitE, unitA);
 	}
 
 }

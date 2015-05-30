@@ -13,7 +13,7 @@ import org.openrdf.model.URI;
 import fi.uef.envi.emrooz.entity.AbstractEntity;
 import fi.uef.envi.emrooz.entity.EntityVisitor;
 import fi.uef.envi.emrooz.entity.time.TemporalEntity;
-import fi.uef.envi.emrooz.vocabulary.SSN;
+import static fi.uef.envi.emrooz.vocabulary.SSN.Observation;
 
 /**
  * <p>
@@ -45,7 +45,7 @@ public class SensorObservation extends AbstractEntity {
 
 	public SensorObservation(URI id, Sensor sensor, Property property,
 			FeatureOfInterest feature) {
-		this(id, SSN.Observation, sensor, property, feature);
+		this(id, Observation, sensor, property, feature);
 	}
 
 	public SensorObservation(URI id, URI type, Sensor sensor,
@@ -56,7 +56,7 @@ public class SensorObservation extends AbstractEntity {
 	public SensorObservation(URI id, Sensor sensor, Property property,
 			FeatureOfInterest feature, SensorOutput result,
 			TemporalEntity resultTime) {
-		this(id, SSN.Observation, sensor, property, feature, result, resultTime);
+		this(id, Observation, sensor, property, feature, result, resultTime);
 	}
 
 	public SensorObservation(URI id, URI type, Sensor sensor,
@@ -75,6 +75,8 @@ public class SensorObservation extends AbstractEntity {
 		this.property = property;
 		this.feature = feature;
 
+		addType(Observation);
+		
 		if (result != null)
 			setObservationResult(result);
 		if (resultTime != null)
@@ -130,6 +132,7 @@ public class SensorObservation extends AbstractEntity {
 
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + types.hashCode();
 		result = prime * result + ((sensor == null) ? 0 : sensor.hashCode());
 		result = prime * result
 				+ ((property == null) ? 0 : property.hashCode());
@@ -164,30 +167,33 @@ public class SensorObservation extends AbstractEntity {
 		} else if (!type.equals(other.type))
 			return false;
 
+		if (!types.equals(other.types))
+			return false;
+
 		if (sensor == null) {
 			if (other.sensor != null)
 				return false;
 		} else if (!sensor.equals(other.sensor))
 			return false;
-		
+
 		if (property == null) {
 			if (other.property != null)
 				return false;
 		} else if (!property.equals(other.property))
 			return false;
-		
+
 		if (feature == null) {
 			if (other.feature != null)
 				return false;
 		} else if (!feature.equals(other.feature))
 			return false;
-		
+
 		if (result == null) {
 			if (other.result != null)
 				return false;
 		} else if (!result.equals(other.result))
 			return false;
-		
+
 		if (resultTime == null) {
 			if (other.resultTime != null)
 				return false;
@@ -199,8 +205,9 @@ public class SensorObservation extends AbstractEntity {
 
 	public String toString() {
 		return "SensorObservation [id = " + id + "; type = " + type
-				+ "; sensor = " + sensor + "; property = " + property
-				+ "; feature = " + feature + "; observationResult = " + result
+				+ "; types = " + types + "; sensor = " + sensor
+				+ "; property = " + property + "; feature = " + feature
+				+ "; observationResult = " + result
 				+ "; observationResultTime = " + resultTime + "]";
 	}
 }

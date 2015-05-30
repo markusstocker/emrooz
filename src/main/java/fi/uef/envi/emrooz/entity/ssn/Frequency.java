@@ -10,7 +10,8 @@ import org.openrdf.model.URI;
 import fi.uef.envi.emrooz.entity.EntityVisitor;
 import fi.uef.envi.emrooz.entity.MeasurementPropertyVisitor;
 import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
-import fi.uef.envi.emrooz.vocabulary.SSN;
+import static fi.uef.envi.emrooz.vocabulary.SSN.Frequency;
+import static fi.uef.envi.emrooz.vocabulary.SSN.MeasurementProperty;
 
 /**
  * <p>
@@ -34,17 +35,22 @@ public class Frequency extends MeasurementProperty {
 	private QuantityValue value;
 
 	public Frequency(URI id) {
-		this(id, SSN.Frequency, null);
+		this(id, Frequency);
+	}
+
+	public Frequency(URI id, URI type) {
+		this(id, type, null);
 	}
 
 	public Frequency(URI id, QuantityValue value) {
-		this(id, SSN.Frequency, value);
+		this(id, Frequency, value);
 	}
 
 	public Frequency(URI id, URI type, QuantityValue value) {
 		super(id, type);
 
 		setQuantityValue(value);
+		addTypes(Frequency, MeasurementProperty);
 	}
 
 	public void setQuantityValue(QuantityValue value) {
@@ -69,6 +75,7 @@ public class Frequency extends MeasurementProperty {
 
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + types.hashCode();
 		result = prime * result + ((value == null) ? 0 : value.hashCode());
 
 		return result;
@@ -96,6 +103,9 @@ public class Frequency extends MeasurementProperty {
 		} else if (!type.equals(other.type))
 			return false;
 
+		if (!types.equals(other.types))
+			return false;
+
 		if (value == null) {
 			if (other.value != null)
 				return false;
@@ -106,8 +116,8 @@ public class Frequency extends MeasurementProperty {
 	}
 
 	public String toString() {
-		return "Frequency [id = " + id + "; type = " + type + "; value = "
-				+ value + "]";
+		return "Frequency [id = " + id + "; type = " + type + "; types = "
+				+ types + "; value = " + value + "]";
 	}
 
 }

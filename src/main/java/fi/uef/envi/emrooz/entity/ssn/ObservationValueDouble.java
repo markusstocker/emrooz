@@ -9,7 +9,7 @@ import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.entity.EntityVisitor;
 import fi.uef.envi.emrooz.entity.ObservationValueVisitor;
-import fi.uef.envi.emrooz.vocabulary.SSN;
+import static fi.uef.envi.emrooz.vocabulary.SSN.ObservationValue;
 
 /**
  * <p>
@@ -33,11 +33,11 @@ public class ObservationValueDouble extends ObservationValue {
 	private Double value;
 
 	public ObservationValueDouble(URI id) {
-		this(id, SSN.ObservationValue);
+		this(id, ObservationValue);
 	}
 
 	public ObservationValueDouble(URI id, Double value) {
-		this(id, SSN.ObservationValue, value);
+		this(id, ObservationValue, value);
 	}
 
 	public ObservationValueDouble(URI id, URI type) {
@@ -48,6 +48,8 @@ public class ObservationValueDouble extends ObservationValue {
 		super(id, type);
 
 		this.value = value;
+		
+		addType(ObservationValue);
 	}
 
 	public void setValue(Double value) {
@@ -72,6 +74,7 @@ public class ObservationValueDouble extends ObservationValue {
 
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + types.hashCode();
 		result = prime * result + ((value == null) ? 0 : value.hashCode());
 
 		return result;
@@ -98,7 +101,10 @@ public class ObservationValueDouble extends ObservationValue {
 				return false;
 		} else if (!type.equals(other.type))
 			return false;
-		
+
+		if (!types.equals(other.types))
+			return false;
+
 		if (value == null) {
 			if (other.value != null)
 				return false;
@@ -110,7 +116,7 @@ public class ObservationValueDouble extends ObservationValue {
 
 	public String toString() {
 		return "ObservationValueDouble [id = " + id + "; type = " + type
-				+ "; value = " + value + "]";
+				+ "; types = " + types + "; value = " + value + "]";
 	}
 
 }

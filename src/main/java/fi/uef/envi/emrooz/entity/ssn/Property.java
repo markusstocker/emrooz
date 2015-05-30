@@ -9,7 +9,7 @@ import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.entity.AbstractEntity;
 import fi.uef.envi.emrooz.entity.EntityVisitor;
-import fi.uef.envi.emrooz.vocabulary.SSN;
+import static fi.uef.envi.emrooz.vocabulary.SSN.Property;
 
 /**
  * <p>
@@ -33,11 +33,11 @@ public class Property extends AbstractEntity {
 	private FeatureOfInterest feature;
 
 	public Property(URI id) {
-		this(id, SSN.Property);
+		this(id, Property);
 	}
 
 	public Property(URI id, FeatureOfInterest feature) {
-		this(id, SSN.Property, feature);
+		this(id, Property, feature);
 	}
 
 	public Property(URI id, URI type) {
@@ -47,6 +47,7 @@ public class Property extends AbstractEntity {
 	public Property(URI id, URI type, FeatureOfInterest feature) {
 		super(id, type);
 
+		addType(Property);
 		setPropertyOf(feature);
 	}
 
@@ -68,6 +69,7 @@ public class Property extends AbstractEntity {
 
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + types.hashCode();
 		result = prime * result + ((feature == null) ? 0 : feature.hashCode());
 
 		return result;
@@ -95,6 +97,9 @@ public class Property extends AbstractEntity {
 		} else if (!type.equals(other.type))
 			return false;
 
+		if (!types.equals(other.types))
+			return false;
+
 		if (feature == null) {
 			if (other.feature != null)
 				return false;
@@ -105,8 +110,8 @@ public class Property extends AbstractEntity {
 	}
 
 	public String toString() {
-		return "Property [id = " + id + "; type = " + type + "; feature = "
-				+ feature + "]";
+		return "Property [id = " + id + "; type = " + type + "; types = "
+				+ types + "; feature = " + feature + "]";
 	}
 
 }

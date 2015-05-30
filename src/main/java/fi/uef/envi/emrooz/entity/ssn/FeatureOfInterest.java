@@ -9,7 +9,7 @@ import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.entity.AbstractEntity;
 import fi.uef.envi.emrooz.entity.EntityVisitor;
-import fi.uef.envi.emrooz.vocabulary.SSN;
+import static fi.uef.envi.emrooz.vocabulary.SSN.FeatureOfInterest;
 
 /**
  * <p>
@@ -31,11 +31,13 @@ import fi.uef.envi.emrooz.vocabulary.SSN;
 public class FeatureOfInterest extends AbstractEntity {
 
 	public FeatureOfInterest(URI id) {
-		this(id, SSN.FeatureOfInterest);
+		this(id, FeatureOfInterest);
 	}
 
 	public FeatureOfInterest(URI id, URI type) {
 		super(id, type);
+		
+		addType(FeatureOfInterest);
 	}
 
 	public void accept(EntityVisitor visitor) {
@@ -48,6 +50,7 @@ public class FeatureOfInterest extends AbstractEntity {
 
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + types.hashCode();
 
 		return result;
 	}
@@ -74,11 +77,15 @@ public class FeatureOfInterest extends AbstractEntity {
 		} else if (!type.equals(other.type))
 			return false;
 
+		if (!types.equals(other.types))
+			return false;
+
 		return true;
 	}
 
 	public String toString() {
-		return "FeatureOfInterest [id = " + id + "; type = " + type + "]";
+		return "FeatureOfInterest [id = " + id + "; type = " + type
+				+ "; types = " + types + "]";
 	}
 
 }

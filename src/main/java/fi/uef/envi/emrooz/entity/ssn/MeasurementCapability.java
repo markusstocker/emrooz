@@ -13,7 +13,7 @@ import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.entity.AbstractEntity;
 import fi.uef.envi.emrooz.entity.EntityVisitor;
-import fi.uef.envi.emrooz.vocabulary.SSN;
+import static fi.uef.envi.emrooz.vocabulary.SSN.MeasurementCapability;
 
 /**
  * <p>
@@ -37,7 +37,7 @@ public class MeasurementCapability extends AbstractEntity {
 	private Set<MeasurementProperty> properties;
 
 	public MeasurementCapability(URI id, MeasurementProperty... properties) {
-		this(id, SSN.MeasurementCapability, properties);
+		this(id, MeasurementCapability, properties);
 	}
 
 	public MeasurementCapability(URI id, URI type,
@@ -46,6 +46,7 @@ public class MeasurementCapability extends AbstractEntity {
 
 		this.properties = new HashSet<MeasurementProperty>();
 
+		addType(MeasurementCapability);
 		addMeasurementProperty(properties);
 	}
 
@@ -75,6 +76,7 @@ public class MeasurementCapability extends AbstractEntity {
 
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + types.hashCode();
 		result = prime * result
 				+ ((properties.isEmpty()) ? 0 : properties.hashCode());
 
@@ -103,6 +105,9 @@ public class MeasurementCapability extends AbstractEntity {
 		} else if (!type.equals(other.type))
 			return false;
 
+		if (!types.equals(other.types))
+			return false;
+
 		if (!properties.equals(other.properties))
 			return false;
 
@@ -111,7 +116,7 @@ public class MeasurementCapability extends AbstractEntity {
 
 	public String toString() {
 		return "MeasurementCapability [id = " + id + "; type = " + type
-				+ "; properties = " + properties + "]";
+				+ "; types = " + types + "; properties = " + properties + "]";
 	}
 
 }

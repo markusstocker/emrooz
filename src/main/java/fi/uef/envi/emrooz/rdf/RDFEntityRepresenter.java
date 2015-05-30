@@ -5,6 +5,8 @@
 
 package fi.uef.envi.emrooz.rdf;
 
+import java.util.List;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -119,7 +121,7 @@ public class RDFEntityRepresenter {
 		if (statements == null)
 			return null;
 
-		URI id = _getId(SSN.Observation, statements);
+		URI id = _getId(statements, SSN.Observation);
 
 		if (id == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -128,16 +130,18 @@ public class RDFEntityRepresenter {
 			return null;
 		}
 
-		URI type = _getType(id, SSN.Observation, statements);
-
 		Sensor sensor = createSensor(statements);
 		Property property = createProperty(statements);
 		FeatureOfInterest feature = createFeatureOfInterest(statements);
 		SensorOutput result = createSensorOutput(statements);
 		TemporalEntity resultTime = createTemporalEntity(statements);
 
-		return new SensorObservation(id, type, sensor, property, feature,
-				result, resultTime);
+		SensorObservation ret = new SensorObservation(id, _getType(statements,
+				id, SSN.Observation), sensor, property, feature, result,
+				resultTime);
+		ret.addTypes(_getTypes(statements, id));
+
+		return ret;
 	}
 
 	public Set<Statement> createRepresentation(Sensor sensor) {
@@ -169,7 +173,7 @@ public class RDFEntityRepresenter {
 	}
 
 	public Sensor createSensor(Set<Statement> statements) {
-		URI id = _getId(SSN.Sensor, statements);
+		URI id = _getId(statements, SSN.Sensor);
 
 		if (id == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -178,28 +182,29 @@ public class RDFEntityRepresenter {
 			return null;
 		}
 
-		Sensor ret = new Sensor(id, _getType(id, SSN.Sensor, statements));
+		Sensor ret = new Sensor(id, _getType(statements, id, SSN.Sensor));
+		ret.addTypes(_getTypes(statements, id));
 
-		Property property = createProperty(_matchSubject(
-				_getObjectId(id, SSN.observes, statements), statements));
+		Property property = createProperty(_matchSubject(statements,
+				_getObjectId(statements, id, SSN.observes)));
 
 		if (property != null) {
 			ret.setObservedProperty(property);
 
 			FeatureOfInterest feature = createFeatureOfInterest(_matchSubject(
-					_getObjectId(property.getId(), SSN.isPropertyOf, statements),
-					statements));
+					statements,
+					_getObjectId(statements, property.getId(), SSN.isPropertyOf)));
 
 			if (feature != null)
 				property.setPropertyOf(feature);
 		}
 
-		Set<URI> measurementCapabilityIds = _getObjectIds(id,
-				SSN.hasMeasurementCapability, statements);
+		Set<URI> measurementCapabilityIds = _getObjectIds(statements, id,
+				SSN.hasMeasurementCapability);
 
 		for (URI measurementCapabilityId : measurementCapabilityIds) {
 			ret.addMeasurementCapability(createMeasurementCapability(_matchSubject(
-					measurementCapabilityId, statements)));
+					statements, measurementCapabilityId)));
 		}
 
 		return ret;
@@ -230,7 +235,7 @@ public class RDFEntityRepresenter {
 
 	public MeasurementCapability createMeasurementCapability(
 			Set<Statement> statements) {
-		URI id = _getId(SSN.MeasurementCapability, statements);
+		URI id = _getId(statements, SSN.MeasurementCapability);
 
 		if (id == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -239,15 +244,16 @@ public class RDFEntityRepresenter {
 			return null;
 		}
 
-		MeasurementCapability ret = new MeasurementCapability(id, _getType(id,
-				SSN.MeasurementCapability, statements));
+		MeasurementCapability ret = new MeasurementCapability(id, _getType(
+				statements, id, SSN.MeasurementCapability));
+		ret.addTypes(_getTypes(statements, id));
 
-		Set<URI> measurementPropertyIds = _getObjectIds(id,
-				SSN.hasMeasurementProperty, statements);
+		Set<URI> measurementPropertyIds = _getObjectIds(statements, id,
+				SSN.hasMeasurementProperty);
 
 		for (URI measurementPropertyId : measurementPropertyIds) {
 			ret.addMeasurementProperty(createMeasurementProperty(_matchSubject(
-					measurementPropertyId, statements)));
+					statements, measurementPropertyId)));
 		}
 
 		return ret;
@@ -266,7 +272,7 @@ public class RDFEntityRepresenter {
 
 	public MeasurementProperty createMeasurementProperty(
 			Set<Statement> statements) {
-		URI id = _getId(SSN.MeasurementProperty, statements);
+		URI id = _getId(statements, SSN.MeasurementProperty);
 
 		if (id == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -275,7 +281,7 @@ public class RDFEntityRepresenter {
 			return null;
 		}
 
-		URI type = _getType(id, SSN.MeasurementProperty, statements);
+		URI type = _getType(statements, id, SSN.MeasurementProperty);
 
 		if (type.equals(SSN.Frequency))
 			return createFrequency(statements);
@@ -315,7 +321,7 @@ public class RDFEntityRepresenter {
 	}
 
 	public Frequency createFrequency(Set<Statement> statements) {
-		URI id = _getId(SSN.Frequency, statements);
+		URI id = _getId(statements, SSN.Frequency);
 
 		if (id == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -324,10 +330,12 @@ public class RDFEntityRepresenter {
 			return null;
 		}
 
-		Frequency ret = new Frequency(id);
+		Frequency ret = new Frequency(id, _getType(statements, id,
+				SSN.Frequency, SSN.MeasurementProperty));
+		ret.addTypes(_getTypes(statements, id));
 
-		QuantityValue value = createQuantityValue(_matchSubject(
-				_getObjectId(id, SSN.hasValue, statements), statements));
+		QuantityValue value = createQuantityValue(_matchSubject(statements,
+				_getObjectId(statements, id, SSN.hasValue)));
 
 		if (value != null) {
 			ret.setQuantityValue(value);
@@ -360,7 +368,7 @@ public class RDFEntityRepresenter {
 	}
 
 	public QuantityValue createQuantityValue(Set<Statement> statements) {
-		URI id = _getId(QUDTSchema.QuantityValue, statements);
+		URI id = _getId(statements, QUDTSchema.QuantityValue);
 
 		if (id == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -369,7 +377,9 @@ public class RDFEntityRepresenter {
 			return null;
 		}
 
-		QuantityValue ret = new QuantityValue(id);
+		QuantityValue ret = new QuantityValue(id, _getType(statements, id,
+				QUDTSchema.QuantityValue));
+		ret.addTypes(_getTypes(statements, id));
 
 		Double value = null;
 
@@ -389,8 +399,8 @@ public class RDFEntityRepresenter {
 			ret.setNumericValue(value);
 		}
 
-		Unit unit = createUnit(_matchSubject(
-				_getObjectId(id, QUDTSchema.unit, statements), statements));
+		Unit unit = createUnit(_matchSubject(statements,
+				_getObjectId(statements, id, QUDTSchema.unit)));
 
 		if (unit == null) {
 			if (log.isLoggable(Level.WARNING))
@@ -418,7 +428,7 @@ public class RDFEntityRepresenter {
 	}
 
 	public Unit createUnit(Set<Statement> statements) {
-		URI id = _getId(QUDTSchema.Unit, statements);
+		URI id = _getId(statements, QUDTSchema.Unit);
 
 		if (id == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -428,7 +438,10 @@ public class RDFEntityRepresenter {
 			return null;
 		}
 
-		return new Unit(id, _getType(id, QUDTSchema.Unit, statements));
+		Unit ret = new Unit(id, _getType(statements, id, QUDTSchema.Unit));
+		ret.addTypes(_getTypes(statements, id));
+
+		return ret;
 	}
 
 	public Set<Statement> createRepresentation(Property property) {
@@ -453,7 +466,7 @@ public class RDFEntityRepresenter {
 	}
 
 	public Property createProperty(Set<Statement> statements) {
-		URI id = _getId(SSN.Property, statements);
+		URI id = _getId(statements, SSN.Property);
 
 		if (id == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -463,7 +476,10 @@ public class RDFEntityRepresenter {
 			return null;
 		}
 
-		return new Property(id, _getType(id, SSN.Property, statements));
+		Property ret = new Property(id, _getType(statements, id, SSN.Property));
+		ret.addTypes(_getTypes(statements, id));
+
+		return ret;
 	}
 
 	public Set<Statement> createRepresentation(FeatureOfInterest feature) {
@@ -479,7 +495,7 @@ public class RDFEntityRepresenter {
 	}
 
 	public FeatureOfInterest createFeatureOfInterest(Set<Statement> statements) {
-		URI id = _getId(SSN.FeatureOfInterest, statements);
+		URI id = _getId(statements, SSN.FeatureOfInterest);
 
 		if (id == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -489,8 +505,11 @@ public class RDFEntityRepresenter {
 			return null;
 		}
 
-		return new FeatureOfInterest(id, _getType(id, SSN.FeatureOfInterest,
-				statements));
+		FeatureOfInterest ret = new FeatureOfInterest(id, _getType(statements,
+				id, SSN.FeatureOfInterest));
+		ret.addTypes(_getTypes(statements, id));
+
+		return ret;
 	}
 
 	public Set<Statement> createRepresentation(SensorOutput result) {
@@ -513,7 +532,7 @@ public class RDFEntityRepresenter {
 	}
 
 	public SensorOutput createSensorOutput(Set<Statement> statements) {
-		URI id = _getId(SSN.SensorOutput, statements);
+		URI id = _getId(statements, SSN.SensorOutput);
 
 		if (id == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -523,8 +542,11 @@ public class RDFEntityRepresenter {
 			return null;
 		}
 
-		return new SensorOutput(id, _getType(id, SSN.SensorOutput, statements),
-				createObservationValue(statements));
+		SensorOutput ret = new SensorOutput(id, _getType(statements, id,
+				SSN.SensorOutput), createObservationValue(statements));
+		ret.addTypes(_getTypes(statements, id));
+
+		return ret;
 	}
 
 	public Set<Statement> createRepresentation(ObservationValue value) {
@@ -560,7 +582,7 @@ public class RDFEntityRepresenter {
 
 	public ObservationValueDouble createObservationValueDouble(
 			Set<Statement> statements) {
-		URI id = _getId(SSN.ObservationValue, statements);
+		URI id = _getId(statements, SSN.ObservationValue);
 
 		if (id == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -586,8 +608,11 @@ public class RDFEntityRepresenter {
 						+ statements + "]");
 		}
 
-		return new ObservationValueDouble(id, _getType(id,
-				SSN.ObservationValue, statements), value);
+		ObservationValueDouble ret = new ObservationValueDouble(id, _getType(
+				statements, id, SSN.ObservationValue), value);
+		ret.addTypes(_getTypes(statements, id));
+
+		return ret;
 	}
 
 	public Set<Statement> createRepresentation(TemporalEntity resultTime) {
@@ -622,7 +647,7 @@ public class RDFEntityRepresenter {
 	}
 
 	public Instant createInstant(Set<Statement> statements) {
-		URI id = _getId(Time.Instant, statements);
+		URI id = _getId(statements, Time.Instant);
 
 		if (id == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -649,7 +674,11 @@ public class RDFEntityRepresenter {
 						+ statements + "]");
 		}
 
-		return new Instant(id, _getType(id, Time.Instant, statements), value);
+		Instant ret = new Instant(id, _getType(statements, id, Time.Instant),
+				value);
+		ret.addTypes(_getTypes(statements, id));
+
+		return ret;
 	}
 
 	private static Literal _literal(Double value) {
@@ -660,7 +689,7 @@ public class RDFEntityRepresenter {
 		return vf.createStatement(s, p, o);
 	}
 
-	private static URI _getId(URI type, Set<Statement> statements) {
+	private static URI _getId(Set<Statement> statements, URI type) {
 		for (Statement statement : statements) {
 			if (statement.getPredicate().equals(RDF.TYPE)
 					&& statement.getObject().equals(type))
@@ -670,22 +699,43 @@ public class RDFEntityRepresenter {
 		return null;
 	}
 
-	private static URI _getType(URI id, URI type, Set<Statement> statements) {
+	private static URI _getType(Set<Statement> statements, URI id, URI... types) {
+		URI ret = null;
+		List<URI> collection = Arrays.asList(types);
+
+		if (collection.size() > 0)
+			ret = collection.get(0);
+
 		if (id == null)
-			return type;
+			return ret;
 
 		for (Statement statement : statements) {
 			if (statement.getSubject().equals(id)
 					&& statement.getPredicate().equals(RDF.TYPE)
-					&& !statement.getObject().equals(type))
+					&& !collection.contains(statement.getObject()))
 				return vf.createURI(statement.getObject().stringValue());
 		}
 
-		return type;
+		return ret;
 	}
 
-	private static URI _getObjectId(URI subject, URI predicate,
-			Set<Statement> statements) {
+	private static Set<URI> _getTypes(Set<Statement> statements, URI id) {
+		if (id == null)
+			return Collections.emptySet();
+
+		Set<URI> ret = new HashSet<URI>();
+
+		for (Statement statement : statements) {
+			if (statement.getSubject().equals(id)
+					&& statement.getPredicate().equals(RDF.TYPE))
+				ret.add(vf.createURI(statement.getObject().stringValue()));
+		}
+
+		return ret;
+	}
+
+	private static URI _getObjectId(Set<Statement> statements, URI subject,
+			URI predicate) {
 		for (Statement statement : statements) {
 			if (statement.getSubject().equals(subject)
 					&& statement.getPredicate().equals(predicate))
@@ -695,8 +745,8 @@ public class RDFEntityRepresenter {
 		return null;
 	}
 
-	private static Set<URI> _getObjectIds(URI subject, URI predicate,
-			Set<Statement> statements) {
+	private static Set<URI> _getObjectIds(Set<Statement> statements,
+			URI subject, URI predicate) {
 		Set<URI> ret = new HashSet<URI>();
 
 		for (Statement statement : statements) {
@@ -708,8 +758,8 @@ public class RDFEntityRepresenter {
 		return Collections.unmodifiableSet(ret);
 	}
 
-	private static Set<Statement> _matchSubject(URI subject,
-			Set<Statement> statements) {
+	private static Set<Statement> _matchSubject(Set<Statement> statements,
+			URI subject) {
 		if (statements.isEmpty())
 			return Collections.emptySet();
 
@@ -720,8 +770,8 @@ public class RDFEntityRepresenter {
 				ret.add(statement);
 				Value object = statement.getObject();
 				if (object instanceof URI)
-					ret.addAll(_matchSubject(
-							vf.createURI(object.stringValue()), statements));
+					ret.addAll(_matchSubject(statements,
+							vf.createURI(object.stringValue())));
 			}
 		}
 

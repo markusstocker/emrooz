@@ -10,7 +10,7 @@ import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.entity.EntityVisitor;
 import fi.uef.envi.emrooz.entity.TemporalEntityVisitor;
-import fi.uef.envi.emrooz.vocabulary.Time;
+import static fi.uef.envi.emrooz.vocabulary.Time.Instant;
 
 /**
  * <p>
@@ -34,12 +34,14 @@ public class Instant extends TemporalEntity {
 	private DateTime value;
 
 	public Instant(URI id, DateTime value) {
-		this(id, Time.Instant, value);
+		this(id, Instant, value);
 	}
 
 	public Instant(URI id, URI type, DateTime value) {
 		super(id, type);
 
+		addType(Instant);
+		
 		if (value == null)
 			throw new NullPointerException("[value = null]");
 
@@ -64,6 +66,7 @@ public class Instant extends TemporalEntity {
 
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + types.hashCode();
 		result = prime * result + ((value == null) ? 0 : value.hashCode());
 
 		return result;
@@ -91,6 +94,9 @@ public class Instant extends TemporalEntity {
 		} else if (!type.equals(other.type))
 			return false;
 
+		if (!types.equals(other.types))
+			return false;
+
 		if (value == null) {
 			if (other.value != null)
 				return false;
@@ -101,8 +107,8 @@ public class Instant extends TemporalEntity {
 	}
 
 	public String toString() {
-		return "Instant [id = " + id + "; type = " + type + "; value = "
-				+ value + "]";
+		return "Instant [id = " + id + "; type = " + type + "; types = "
+				+ types + "; value = " + value + "]";
 	}
 
 }

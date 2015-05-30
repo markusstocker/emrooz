@@ -13,7 +13,7 @@ import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.entity.AbstractEntity;
 import fi.uef.envi.emrooz.entity.EntityVisitor;
-import fi.uef.envi.emrooz.vocabulary.SSN;
+import static fi.uef.envi.emrooz.vocabulary.SSN.Sensor;
 
 /**
  * <p>
@@ -38,7 +38,7 @@ public class Sensor extends AbstractEntity {
 	private Set<MeasurementCapability> capabilities;
 
 	public Sensor(URI id) {
-		this(id, SSN.Sensor, null);
+		this(id, Sensor, null);
 	}
 
 	public Sensor(URI id, URI type) {
@@ -47,7 +47,7 @@ public class Sensor extends AbstractEntity {
 
 	public Sensor(URI id, Property property,
 			MeasurementCapability... capabilities) {
-		this(id, SSN.Sensor, property, capabilities);
+		this(id, Sensor, property, capabilities);
 	}
 
 	public Sensor(URI id, URI type, Property property,
@@ -57,6 +57,7 @@ public class Sensor extends AbstractEntity {
 		this.property = property;
 		this.capabilities = new HashSet<MeasurementCapability>();
 
+		addType(Sensor);
 		addMeasurementCapability(capabilities);
 	}
 
@@ -94,6 +95,7 @@ public class Sensor extends AbstractEntity {
 
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + types.hashCode();
 		result = prime * result
 				+ ((property == null) ? 0 : property.hashCode());
 		result = prime * result
@@ -123,7 +125,10 @@ public class Sensor extends AbstractEntity {
 				return false;
 		} else if (!type.equals(other.type))
 			return false;
-		
+
+		if (!types.equals(other.types))
+			return false;
+
 		if (property == null) {
 			if (other.property != null)
 				return false;
@@ -137,8 +142,9 @@ public class Sensor extends AbstractEntity {
 	}
 
 	public String toString() {
-		return "Sensor [id = " + id + "; type = " + type + "; property = "
-				+ property + "; capabilities = " + capabilities + "]";
+		return "Sensor [id = " + id + "; type = " + type + "; types = " + types
+				+ "; property = " + property + "; capabilities = "
+				+ capabilities + "]";
 	}
 
 }

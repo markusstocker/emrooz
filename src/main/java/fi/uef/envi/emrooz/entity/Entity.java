@@ -5,6 +5,8 @@
 
 package fi.uef.envi.emrooz.entity;
 
+import java.util.Set;
+
 import org.openrdf.model.URI;
 
 /**
@@ -29,6 +31,14 @@ public interface Entity {
 	public URI getId();
 	
 	public URI getType();
+	
+	public Set<URI> getTypes();
+	
+	public void addType(URI type);
+	
+	public void addTypes(Set<URI> types);
+	
+	public void addTypes(URI... types);
 	
 	public void accept(EntityVisitor visitor);
 	

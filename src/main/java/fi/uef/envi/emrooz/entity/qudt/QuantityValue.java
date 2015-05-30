@@ -9,7 +9,7 @@ import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.entity.AbstractEntity;
 import fi.uef.envi.emrooz.entity.EntityVisitor;
-import fi.uef.envi.emrooz.vocabulary.QUDTSchema;
+import static fi.uef.envi.emrooz.vocabulary.QUDTSchema.QuantityValue;
 
 /**
  * <p>
@@ -34,7 +34,7 @@ public class QuantityValue extends AbstractEntity {
 	public Unit unit;
 
 	public QuantityValue(URI id) {
-		this(id, QUDTSchema.QuantityValue);
+		this(id, QuantityValue);
 	}
 
 	public QuantityValue(URI id, URI type) {
@@ -42,12 +42,13 @@ public class QuantityValue extends AbstractEntity {
 	}
 
 	public QuantityValue(URI id, Double value, Unit unit) {
-		this(id, QUDTSchema.QuantityValue, value, unit);
+		this(id, QuantityValue, value, unit);
 	}
 
 	public QuantityValue(URI id, URI type, Double value, Unit unit) {
 		super(id, type);
 
+		addType(QuantityValue);
 		setNumericValue(value);
 		setUnit(unit);
 	}
@@ -80,6 +81,7 @@ public class QuantityValue extends AbstractEntity {
 
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + types.hashCode();
 		result = prime * result + ((value == null) ? 0 : value.hashCode());
 		result = prime * result + ((unit == null) ? 0 : unit.hashCode());
 
@@ -109,6 +111,9 @@ public class QuantityValue extends AbstractEntity {
 		} else if (!type.equals(other.type))
 			return false;
 
+		if (!types.equals(other.types))
+			return false;
+
 		if (value == null) {
 			if (other.value != null)
 				return false;
@@ -126,8 +131,8 @@ public class QuantityValue extends AbstractEntity {
 
 	@Override
 	public String toString() {
-		return "QuantityValue [id = " + id + "; type = " + type + "; value = "
-				+ value + "; unit = " + unit + "]";
+		return "QuantityValue [id = " + id + "; type = " + type + "; types = "
+				+ types + "; value = " + value + "; unit = " + unit + "]";
 	}
 
 }

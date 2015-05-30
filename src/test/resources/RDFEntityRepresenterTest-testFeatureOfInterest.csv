@@ -1,0 +1,5 @@
+http://example.org#f1,http://purl.oclc.org/NET/ssnx/ssn#FeatureOfInterest,(http://example.org#f1 http://www.w3.org/1999/02/22-rdf-syntax-ns#type http://purl.oclc.org/NET/ssnx/ssn#FeatureOfInterest),assertEquals
+http://example.org#f1,http://example.org#FeatureOfInterest,(http://example.org#f1 http://www.w3.org/1999/02/22-rdf-syntax-ns#type http://purl.oclc.org/NET/ssnx/ssn#FeatureOfInterest);(http://example.org#f1 http://www.w3.org/1999/02/22-rdf-syntax-ns#type http://example.org#FeatureOfInterest),assertEquals
+http://example.org#f1,,(http://example.org#f1 http://www.w3.org/1999/02/22-rdf-syntax-ns#type http://purl.oclc.org/NET/ssnx/ssn#FeatureOfInterest),assertEquals
+http://example.org#f1,http://example.org#FeatureOfInterest,(http://example.org#f1 http://www.w3.org/1999/02/22-rdf-syntax-ns#type http://purl.oclc.org/NET/ssnx/ssn#FeatureOfInterest),assertNotEquals
+http://example.org#f1,http://purl.oclc.org/NET/ssnx/ssn#FeatureOfInterest,(http://example.org#f2 http://www.w3.org/1999/02/22-rdf-syntax-ns#type http://purl.oclc.org/NET/ssnx/ssn#FeatureOfInterest),assertNotEquals
