@@ -60,15 +60,11 @@ public class SesameKnowledgeStoreTest {
 			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statements,
 			String assertType) throws RepositoryException, RDFParseException,
 			IOException {
-		Repository r = new SailRepository(new MemoryStore());
-		r.initialize();
-		RepositoryConnection c = r.getConnection();
-		c.add(new File(kb), null, RDFFormat.RDFXML);
-
+		SesameKnowledgeStore ks = new SesameKnowledgeStore(new SailRepository(new MemoryStore()));
+		ks.load(new File(kb));
+		
 		RDFEntityRepresenter er = new RDFEntityRepresenter();
 		Set<Sensor> e = er.createSensors(statements);
-
-		SesameKnowledgeStore ks = new SesameKnowledgeStore(r);
 
 		Set<Sensor> a = ks.getSensors();
 
