@@ -295,16 +295,16 @@ public class RDFEntityRepresenter {
 			return null;
 		}
 
-		URI type = _getType(statements, id, SSN.MeasurementProperty);
+		Set<URI> types = _getTypes(statements, id);
 
-		if (type.equals(SSN.Frequency))
+		if (types.contains(SSN.Frequency))
 			return createFrequency(statements);
 
 		if (log.isLoggable(Level.WARNING))
 			log.warning("Failed to create measurement property, unrecognized type [id = "
 					+ id
-					+ "; type = "
-					+ type
+					+ "; types = "
+					+ types
 					+ "; statements = "
 					+ statements
 					+ "]");
