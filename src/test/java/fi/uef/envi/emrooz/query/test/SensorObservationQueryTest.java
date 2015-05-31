@@ -8,8 +8,7 @@ package fi.uef.envi.emrooz.query.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-import java.io.File;
-import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
 
 import junitparams.FileParameters;
@@ -20,21 +19,13 @@ import org.joda.time.DateTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.openrdf.model.URI;
-import org.openrdf.repository.RepositoryConnection;
-import org.openrdf.repository.RepositoryException;
-import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.RDFParseException;
-import org.openrdf.sail.memory.MemoryStore;
 
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
-import fi.uef.envi.emrooz.query.SensorObservationQueryRewriter;
-import fi.uef.envi.emrooz.sesame.SesameKnowledgeStore;
 import fi.uef.envi.emrooz.test.ParamsConverterTest;
 
 /**
  * <p>
- * Title: SensorObservationQueryRewriterTest
+ * Title: SensorObservationQueryTest
  * </p>
  * <p>
  * Description:
@@ -50,30 +41,21 @@ import fi.uef.envi.emrooz.test.ParamsConverterTest;
  */
 
 @RunWith(JUnitParamsRunner.class)
-public class SensorObservationQueryRewriterTest {
+public class SensorObservationQueryTest {
 
 	@Test
-	@FileParameters("src/test/resources/SensorObservationQueryRewriterTest.csv")
-	public void testSensorObservationQueryRewriter(
-			String kb,
+	@FileParameters("src/test/resources/SensorObservationQueryTest-1.csv")
+	public void testSensorObservationQuery1(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI sensorId,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI propertyId,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI featureId,
 			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime timeFrom,
 			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime timeTo,
 			@ConvertParam(value = ParamsConverterTest.StringToSensorObservationQueryCollection.class) Set<SensorObservationQuery> e,
-			String assertType) throws RepositoryException, RDFParseException,
-			IOException {
-		SailRepository rp = new SailRepository(new MemoryStore());
-		rp.initialize();
-		RepositoryConnection rc = rp.getConnection();
-		rc.add(new File(kb), null, RDFFormat.RDFXML);
-
-		SensorObservationQueryRewriter rw = new SensorObservationQueryRewriter(
-				new SesameKnowledgeStore(rp));
-
-		Set<SensorObservationQuery> a = rw.rewrite(SensorObservationQuery
-				.create(sensorId, propertyId, featureId, timeFrom, timeTo));
+			String assertType) {
+		Set<SensorObservationQuery> a = new HashSet<SensorObservationQuery>();
+		a.add(SensorObservationQuery.create(sensorId, propertyId, featureId,
+				timeFrom, timeTo));
 
 		if (assertType.equals("assertEquals")) {
 			assertEquals(e, a);
@@ -81,7 +63,23 @@ public class SensorObservationQueryRewriterTest {
 		}
 
 		assertNotEquals(e, a);
-
-		rc.close();
 	}
+
+	@Test
+	@FileParameters("src/test/resources/SensorObservationQueryTest-2.csv")
+	public void testSensorObservationQuery2(
+			String query,
+			@ConvertParam(value = ParamsConverterTest.StringToSensorObservationQueryCollection.class) Set<SensorObservationQuery> e,
+			String assertType) {
+		Set<SensorObservationQuery> a = new HashSet<SensorObservationQuery>();
+		a.add(SensorObservationQuery.create(query));
+
+		if (assertType.equals("assertEquals")) {
+			assertEquals(e, a);
+			return;
+		}
+
+		assertNotEquals(e, a);
+	}
+
 }

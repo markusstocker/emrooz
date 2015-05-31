@@ -1,0 +1,6 @@
+http://example.org#s1,http://example.org#p1,http://example.org#f1,2015-05-31T00:00:00.000+03:00,2015-05-31T01:00:00.000+03:00,(http://example.org#s1 http://example.org#p1 http://example.org#f1 2015-05-31T00:00:00.000+03:00 2015-05-31T01:00:00.000+03:00),assertEquals
+http://example.org#s1,http://example.org#p1,http://example.org#f1,2015-05-31T00:00:00.000+03:00,2015-05-31T01:00:00.000+03:00,(http://example.org#s1 http://example.org#p1 http://example.org#f1 2015-05-31T00:00:00.000+03:00 2015-05-31T02:00:00.000+03:00),assertNotEquals
+,http://example.org#p1,http://example.org#f1,2015-05-31T00:00:00.000+03:00,2015-05-31T01:00:00.000+03:00,(? http://example.org#p1 http://example.org#f1 2015-05-31T00:00:00.000+03:00 2015-05-31T01:00:00.000+03:00),assertEquals
+,,http://example.org#f1,2015-05-31T00:00:00.000+03:00,2015-05-31T01:00:00.000+03:00,(? ? http://example.org#f1 2015-05-31T00:00:00.000+03:00 2015-05-31T01:00:00.000+03:00),assertEquals
+,,,2015-05-31T00:00:00.000+03:00,2015-05-31T01:00:00.000+03:00,(? ? ? 2015-05-31T00:00:00.000+03:00 2015-05-31T01:00:00.000+03:00),assertEquals
+,,,2015-05-31T00:00:00.000+03:00,2015-05-31T01:00:00.000+03:00,(? ? ? 2015-05-31T01:00:00.000+03:00 2015-05-31T02:00:00.000+03:00),assertNotEquals

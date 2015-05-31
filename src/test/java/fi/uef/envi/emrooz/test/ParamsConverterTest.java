@@ -207,7 +207,7 @@ public class ParamsConverterTest {
 
 		assertEquals(expected, actual);
 	}
-	
+
 	@Test
 	@Parameters({ "(http://envi.uef.fi/emrooz#s1 http://envi.uef.fi/emrooz#p1 http://envi.uef.fi/emrooz#f1 2015-05-31T00:00:00.000+03:00 2015-05-31T01:00:00.000+03:00)" })
 	public void testNotEqualsStringToSensorObservationQueryCollection1(
@@ -381,12 +381,22 @@ public class ParamsConverterTest {
 					continue;
 				}
 
-				URI sensorId = vf.createURI(values[0]);
-				URI propertyId = vf.createURI(values[1]);
-				URI featureId = vf.createURI(values[2]);
+				URI sensorId = null;
+				URI propertyId = null;
+				URI featureId = null;
+	
+				if (!values[0].equals("?"))
+					sensorId = vf.createURI(values[0]);
+
+				if (!values[1].equals("?"))
+					propertyId = vf.createURI(values[1]);
+
+				if (!values[2].equals("?"))
+					featureId = vf.createURI(values[2]);
+
 				DateTime timeFrom = dtf.parseDateTime(values[3]);
 				DateTime timeTo = dtf.parseDateTime(values[4]);
-
+				
 				ret.add(SensorObservationQuery.create(sensorId, propertyId,
 						featureId, timeFrom, timeTo));
 			}

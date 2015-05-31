@@ -10,11 +10,13 @@ import java.util.List;
 import org.joda.time.DateTime;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
+import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.query.algebra.TupleExpr;
 import org.openrdf.query.algebra.Var;
 import org.openrdf.query.algebra.helpers.StatementPatternCollector;
 import org.openrdf.query.parser.ParsedQuery;
+import org.openrdf.query.parser.sparql.SPARQLParser;
 
 import fi.uef.envi.emrooz.api.Query;
 import fi.uef.envi.emrooz.vocabulary.SSN;
@@ -45,6 +47,7 @@ public class SensorObservationQuery implements Query {
 	private DateTime timeFrom;
 	private DateTime timeTo;
 
+	private static SPARQLParser sparqlParser = new SPARQLParser();
 	private static StatementPatternCollector collector = new StatementPatternCollector();
 	private static SparqlQueryModelVisitor visitor = new SparqlQueryModelVisitor();
 
@@ -116,12 +119,19 @@ public class SensorObservationQuery implements Query {
 		return ret;
 	}
 
-	public static SensorObservationQuery create(ParsedQuery query) {
-		SensorObservationQuery ret = new SensorObservationQuery();
-
-		if (query == null) {
-			throw new RuntimeException("[query = null]");
+	public static SensorObservationQuery create(String query) {
+		try {
+			return create(sparqlParser.parseQuery(query, null));
+		} catch (MalformedQueryException e) {
+			throw new RuntimeException(e);
 		}
+	}
+
+	public static SensorObservationQuery create(ParsedQuery query) {
+		if (query == null)
+			throw new RuntimeException("[query = null]");
+
+		SensorObservationQuery ret = new SensorObservationQuery();
 
 		TupleExpr expr = query.getTupleExpr();
 
@@ -149,19 +159,25 @@ public class SensorObservationQuery implements Query {
 
 			if (p.equals(SSN.observedBy)) {
 				Value o = object.getValue();
-				if (o != null) {
+				if (o == null) {
+					sensorId = null;
+				} else {
 					if (o instanceof URI)
 						sensorId = (URI) o;
 				}
 			} else if (p.equals(SSN.observedProperty)) {
 				Value o = object.getValue();
-				if (o != null) {
+				if (o == null) {
+					propertyId = null;
+				} else {
 					if (o instanceof URI)
 						propertyId = (URI) o;
 				}
 			} else if (p.equals(SSN.featureOfInterest)) {
 				Value o = object.getValue();
-				if (o != null) {
+				if (o == null) {
+					featureId = null;
+				} else {
 					if (o instanceof URI)
 						featureId = (URI) o;
 				}
