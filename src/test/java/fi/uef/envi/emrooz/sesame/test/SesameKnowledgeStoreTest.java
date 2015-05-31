@@ -10,7 +10,6 @@ import static org.junit.Assert.assertFalse;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Set;
 
 import junitparams.FileParameters;
@@ -66,9 +65,8 @@ public class SesameKnowledgeStoreTest {
 		RepositoryConnection c = r.getConnection();
 		c.add(new File(kb), null, RDFFormat.RDFXML);
 
-		Set<Sensor> e = new HashSet<Sensor>();
 		RDFEntityRepresenter er = new RDFEntityRepresenter();
-		e.add(er.createSensor(statements));
+		Set<Sensor> e = er.createSensors(statements);
 
 		SesameKnowledgeStore ks = new SesameKnowledgeStore(r);
 

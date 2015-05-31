@@ -172,6 +172,20 @@ public class RDFEntityRepresenter {
 		return Collections.unmodifiableSet(ret);
 	}
 
+	public Set<Sensor> createSensors(Set<Statement> statements) {
+		if (statements.isEmpty())
+			return Collections.emptySet();
+		
+		Set<Sensor> ret = new HashSet<Sensor>();
+		Set<URI> ids = _getIds(statements, SSN.Sensor);
+		
+		for (URI id : ids) {
+			ret.add(createSensor(_matchSubject(statements, id)));
+		}
+		
+		return Collections.unmodifiableSet(ret);
+	}
+	
 	public Sensor createSensor(Set<Statement> statements) {
 		URI id = _getId(statements, SSN.Sensor);
 
@@ -689,6 +703,18 @@ public class RDFEntityRepresenter {
 		return vf.createStatement(s, p, o);
 	}
 
+	private static Set<URI> _getIds(Set<Statement> statements, URI type) {
+		Set<URI> ret = new HashSet<URI>();
+		
+		for (Statement statement : statements) {
+			if (statement.getPredicate().equals(RDF.TYPE)
+					&& statement.getObject().equals(type))
+				ret.add(vf.createURI(statement.getSubject().stringValue()));
+		}
+		
+		return Collections.unmodifiableSet(ret);
+	}
+	
 	private static URI _getId(Set<Statement> statements, URI type) {
 		for (Statement statement : statements) {
 			if (statement.getPredicate().equals(RDF.TYPE)
