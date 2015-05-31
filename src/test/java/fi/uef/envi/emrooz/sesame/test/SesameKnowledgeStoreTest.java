@@ -71,5 +71,7 @@ public class SesameKnowledgeStoreTest {
 		}
 
 		assertFalse(CollectionUtils.isEqualCollection(e, a));
+		
+		ks.close();
 	}
 }
