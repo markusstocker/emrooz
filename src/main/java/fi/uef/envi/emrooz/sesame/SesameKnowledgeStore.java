@@ -48,7 +48,7 @@ import fi.uef.envi.emrooz.vocabulary.SSN;
 
 /**
  * <p>
- * Title: KnowledgeStore
+ * Title: SesameKnowledgeStore
  * </p>
  * <p>
  * Description:
