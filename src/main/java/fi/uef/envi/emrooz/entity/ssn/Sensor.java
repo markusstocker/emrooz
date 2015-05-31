@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.entity.AbstractEntity;
@@ -135,7 +136,8 @@ public class Sensor extends AbstractEntity {
 		} else if (!property.equals(other.property))
 			return false;
 
-		if (!capabilities.equals(other.capabilities))
+		if (!CollectionUtils
+				.isEqualCollection(capabilities, other.capabilities))
 			return false;
 
 		return true;
