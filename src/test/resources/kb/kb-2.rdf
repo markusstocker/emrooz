@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE rdf:RDF [
+    <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#" >
+    <!ENTITY ssn "http://purl.oclc.org/NET/ssnx/ssn#" >
+    <!ENTITY rdfs "http://www.w3.org/2000/01/rdf-schema#" >
+    <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
+]>
+
+<rdf:RDF xmlns="http://example.org#"
+     xml:base="http://example.org"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:ssn="http://purl.oclc.org/NET/ssnx/ssn#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   
+    <rdf:Resource rdf:about="http://example.org#air">
+        <rdf:type rdf:resource="&ssn;FeatureOfInterest"/>
+    </rdf:Resource>
+    
+    <rdf:Resource rdf:about="http://example.org#pavement">
+        <rdf:type rdf:resource="&ssn;FeatureOfInterest"/>
+    </rdf:Resource>
+    
+    <rdf:Resource rdf:about="http://example.org#temperature">
+        <rdf:type rdf:resource="&ssn;Property"/>
+        <ssn:isPropertyOf rdf:resource="http://example.org#air"/>
+    </rdf:Resource>
+    
+    <rdf:Resource rdf:about="http://example.org#humidity">
+        <rdf:type rdf:resource="&ssn;Property"/>
+        <ssn:isPropertyOf rdf:resource="http://example.org#air"/>
+    </rdf:Resource>
+    
+    <rdf:Resource rdf:about="http://example.org#acceleration">
+        <rdf:type rdf:resource="&ssn;Property"/>
+        <ssn:isPropertyOf rdf:resource="http://example.org#pavement"/>
+    </rdf:Resource>
+
+    <rdf:Resource rdf:about="http://example.org#aThermometer">
+        <rdf:type rdf:resource="&ssn;Sensor"/>
+        <ssn:observes rdf:resource="http://example.org#temperature"/>
+    </rdf:Resource>
+    
+    <rdf:Resource rdf:about="http://example.org#aHygrometer">
+        <rdf:type rdf:resource="&ssn;Sensor"/>
+        <ssn:observes rdf:resource="http://example.org#humidity"/>
+    </rdf:Resource>
+    
+    <rdf:Resource rdf:about="http://example.org#aAccelerometer">
+        <rdf:type rdf:resource="&ssn;Sensor"/>
+        <ssn:observes rdf:resource="http://example.org#acceleration"/>
+    </rdf:Resource>
+    
+    <rdf:Resource rdf:about="http://example.org#bAccelerometer">
+        <rdf:type rdf:resource="&ssn;Sensor"/>
+        <ssn:observes rdf:resource="http://example.org#acceleration"/>
+    </rdf:Resource>
+    
+</rdf:RDF>
+

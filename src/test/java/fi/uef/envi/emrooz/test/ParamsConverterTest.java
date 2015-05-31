@@ -28,8 +28,10 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.model.vocabulary.XMLSchema;
 
+import fi.uef.envi.emrooz.query.SensorObservationQuery;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import junitparams.converters.ConversionFailedException;
 import junitparams.converters.ConvertParam;
 import junitparams.converters.ParamConverter;
 
@@ -189,7 +191,43 @@ public class ParamsConverterTest {
 		assertNotEquals(expected, actual);
 	}
 
+	@Test
+	@Parameters({ "(http://envi.uef.fi/emrooz#s1 http://envi.uef.fi/emrooz#p1 http://envi.uef.fi/emrooz#f1 2015-05-31T00:00:00.000+03:00 2015-05-31T01:00:00.000+03:00)" })
+	public void testEqualsStringToSensorObservationQueryCollection1(
+			@ConvertParam(value = StringToSensorObservationQueryCollection.class) Set<SensorObservationQuery> actual) {
+
+		Set<SensorObservationQuery> expected = new HashSet<SensorObservationQuery>();
+
+		expected.add(SensorObservationQuery.create(
+				vf.createURI("http://envi.uef.fi/emrooz#s1"),
+				vf.createURI("http://envi.uef.fi/emrooz#p1"),
+				vf.createURI("http://envi.uef.fi/emrooz#f1"),
+				dtf.parseDateTime("2015-05-31T00:00:00.000+03:00"),
+				dtf.parseDateTime("2015-05-31T01:00:00.000+03:00")));
+
+		assertEquals(expected, actual);
+	}
+	
+	@Test
+	@Parameters({ "(http://envi.uef.fi/emrooz#s1 http://envi.uef.fi/emrooz#p1 http://envi.uef.fi/emrooz#f1 2015-05-31T00:00:00.000+03:00 2015-05-31T01:00:00.000+03:00)" })
+	public void testNotEqualsStringToSensorObservationQueryCollection1(
+			@ConvertParam(value = StringToSensorObservationQueryCollection.class) Set<SensorObservationQuery> actual) {
+
+		Set<SensorObservationQuery> expected = new HashSet<SensorObservationQuery>();
+
+		expected.add(SensorObservationQuery.create(
+				vf.createURI("http://envi.uef.fi/emrooz#s1"),
+				vf.createURI("http://envi.uef.fi/emrooz#p1"),
+				vf.createURI("http://envi.uef.fi/emrooz#f1"),
+				dtf.parseDateTime("2015-05-31T01:00:00.000+03:00"),
+				dtf.parseDateTime("2015-05-31T02:00:00.000+03:00")));
+
+		assertNotEquals(expected, actual);
+	}
+
 	public static class StringToURIConverter implements ParamConverter<URI> {
+
+		@Override
 		public URI convert(Object param, String options) {
 			String value = param.toString();
 
@@ -203,6 +241,8 @@ public class ParamsConverterTest {
 
 	public static class StringToDoubleConverter implements
 			ParamConverter<Double> {
+
+		@Override
 		public Double convert(Object param, String options) {
 			String value = param.toString();
 
@@ -211,10 +251,13 @@ public class ParamsConverterTest {
 
 			return Double.valueOf(value);
 		}
+
 	}
 
 	public static class StringToDateTimeConverter implements
 			ParamConverter<DateTime> {
+
+		@Override
 		public DateTime convert(Object param, String options) {
 			String value = param.toString();
 
@@ -223,10 +266,13 @@ public class ParamsConverterTest {
 
 			return dtf.parseDateTime(value);
 		}
+
 	}
 
 	public static class StringToStatementsConverter implements
 			ParamConverter<Set<Statement>> {
+
+		@Override
 		public Set<Statement> convert(Object param, String options) {
 			String value = param.toString();
 
@@ -257,10 +303,8 @@ public class ParamsConverterTest {
 
 				if (length != 3) {
 					if (log.isLoggable(Level.WARNING))
-						log.warning("Expected three resources [resources.length = "
-								+ length
-								+ "; statement = "
-								+ statement
+						log.warning("Expected three resources [length = "
+								+ length + "; statement = " + statement
 								+ "; statements = " + statements + "]");
 					continue;
 				}
@@ -298,6 +342,58 @@ public class ParamsConverterTest {
 
 			return Collections.unmodifiableSet(ret);
 		}
+
+	}
+
+	public static class StringToSensorObservationQueryCollection implements
+			ParamConverter<Set<SensorObservationQuery>> {
+
+		@Override
+		public Set<SensorObservationQuery> convert(Object param, String options)
+				throws ConversionFailedException {
+			String value = param.toString();
+
+			if (value.isEmpty())
+				return Collections.emptySet();
+
+			Set<SensorObservationQuery> ret = new HashSet<SensorObservationQuery>();
+
+			String[] queries = value.split(";");
+
+			for (String query : queries) {
+				if (query.startsWith("(") && query.endsWith(")")) {
+					query = query.substring(1, query.length() - 1);
+				} else {
+					if (log.isLoggable(Level.WARNING))
+						log.warning("Query should start and end with rounded parenthesis [statement = "
+								+ query + "; queries = " + queries + "]");
+					continue;
+				}
+
+				String[] values = query.split(" ");
+				int length = values.length;
+
+				if (length != 5) {
+					if (log.isLoggable(Level.WARNING))
+						log.warning("Expected five values [length = " + length
+								+ "; query = " + query + "; queries = "
+								+ queries + "]");
+					continue;
+				}
+
+				URI sensorId = vf.createURI(values[0]);
+				URI propertyId = vf.createURI(values[1]);
+				URI featureId = vf.createURI(values[2]);
+				DateTime timeFrom = dtf.parseDateTime(values[3]);
+				DateTime timeTo = dtf.parseDateTime(values[4]);
+
+				ret.add(SensorObservationQuery.create(sensorId, propertyId,
+						featureId, timeFrom, timeTo));
+			}
+
+			return ret;
+		}
+
 	}
 
 }

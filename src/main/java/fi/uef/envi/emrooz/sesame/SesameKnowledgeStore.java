@@ -189,11 +189,13 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 				+ QUDTUnit.ns
 				+ "#>"
 				+ "select ?sensorId ?propertyId ?featureId ?measCapabilityId ?measPropertyId ?valueId ?value "
-				+ "where {" + "?sensorId rdf:type ssn:Sensor ."
+				+ "where {"
+				+ "?sensorId rdf:type ssn:Sensor ."
 				+ "?sensorId ssn:observes ?propertyId ."
 				+ "?propertyId rdf:type ssn:Property ."
 				+ "?propertyId ssn:isPropertyOf ?featureId ."
 				+ "?featureId rdf:type ssn:FeatureOfInterest ."
+				+ "optional {"
 				+ "?sensorId ssn:hasMeasurementCapability ?measCapabilityId ."
 				+ "?measCapabilityId rdf:type ssn:MeasurementCapability ."
 				+ "?measCapabilityId ssn:hasMeasurementProperty ?measPropertyId ."
@@ -201,7 +203,7 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 				+ "?measPropertyId ssn:hasValue ?valueId ."
 				+ "?valueId rdf:type qudt:QuantityValue ."
 				+ "?valueId qudt:unit unit:Hertz ."
-				+ "?valueId qudt:numericValue ?value ." + "}";
+				+ "?valueId qudt:numericValue ?value ." + "} }";
 
 		try {
 			TupleQuery query = connection.prepareTupleQuery(
@@ -210,31 +212,41 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 
 			while (rs.hasNext()) {
 				BindingSet bs = rs.next();
-				
+
 				URI sensorId = _uri(bs.getValue("sensorId"));
 				URI propertyId = _uri(bs.getValue("propertyId"));
 				URI featureId = _uri(bs.getValue("featureId"));
-				URI measCapabilityId = _uri(bs.getValue("measCapabilityId"));
-				URI measPropertyId = _uri(bs.getValue("measPropertyId"));
-				URI valueId = _uri(bs.getValue("valueId"));
-				Double value = Double.valueOf(bs.getValue("value")
-						.stringValue());
 
 				Sensor sensor = new Sensor(sensorId);
 				Property property = new Property(propertyId);
 				FeatureOfInterest feature = new FeatureOfInterest(featureId);
-				MeasurementCapability measCapability = new MeasurementCapability(
-						measCapabilityId);
-				Frequency measProperty = new Frequency(measPropertyId);
-				QuantityValue quantityValue = new QuantityValue(valueId);
 
 				property.setPropertyOf(feature);
 				sensor.setObservedProperty(property);
-				sensor.addMeasurementCapability(measCapability);
-				measCapability.addMeasurementProperty(measProperty);
-				measProperty.setQuantityValue(quantityValue);
-				quantityValue.setNumericValue(value);
-				quantityValue.setUnit(new Unit(QUDTUnit.Hertz));
+
+				if (bs.getValue("measCapabilityId") != null) {
+					// Measurement capability is set optional. For applications
+					// the frequency must be set, otherwise Cassandra doesn't
+					// know when to rollover. However, for testing purposes it
+					// is convenient not to have to specify the measurement
+					// capability for each sensor.
+					URI measCapabilityId = _uri(bs.getValue("measCapabilityId"));
+					URI measPropertyId = _uri(bs.getValue("measPropertyId"));
+					URI valueId = _uri(bs.getValue("valueId"));
+					Double value = Double.valueOf(bs.getValue("value")
+							.stringValue());
+
+					MeasurementCapability measCapability = new MeasurementCapability(
+							measCapabilityId);
+					Frequency measProperty = new Frequency(measPropertyId);
+					QuantityValue quantityValue = new QuantityValue(valueId);
+
+					sensor.addMeasurementCapability(measCapability);
+					measCapability.addMeasurementProperty(measProperty);
+					measProperty.setQuantityValue(quantityValue);
+					quantityValue.setNumericValue(value);
+					quantityValue.setUnit(new Unit(QUDTUnit.Hertz));
+				}
 
 				sensors.add(sensor);
 			}
