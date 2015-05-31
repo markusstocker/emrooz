@@ -40,5 +40,9 @@ JUnit (4.12):
 cassandra-utils (0.2.1):
 	https://github.com/marccarre/cassandra-utils
 	Apache License 2.0
+
+commons-collections4 (4.0):
+    https://commons.apache.org/proper/commons-collections/
+    Apache License 2.0
 	
 	

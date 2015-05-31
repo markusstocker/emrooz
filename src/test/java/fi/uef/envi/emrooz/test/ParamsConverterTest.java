@@ -6,17 +6,22 @@
 package fi.uef.envi.emrooz.test;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
@@ -225,6 +230,88 @@ public class ParamsConverterTest {
 		assertNotEquals(expected, actual);
 	}
 
+	@Test
+	@Parameters({ "(s=http://example.org#s p=http://example.org#p o=http://example.org#o)" })
+	public void testEqualsStringToBindingMapSet1(
+			@ConvertParam(value = StringToBindingMapSet.class) Set<Map<String, String>> actual) {
+
+		Set<Map<String, String>> expected = new HashSet<Map<String, String>>();
+
+		Map<String, String> m1 = new HashMap<String, String>();
+		expected.add(m1);
+		
+		m1.put("s", "http://example.org#s");
+		m1.put("p", "http://example.org#p");
+		m1.put("o", "http://example.org#o");
+
+		assertTrue(CollectionUtils.isEqualCollection(expected, actual));
+	}
+	
+	@Test
+	@Parameters({ "(s=http://example.org#s p=http://example.org#p o=http://example.org#q)" })
+	public void testNotEqualsStringToBindingMapSet1(
+			@ConvertParam(value = StringToBindingMapSet.class) Set<Map<String, String>> actual) {
+
+		Set<Map<String, String>> expected = new HashSet<Map<String, String>>();
+
+		Map<String, String> m1 = new HashMap<String, String>();
+		expected.add(m1);
+		
+		m1.put("s", "http://example.org#s");
+		m1.put("p", "http://example.org#p");
+		m1.put("o", "http://example.org#o");
+
+		assertFalse(CollectionUtils.isEqualCollection(expected, actual));
+	}
+	
+	@Test
+	@Parameters({ "(s=http://example.org#s1 p=http://example.org#p1 o=http://example.org#o1);(s=http://example.org#s2 p=http://example.org#p2 o=http://example.org#o2)" })
+	public void testEqualsStringToBindingMapSet2(
+			@ConvertParam(value = StringToBindingMapSet.class) Set<Map<String, String>> actual) {
+
+		Set<Map<String, String>> expected = new HashSet<Map<String, String>>();
+
+		Map<String, String> m1 = new HashMap<String, String>();
+		expected.add(m1);
+		
+		m1.put("s", "http://example.org#s1");
+		m1.put("p", "http://example.org#p1");
+		m1.put("o", "http://example.org#o1");
+		
+		Map<String, String> m2 = new HashMap<String, String>();
+		expected.add(m2);
+		
+		m2.put("s", "http://example.org#s2");
+		m2.put("p", "http://example.org#p2");
+		m2.put("o", "http://example.org#o2");
+
+		assertTrue(CollectionUtils.isEqualCollection(expected, actual));
+	}
+	
+	@Test
+	@Parameters({ "(s=http://example.org#s1 p=http://example.org#p1 o=http://example.org#o1);(s=http://example.org#s2 p=http://example.org#p2 q=http://example.org#o2)" })
+	public void testNotEqualsStringToBindingMapSet2(
+			@ConvertParam(value = StringToBindingMapSet.class) Set<Map<String, String>> actual) {
+
+		Set<Map<String, String>> expected = new HashSet<Map<String, String>>();
+
+		Map<String, String> m1 = new HashMap<String, String>();
+		expected.add(m1);
+		
+		m1.put("s", "http://example.org#s1");
+		m1.put("p", "http://example.org#p1");
+		m1.put("o", "http://example.org#o1");
+		
+		Map<String, String> m2 = new HashMap<String, String>();
+		expected.add(m2);
+		
+		m2.put("s", "http://example.org#s2");
+		m2.put("p", "http://example.org#p2");
+		m2.put("o", "http://example.org#o2");
+
+		assertFalse(CollectionUtils.isEqualCollection(expected, actual));
+	}
+
 	public static class StringToURIConverter implements ParamConverter<URI> {
 
 		@Override
@@ -345,6 +432,73 @@ public class ParamsConverterTest {
 
 	}
 
+	public static class StringToBindingMapSet implements
+			ParamConverter<Set<Map<String, String>>> {
+
+		@Override
+		public Set<Map<String, String>> convert(Object param, String options)
+				throws ConversionFailedException {
+			String value = param.toString();
+
+			if (value.isEmpty())
+				return Collections.emptySet();
+
+			Set<Map<String, String>> ret = new HashSet<Map<String, String>>();
+
+			String[] bindingSets = value.split(";");
+
+			for (String bindingSet : bindingSets) {
+				if (bindingSet.startsWith("(") && bindingSet.endsWith(")")) {
+					bindingSet = bindingSet.substring(1,
+							bindingSet.length() - 1);
+				} else {
+					if (log.isLoggable(Level.WARNING))
+						log.warning("Bindings should start and end with rounded parenthesis [bindingSet = "
+								+ bindingSet
+								+ "; bindingSets = "
+								+ bindingSets
+								+ "]");
+					continue;
+				}
+
+				String[] bindings = bindingSet.split(" ");
+				int length = bindings.length;
+
+				if (length <= 0) {
+					if (log.isLoggable(Level.WARNING))
+						log.warning("Expected at least one binding [length = "
+								+ length + "; bindings = " + bindings
+								+ "; bindingSet = " + bindingSet
+								+ "; bindingSets = " + bindingSets + "]");
+					continue;
+				}
+
+				Map<String, String> m = new HashMap<String, String>();
+				ret.add(m);
+
+				for (String binding : bindings) {
+					String[] values = binding.split("=");
+					length = values.length;
+
+					if (length != 2) {
+						if (log.isLoggable(Level.WARNING))
+							log.warning("Expected two values [length = "
+									+ length + "; values = " + values
+									+ "; bindings = " + bindings
+									+ "; bindingSet = " + bindingSet
+									+ "; bindingSets = " + bindingSets + "]");
+						continue;
+					}
+
+					m.put(values[0], values[1]);
+				}
+			}
+
+			return Collections.unmodifiableSet(ret);
+		}
+
+	}
+
 	public static class StringToSensorObservationQueryCollection implements
 			ParamConverter<Set<SensorObservationQuery>> {
 
@@ -384,7 +538,7 @@ public class ParamsConverterTest {
 				URI sensorId = null;
 				URI propertyId = null;
 				URI featureId = null;
-	
+
 				if (!values[0].equals("?"))
 					sensorId = vf.createURI(values[0]);
 
@@ -396,12 +550,12 @@ public class ParamsConverterTest {
 
 				DateTime timeFrom = dtf.parseDateTime(values[3]);
 				DateTime timeTo = dtf.parseDateTime(values[4]);
-				
+
 				ret.add(SensorObservationQuery.create(sensorId, propertyId,
 						featureId, timeFrom, timeTo));
 			}
 
-			return ret;
+			return Collections.unmodifiableSet(ret);
 		}
 
 	}

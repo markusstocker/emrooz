@@ -1,0 +1,4 @@
+select ?s ?p ?o where { ?s ?p ?o },(http://example.org#s http://example.org#p http://example.org#o),(s=http://example.org#s p=http://example.org#p o=http://example.org#o),assertEquals
+select ?s ?p ?o where { ?s ?p ?o },(http://example.org#s http://example.org#p http://example.org#o),(s=http://example.org#s p=http://example.org#p o=http://example.org#o1),assertNotEquals
+select ?s ?p ?o where { ?s ?p ?o },(http://example.org#s1 http://example.org#p1 http://example.org#o1);(http://example.org#s2 http://example.org#p2 http://example.org#o2),(s=http://example.org#s1 p=http://example.org#p1 o=http://example.org#o1);(s=http://example.org#s2 p=http://example.org#p2 o=http://example.org#o2),assertEquals
+select ?p ?o where { <http://example.org#s> ?p ?o },(http://example.org#s http://example.org#p http://example.org#o),(p=http://example.org#p o=http://example.org#o),assertEquals
