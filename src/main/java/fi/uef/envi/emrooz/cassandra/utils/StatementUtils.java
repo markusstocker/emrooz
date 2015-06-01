@@ -75,9 +75,15 @@ public class StatementUtils {
 		RDFParser rdfParser = Rio.createParser(RDFFormat.BINARY);
 		StatementCollector collector = new StatementCollector(ret);
 		rdfParser.setRDFHandler(collector);
-		rdfParser.parse(new ByteArrayInputStream(bytes), null);
+
+		toStatements(rdfParser, bytes);
 
 		return Collections.unmodifiableSet(ret);
+	}
+
+	public static void toStatements(RDFParser parser, byte[] bytes)
+			throws RDFParseException, RDFHandlerException, IOException {
+		parser.parse(new ByteArrayInputStream(bytes), null);
 	}
 
 	public static Iterator<Statement> toStatements(Iterator<Row> iterator)
@@ -92,9 +98,10 @@ public class StatementUtils {
 		rdfParser.setRDFHandler(collector);
 
 		while (iterator.hasNext()) {
-			rdfParser.parse(
-					new ByteArrayInputStream(Bytes.getArray(iterator.next()
-							.getBytes(DATA_TABLE_ATTRIBUTE_3))), null);
+			toStatements(
+					rdfParser,
+					Bytes.getArray(iterator.next().getBytes(
+							DATA_TABLE_ATTRIBUTE_3)));
 		}
 
 		return Collections.unmodifiableSet(ret).iterator();

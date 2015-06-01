@@ -66,10 +66,9 @@ public class CassandraResultSet implements ResultSet<Statement> {
 
 	private void getStatementIterator() throws RDFParseException,
 			RDFHandlerException, IOException {
-		if (!results.hasNext()) {
-			statements = Collections.emptyIterator();
-			return;
-		}
+		if (!results.hasNext())
+			return; // Do not set statements to empty iterator; there may still
+					// be statements even though there are no more results
 
 		if (!statements.hasNext()) {
 			statements = StatementUtils.toStatements(results.next());
