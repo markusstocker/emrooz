@@ -29,6 +29,7 @@ import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 
+import fi.uef.envi.emrooz.cassandra.utils.StatementUtils;
 import fi.uef.envi.emrooz.entity.ssn.Sensor;
 
 /**
@@ -80,7 +81,8 @@ public class CassandraAdder extends CassandraRequestHandler {
 
 	private void addSensorObservation(String rowKey, UUID resultTime,
 			Set<Statement> columnValue) {
-		addSensorObservation(rowKey, resultTime, toByteArray(columnValue));
+		addSensorObservation(rowKey, resultTime,
+				StatementUtils.toByteArray(columnValue));
 	}
 
 	private void addSensorObservation(String rowKey, UUID columnName,
@@ -96,22 +98,4 @@ public class CassandraAdder extends CassandraRequestHandler {
 				.bind(rowKey, columnName, ByteBuffer.wrap(columnValue)));
 	}
 
-	public static byte[] toByteArray(Set<Statement> statements) {
-		ByteArrayOutputStream os = new ByteArrayOutputStream();
-		RDFHandler rdfHandler = new BinaryRDFWriter(os);
-
-		try {
-			rdfHandler.startRDF();
-
-			for (Statement statement : statements) {
-				rdfHandler.handleStatement(statement);
-			}
-
-			rdfHandler.endRDF();
-		} catch (RDFHandlerException e) {
-			e.printStackTrace();
-		}
-
-		return os.toByteArray();
-	}
 }
