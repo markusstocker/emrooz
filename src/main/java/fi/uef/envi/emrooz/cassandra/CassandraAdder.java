@@ -11,7 +11,6 @@ import static fi.uef.envi.emrooz.EmroozOptions.DATA_TABLE_ATTRIBUTE_2;
 import static fi.uef.envi.emrooz.EmroozOptions.DATA_TABLE_ATTRIBUTE_3;
 import static fi.uef.envi.emrooz.EmroozOptions.KEYSPACE;
 
-import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.Set;
 import java.util.UUID;
@@ -20,9 +19,6 @@ import java.util.logging.Logger;
 
 import org.joda.time.DateTime;
 import org.openrdf.model.Statement;
-import org.openrdf.rio.RDFHandler;
-import org.openrdf.rio.RDFHandlerException;
-import org.openrdf.rio.binary.BinaryRDFWriter;
 
 import com.carmatech.cassandra.TimeUUID;
 import com.datastax.driver.core.BoundStatement;
