@@ -117,6 +117,24 @@ public class RDFEntityRepresenter {
 		return Collections.unmodifiableSet(ret);
 	}
 
+	public Set<SensorObservation> createSensorObservations(
+			Set<Statement> statements) {
+		if (statements == null)
+			return Collections.emptySet();
+		if (statements.isEmpty())
+			return Collections.emptySet();
+
+		Set<SensorObservation> ret = new HashSet<SensorObservation>();
+
+		Set<URI> ids = _getIds(statements, SSN.Observation);
+
+		for (URI id : ids) {
+			ret.add(createSensorObservation(_matchSubject(statements, id)));
+		}
+
+		return Collections.unmodifiableSet(ret);
+	}
+
 	public SensorObservation createSensorObservation(Set<Statement> statements) {
 		if (statements == null)
 			return null;
@@ -175,17 +193,17 @@ public class RDFEntityRepresenter {
 	public Set<Sensor> createSensors(Set<Statement> statements) {
 		if (statements.isEmpty())
 			return Collections.emptySet();
-		
+
 		Set<Sensor> ret = new HashSet<Sensor>();
 		Set<URI> ids = _getIds(statements, SSN.Sensor);
-		
+
 		for (URI id : ids) {
 			ret.add(createSensor(_matchSubject(statements, id)));
 		}
-		
+
 		return Collections.unmodifiableSet(ret);
 	}
-	
+
 	public Sensor createSensor(Set<Statement> statements) {
 		URI id = _getId(statements, SSN.Sensor);
 
@@ -306,8 +324,7 @@ public class RDFEntityRepresenter {
 					+ "; types = "
 					+ types
 					+ "; statements = "
-					+ statements
-					+ "]");
+					+ statements + "]");
 
 		return null;
 	}
@@ -705,16 +722,16 @@ public class RDFEntityRepresenter {
 
 	private static Set<URI> _getIds(Set<Statement> statements, URI type) {
 		Set<URI> ret = new HashSet<URI>();
-		
+
 		for (Statement statement : statements) {
 			if (statement.getPredicate().equals(RDF.TYPE)
 					&& statement.getObject().equals(type))
 				ret.add(vf.createURI(statement.getSubject().stringValue()));
 		}
-		
+
 		return Collections.unmodifiableSet(ret);
 	}
-	
+
 	private static URI _getId(Set<Statement> statements, URI type) {
 		for (Statement statement : statements) {
 			if (statement.getPredicate().equals(RDF.TYPE)

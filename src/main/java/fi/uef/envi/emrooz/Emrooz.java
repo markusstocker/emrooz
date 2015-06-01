@@ -5,6 +5,7 @@
 
 package fi.uef.envi.emrooz;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -58,6 +59,7 @@ public class Emrooz {
 	private DataStore ds;
 
 	private Map<URI, Map<URI, Map<URI, Sensor>>> sensors;
+	private Map<URI, Sensor> sensorsById;
 
 	private DateTime instant = null;
 	private final TemporalEntityVisitor temporalEntityVisitor;
@@ -78,6 +80,7 @@ public class Emrooz {
 		this.ds = ds;
 
 		this.sensors = new HashMap<URI, Map<URI, Map<URI, Sensor>>>();
+		this.sensorsById = new HashMap<URI, Sensor>();
 		this.temporalEntityVisitor = new EmroozTemporalEntityVisitor();
 		this.representer = new RDFEntityRepresenter();
 		this.sensorObservationQueryRewriter = new SensorObservationQueryRewriter(
@@ -86,14 +89,47 @@ public class Emrooz {
 		sensors();
 	}
 
-	public void addSensorObservation(Set<Statement> statements) {
-		add(representer.createSensorObservation(statements));
+	public void loadKnowledgeBase(File file) {
+		ks.load(file);
+		sensors();
 	}
 
 	public void add(Sensor sensor) {
 		ks.addSensor(sensor);
+		sensors();
 	}
 
+	public Sensor getSensorById(URI sensorId) {
+		if (sensorId == null) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("[sensorId = null]");
+			return null;
+		}
+
+		Sensor ret = sensorsById.get(sensorId);
+
+		if (ret == null) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("Cannot find sensor [sensorId = " + sensorId
+						+ "; sensorsById = " + sensorsById + "]");
+		}
+
+		return ret;
+	}
+	
+	public void addSensorObservation(Set<Statement> statements) {
+		add(representer.createSensorObservation(statements));
+	}
+	
+	public void addSensorObservations(Set<Statement> statements) {
+		add(representer.createSensorObservations(statements));
+	}
+
+	public void add(Set<SensorObservation> observations) {
+		for (SensorObservation observation : observations)
+			add(observation);
+	}
+	
 	public void add(SensorObservation observation) {
 		if (observation == null)
 			return;
@@ -282,11 +318,14 @@ public class Emrooz {
 
 	private void sensors() {
 		sensors.clear();
+		sensorsById.clear();
 
 		Set<Sensor> sensors = ks.getSensors();
 
 		for (Sensor sensor : sensors) {
 			URI sensorId = sensor.getId();
+
+			sensorsById.put(sensorId, sensor);
 
 			Map<URI, Map<URI, Sensor>> m1 = this.sensors.get(sensorId);
 
