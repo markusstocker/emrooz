@@ -31,7 +31,7 @@ import fi.uef.envi.emrooz.entity.ssn.Sensor;
  * @author Markus Stocker
  */
 
-public interface KnowledgeStore {
+public interface KnowledgeStore extends Store {
 
 	public void load(File file);
 
@@ -41,7 +41,5 @@ public interface KnowledgeStore {
 
 	public QueryHandler<BindingSet> createQueryHandler(
 			QueryHandler<Statement> other, ParsedQuery query);
-
-	public void close();
 
 }

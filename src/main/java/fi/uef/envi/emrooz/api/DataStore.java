@@ -31,14 +31,12 @@ import fi.uef.envi.emrooz.query.SensorObservationQuery;
  * @author Markus Stocker
  */
 
-public interface DataStore {
+public interface DataStore extends Store {
 
 	public void addSensorObservation(Sensor specification, DateTime resultTime,
 			Set<Statement> statements);
 
 	public QueryHandler<Statement> createQueryHandler(
 			Map<SensorObservationQuery, Sensor> queries);
-
-	public void close();
 
 }
