@@ -83,21 +83,24 @@ public class RowKeyUtils {
 			return null;
 		}
 
-		if (rollover.equals(Rollover.YEAR))
-			time = time.year().roundFloorCopy();
-		else if (rollover.equals(Rollover.MONTH))
-			time = time.monthOfYear().roundFloorCopy();
-		else if (rollover.equals(Rollover.DAY))
-			time = time.dayOfMonth().roundFloorCopy();
-		else if (rollover.equals(Rollover.HOUR))
-			time = time.hourOfDay().roundFloorCopy();
-		else if (rollover.equals(Rollover.MINUTE))
-			time = time.minuteOfHour().roundFloorCopy();
-		else
-			throw new RuntimeException("Unsupported rollover [rollover = "
-					+ rollover + "]");
+		String shaHex = getShaHex(specification);
+		String date = getDate(rollover, time);
 
-		return getSha1Hex(specification) + "-" + dtfRowKey.print(time);
+		if (shaHex == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to compute SHA hex for specification [specification = "
+						+ specification + "]");
+			return null;
+		}
+
+		if (date == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to compute date for rollover and time [rollover = "
+						+ rollover + "; time = " + time + "]");
+			return null;
+		}
+
+		return shaHex + "-" + date;
 	}
 
 	public Rollover getRollover(Sensor specification) {
@@ -161,7 +164,22 @@ public class RowKeyUtils {
 		return ret;
 	}
 
-	private String getSha1Hex(Sensor specification) {
+	private String getDate(Rollover rollover, DateTime time) {
+		if (rollover.equals(Rollover.YEAR))
+			return dtfRowKey.print(time.year().roundFloorCopy());
+		else if (rollover.equals(Rollover.MONTH))
+			return dtfRowKey.print(time.monthOfYear().roundFloorCopy());
+		else if (rollover.equals(Rollover.DAY))
+			return dtfRowKey.print(time.dayOfMonth().roundFloorCopy());
+		else if (rollover.equals(Rollover.HOUR))
+			return dtfRowKey.print(time.hourOfDay().roundFloorCopy());
+		else if (rollover.equals(Rollover.MINUTE))
+			return dtfRowKey.print(time.minuteOfHour().roundFloorCopy());
+
+		return null;
+	}
+
+	private String getShaHex(Sensor specification) {
 		String ret = shaCache.get(specification);
 
 		if (ret != null)
