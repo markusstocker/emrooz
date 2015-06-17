@@ -81,11 +81,6 @@ public class StatementUtils {
 		return Collections.unmodifiableSet(ret);
 	}
 
-	public static void toStatements(RDFParser parser, byte[] bytes)
-			throws RDFParseException, RDFHandlerException, IOException {
-		parser.parse(new ByteArrayInputStream(bytes), null);
-	}
-
 	public static Iterator<Statement> toStatements(Iterator<Row> iterator)
 			throws RDFParseException, RDFHandlerException, IOException {
 		if (!iterator.hasNext()) {
@@ -105,6 +100,11 @@ public class StatementUtils {
 		}
 
 		return Collections.unmodifiableSet(ret).iterator();
+	}
+	
+	private static void toStatements(RDFParser parser, byte[] bytes)
+			throws RDFParseException, RDFHandlerException, IOException {
+		parser.parse(new ByteArrayInputStream(bytes), null);
 	}
 
 }
