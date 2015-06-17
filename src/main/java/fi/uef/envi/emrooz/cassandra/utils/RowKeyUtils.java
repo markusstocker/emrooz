@@ -51,7 +51,7 @@ import fi.uef.envi.emrooz.vocabulary.QUDTUnit;
 public class RowKeyUtils {
 
 	private DateTimeFormatter dtfRowKey;
-	private Map<Sensor, String> sha1HexCache;
+	private Map<Sensor, String> shaCache;
 	private Map<Sensor, Rollover> rolloverCache;
 	private Frequency frequency;
 	private MeasurementPropertyVisitor measurementPropertyVisitor;
@@ -61,7 +61,7 @@ public class RowKeyUtils {
 
 	public RowKeyUtils() {
 		this.dtfRowKey = DateTimeFormat.forPattern(ROWKEY_DATETIME_PATTERN);
-		this.sha1HexCache = new HashMap<Sensor, String>();
+		this.shaCache = new HashMap<Sensor, String>();
 		this.rolloverCache = new HashMap<Sensor, Rollover>();
 		this.measurementPropertyVisitor = new HandlerMeasurementPropertyVisitor();
 	}
@@ -162,7 +162,7 @@ public class RowKeyUtils {
 	}
 
 	private String getSha1Hex(Sensor specification) {
-		String ret = sha1HexCache.get(specification);
+		String ret = shaCache.get(specification);
 
 		if (ret != null)
 			return ret;
@@ -196,10 +196,10 @@ public class RowKeyUtils {
 
 		URI featureId = feature.getId();
 
-		ret = DigestUtils.sha1Hex(sensorId.stringValue() + "-"
+		ret = DigestUtils.sha256Hex(sensorId.stringValue() + "-"
 				+ propertyId.stringValue() + "-" + featureId.stringValue());
 
-		sha1HexCache.put(specification, ret);
+		shaCache.put(specification, ret);
 
 		return ret;
 	}
