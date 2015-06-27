@@ -72,6 +72,16 @@ public class EntityFactory {
 						frequency, createUnit(QUDTUnit.Hertz)))));
 	}
 
+	public Sensor createSensor(String sensorFragment, String propertyFragment,
+			String[] featuresFragment, Double frequency) {
+		return createSensor(
+				vf.createURI(ns + sensorFragment),
+				createProperty(propertyFragment,
+						createFeaturesOfInterest(featuresFragment)),
+				createMeasurementCapability(createFrequency(createQuantityValue(
+						frequency, createUnit(QUDTUnit.Hertz)))));
+	}
+
 	public Sensor createSensor(URI sensor, URI property, URI feature,
 			Double frequency) {
 		return createSensor(
@@ -116,6 +126,10 @@ public class EntityFactory {
 		return createProperty(vf.createURI(ns + fragment), feature);
 	}
 
+	public Property createProperty(String fragment, FeatureOfInterest[] features) {
+		return createProperty(vf.createURI(ns + fragment), features);
+	}
+
 	public Property createProperty(URI id) {
 		return createProperty(id, SSN.Property);
 	}
@@ -124,16 +138,35 @@ public class EntityFactory {
 		return createProperty(id, SSN.Property, feature);
 	}
 
+	public Property createProperty(URI id, FeatureOfInterest[] features) {
+		return createProperty(id, SSN.Property, features);
+	}
+
 	public Property createProperty(URI id, URI type) {
-		return createProperty(id, type, null);
+		return new Property(id, type);
 	}
 
 	public Property createProperty(URI id, URI type, FeatureOfInterest feature) {
 		return new Property(id, type, feature);
 	}
 
+	public Property createProperty(URI id, URI type,
+			FeatureOfInterest[] features) {
+		return new Property(id, type, features);
+	}
+
 	public FeatureOfInterest createFeatureOfInterest(String fragment) {
 		return new FeatureOfInterest(vf.createURI(ns + fragment));
+	}
+
+	public FeatureOfInterest[] createFeaturesOfInterest(String[] fragments) {
+		FeatureOfInterest[] ret = new FeatureOfInterest[fragments.length];
+
+		for (int i = 0; i < fragments.length; i++) {
+			ret[i] = new FeatureOfInterest(vf.createURI(ns + fragments[i]));
+		}
+
+		return ret;
 	}
 
 	public FeatureOfInterest createFeatureOfInterest(URI id) {

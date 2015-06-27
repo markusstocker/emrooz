@@ -60,12 +60,12 @@ public class CompletePersistentExample {
 		String sparql = "prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#>"
 				+ "prefix time: <http://www.w3.org/2006/time#>"
 				+ "prefix dul: <http://www.loa-cnr.it/ontologies/DUL.owl#>"
-				+ "select ?sensor ?property ?time ?value "
+				+ "select ?sensor ?property ?feature ?time ?value "
 				+ "where {"
 				+ "["
 				+ "ssn:observedBy ?sensor ;"
 				+ "ssn:observedProperty ?property ;"
-				+ "ssn:featureOfInterest <http://example.org#air> ;"
+				+ "ssn:featureOfInterest ?feature ;"
 				+ "ssn:observationResultTime [ time:inXSDDateTime ?time ] ;"
 				+ "ssn:observationResult [ ssn:hasValue [ dul:hasRegionDataValue ?value ] ]"
 				+ "]"
@@ -91,6 +91,8 @@ public class CompletePersistentExample {
 		e.add(f.createSensor("aThermometer", "temperature", "air", 1.0));
 		e.add(f.createSensor("aHygrometer", "humidity", "air", 1.0));
 		e.add(f.createSensor("aAccelerometer", "vibration", "pavement", 1.0));
+		e.add(f.createSensor("aGasAnalyzer", "moleFraction", new String[] {
+				"CO2", "H2O" }, 1.0));
 
 		DateTime now = dtf.parseDateTime("2015-05-18T00:00:00.000+03:00");
 
@@ -99,13 +101,18 @@ public class CompletePersistentExample {
 		long start = System.currentTimeMillis();
 
 		for (int i = 0; i < 120; i++) {
+			String time = dtf.print(now.plusSeconds(i));
+
 			e.add(f.createSensorObservation("aThermometer", "temperature",
-					"air", r.nextDouble(),
-					ISODateTimeFormat.dateTime().print(now.plusSeconds(i))));
-			e.add(f.createSensorObservation("aHygrometer", "humidity",
-					"air", r.nextDouble(), dtf.print(now.plusSeconds(i))));
+					"air", r.nextDouble(), time));
+			e.add(f.createSensorObservation("aHygrometer", "humidity", "air",
+					r.nextDouble(), time));
 			e.add(f.createSensorObservation("aAccelerometer", "vibration",
-					"pavement", r.nextDouble(), dtf.print(now.plusSeconds(i))));
+					"pavement", r.nextDouble(), time));
+			e.add(f.createSensorObservation("aGasAnalyzer", "moleFraction",
+					"CO2", r.nextDouble(), time));
+			e.add(f.createSensorObservation("aGasAnalyzer", "moleFraction",
+					"H2O", r.nextDouble(), time));
 		}
 
 		long end = System.currentTimeMillis();
