@@ -10,8 +10,9 @@ import java.util.Set;
 
 import org.joda.time.DateTime;
 import org.openrdf.model.Statement;
+import org.openrdf.model.URI;
 
-import fi.uef.envi.emrooz.entity.ssn.Sensor;
+import fi.uef.envi.emrooz.entity.ssn.Frequency;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 
 /**
@@ -33,10 +34,11 @@ import fi.uef.envi.emrooz.query.SensorObservationQuery;
 
 public interface DataStore extends Store {
 
-	public void addSensorObservation(Sensor specification, DateTime resultTime,
+	public void addSensorObservation(URI sensorId, URI propertyId,
+			URI featureId, Frequency frequency, DateTime resultTime,
 			Set<Statement> statements);
 
 	public QueryHandler<Statement> createQueryHandler(
-			Map<SensorObservationQuery, Sensor> queries);
+			Map<SensorObservationQuery, Frequency> queries);
 
 }

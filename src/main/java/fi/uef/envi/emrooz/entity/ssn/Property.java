@@ -5,6 +5,10 @@
 
 package fi.uef.envi.emrooz.entity.ssn;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.entity.AbstractEntity;
@@ -30,7 +34,7 @@ import static fi.uef.envi.emrooz.vocabulary.SSN.Property;
 
 public class Property extends AbstractEntity {
 
-	private FeatureOfInterest feature;
+	private Set<FeatureOfInterest> features;
 
 	public Property(URI id) {
 		this(id, Property);
@@ -47,16 +51,21 @@ public class Property extends AbstractEntity {
 	public Property(URI id, URI type, FeatureOfInterest feature) {
 		super(id, type);
 
+		features = new HashSet<FeatureOfInterest>();
+		
 		addType(Property);
-		setPropertyOf(feature);
+		addPropertyOf(feature);
 	}
 
-	public void setPropertyOf(FeatureOfInterest feature) {
-		this.feature = feature;
+	public void addPropertyOf(FeatureOfInterest feature) {
+		if (feature == null)
+			return;
+
+		features.add(feature);
 	}
 
-	public FeatureOfInterest getPropertyOf() {
-		return feature;
+	public Set<FeatureOfInterest> getPropertiesOf() {
+		return Collections.unmodifiableSet(features);
 	}
 
 	public void accept(EntityVisitor visitor) {
@@ -70,7 +79,7 @@ public class Property extends AbstractEntity {
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		result = prime * result + types.hashCode();
-		result = prime * result + ((feature == null) ? 0 : feature.hashCode());
+		result = prime * result + features.hashCode();
 
 		return result;
 	}
@@ -100,10 +109,7 @@ public class Property extends AbstractEntity {
 		if (!types.equals(other.types))
 			return false;
 
-		if (feature == null) {
-			if (other.feature != null)
-				return false;
-		} else if (!feature.equals(other.feature))
+		if (!features.equals(other.features))
 			return false;
 
 		return true;
@@ -111,7 +117,7 @@ public class Property extends AbstractEntity {
 
 	public String toString() {
 		return "Property [id = " + id + "; type = " + type + "; types = "
-				+ types + "; feature = " + feature + "]";
+				+ types + "; features = " + features + "]";
 	}
 
 }

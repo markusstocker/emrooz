@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 
 import org.joda.time.DateTime;
 import org.openrdf.model.Statement;
+import org.openrdf.model.URI;
 
 import com.carmatech.cassandra.TimeUUID;
 import com.datastax.driver.core.BoundStatement;
@@ -26,7 +27,7 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 
 import fi.uef.envi.emrooz.cassandra.utils.StatementUtils;
-import fi.uef.envi.emrooz.entity.ssn.Sensor;
+import fi.uef.envi.emrooz.entity.ssn.Frequency;
 
 /**
  * <p>
@@ -64,10 +65,12 @@ public class CassandraAdder extends CassandraRequestHandler {
 						+ "," + DATA_TABLE_ATTRIBUTE_3 + ") VALUES (?, ?, ?)");
 	}
 
-	public void addSensorObservation(Sensor specification, DateTime resultTime,
+	public void addSensorObservation(URI sensorId, URI propertyId,
+			URI featureId, Frequency frequency, DateTime resultTime,
 			Set<Statement> statements) {
-		addSensorObservation(getRowKey(specification, resultTime), resultTime,
-				statements);
+		addSensorObservation(
+				getRowKey(sensorId, propertyId, featureId, frequency,
+						resultTime), resultTime, statements);
 	}
 
 	private void addSensorObservation(String rowKey, DateTime resultTime,

@@ -6,7 +6,9 @@
 package fi.uef.envi.emrooz.entity.ssn;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -36,7 +38,7 @@ import static fi.uef.envi.emrooz.vocabulary.SSN.Sensor;
 public class Sensor extends AbstractEntity {
 
 	private Property property;
-	private Set<MeasurementCapability> capabilities;
+	private Map<URI, MeasurementCapability> capabilities;
 
 	public Sensor(URI id) {
 		this(id, Sensor, null);
@@ -56,7 +58,7 @@ public class Sensor extends AbstractEntity {
 		super(id, type);
 
 		this.property = property;
-		this.capabilities = new HashSet<MeasurementCapability>();
+		this.capabilities = new HashMap<URI, MeasurementCapability>();
 
 		addType(Sensor);
 		addMeasurementCapability(capabilities);
@@ -74,12 +76,16 @@ public class Sensor extends AbstractEntity {
 			if (capability == null)
 				continue;
 
-			this.capabilities.add(capability);
+			URI capabilityId = capability.getId();
+
+			if (!this.capabilities.containsKey(capabilityId))
+				this.capabilities.put(capabilityId, capability);
 		}
 	}
 
 	public Set<MeasurementCapability> getMeasurementCapabilities() {
-		return Collections.unmodifiableSet(capabilities);
+		return Collections.unmodifiableSet(new HashSet<MeasurementCapability>(
+				capabilities.values()));
 	}
 
 	public Property getObservedProperty() {
@@ -136,8 +142,8 @@ public class Sensor extends AbstractEntity {
 		} else if (!property.equals(other.property))
 			return false;
 
-		if (!CollectionUtils
-				.isEqualCollection(capabilities, other.capabilities))
+		if (!CollectionUtils.isEqualCollection(capabilities.values(),
+				other.capabilities.values()))
 			return false;
 
 		return true;

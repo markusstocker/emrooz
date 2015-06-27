@@ -20,11 +20,7 @@ import fi.uef.envi.emrooz.Rollover;
 import fi.uef.envi.emrooz.cassandra.utils.RowKeyUtils;
 import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.qudt.Unit;
-import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
 import fi.uef.envi.emrooz.entity.ssn.Frequency;
-import fi.uef.envi.emrooz.entity.ssn.MeasurementCapability;
-import fi.uef.envi.emrooz.entity.ssn.Property;
-import fi.uef.envi.emrooz.entity.ssn.Sensor;
 import fi.uef.envi.emrooz.test.ParamsConverterTest;
 
 /**
@@ -50,21 +46,18 @@ public class RowKeyUtilsTest {
 	@Test
 	@FileParameters("src/test/resources/RowKeyUtilsTest-testGetRowKey.csv")
 	public void testGetRowKey(
-			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI sensorId,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI propertyId,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI featureId,
-			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI measCapaId,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI measPropId,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI valueId,
 			@ConvertParam(value = ParamsConverterTest.StringToDoubleConverter.class) Double value,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI unitId,
 			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime time,
 			String e, String assertType) {
-		String a = new RowKeyUtils().getRowKey(new Sensor(id, new Property(
-				propertyId, new FeatureOfInterest(featureId)),
-				new MeasurementCapability(measCapaId, new Frequency(measPropId,
-						new QuantityValue(valueId, value, new Unit(unitId))))),
-				time);
+		String a = new RowKeyUtils().getRowKey(sensorId, propertyId, featureId,
+				new Frequency(measPropId, new QuantityValue(valueId, value,
+						new Unit(unitId))), time);
 
 		if (assertType.equals("assertEquals")) {
 			assertEquals(e, a);
@@ -77,22 +70,20 @@ public class RowKeyUtilsTest {
 	@Test
 	@FileParameters("src/test/resources/RowKeyUtilsTest-testGetRollover.csv")
 	public void testGetRollover(
-			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI sensorId,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI propertyId,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI featureId,
-			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI measCapaId,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI measPropId,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI valueId,
 			@ConvertParam(value = ParamsConverterTest.StringToDoubleConverter.class) Double value,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI unitId,
 			String rollover, String assertType) {
-		Rollover a = new RowKeyUtils().getRollover(new Sensor(id, new Property(
-				propertyId, new FeatureOfInterest(featureId)),
-				new MeasurementCapability(measCapaId, new Frequency(measPropId,
-						new QuantityValue(valueId, value, new Unit(unitId))))));
+		Rollover a = new RowKeyUtils().getRollover(sensorId, propertyId,
+				featureId, new Frequency(measPropId, new QuantityValue(valueId,
+						value, new Unit(unitId))));
 
 		Rollover e = Rollover.valueOf(rollover);
-		
+
 		if (assertType.equals("assertEquals")) {
 			assertEquals(e, a);
 			return;

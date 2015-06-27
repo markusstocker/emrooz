@@ -52,12 +52,13 @@ public class SensorSpecificationExample {
 		KnowledgeStore ks = new SesameKnowledgeStore(r);
 
 		// Loads this KB, which may contain sensor specifications
-		ks.load(new File("src/examples/resources/kb.rdf"));
+//		ks.load(new File("src/examples/resources/kb.rdf"));
 
 		// Load sensor specifications programmatically
-		ks.addSensor(sensor1());
-		ks.addSensor(sensor2());
-		ks.addSensor(sensor3());
+//		ks.addSensor(sensor1());
+//		ks.addSensor(sensor2());
+//		ks.addSensor(sensor3());
+		ks.addSensor(sensor4());
 
 		ks.close();
 	}
@@ -81,7 +82,33 @@ public class SensorSpecificationExample {
 		sensor.setObservedProperty(property);
 
 		FeatureOfInterest feature = f.createFeatureOfInterest("wind");
-		property.setPropertyOf(feature);
+		property.addPropertyOf(feature);
+
+		MeasurementCapability capability = f.createMeasurementCapability();
+		sensor.addMeasurementCapability(capability);
+
+		Frequency frequency = f.createFrequency();
+		capability.addMeasurementProperty(frequency);
+
+		QuantityValue value = f.createQuantityValue();
+		frequency.setQuantityValue(value);
+
+		Unit unit = f.createUnit(QUDTUnit.Hertz);
+
+		value.setNumericValue(0.0167);
+		value.setUnit(unit);
+
+		return sensor;
+	}
+
+	private static Sensor sensor4() {
+		Sensor sensor = f.createSensor("aGasAnalyzer");
+
+		Property property = f.createProperty("moleFraction");
+		sensor.setObservedProperty(property);
+
+		property.addPropertyOf(f.createFeatureOfInterest("CO2"));
+		property.addPropertyOf(f.createFeatureOfInterest("H2O"));
 
 		MeasurementCapability capability = f.createMeasurementCapability();
 		sensor.addMeasurementCapability(capability);

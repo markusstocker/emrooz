@@ -1,2 +1,2 @@
-http://example.org#s1,http://example.org#p1,http://example.org#f1,http://example.org#mc1,http://example.org#mp1,http://example.org#qv1,1.0,http://qudt.org/vocab/unit#Hertz,DAY,assertEquals
-http://example.org#s1,http://example.org#p1,http://example.org#f1,http://example.org#mc1,http://example.org#mp1,http://example.org#qv1,1.0,http://qudt.org/vocab/unit#Hertz,HOUR,assertNotEquals
+http://example.org#s1,http://example.org#p1,http://example.org#f1,http://example.org#mp1,http://example.org#qv1,1.0,http://qudt.org/vocab/unit#Hertz,DAY,assertEquals
+http://example.org#s1,http://example.org#p1,http://example.org#f1,http://example.org#mp1,http://example.org#qv1,1.0,http://qudt.org/vocab/unit#Hertz,HOUR,assertNotEquals

@@ -6,9 +6,11 @@
 package fi.uef.envi.emrooz.cassandra;
 
 import org.joda.time.DateTime;
+import org.openrdf.model.URI;
+
 import fi.uef.envi.emrooz.Rollover;
 import fi.uef.envi.emrooz.cassandra.utils.RowKeyUtils;
-import fi.uef.envi.emrooz.entity.ssn.Sensor;
+import fi.uef.envi.emrooz.entity.ssn.Frequency;
 
 /**
  * <p>
@@ -35,12 +37,16 @@ public abstract class CassandraRequestHandler {
 		this.rowKeyUtils = new RowKeyUtils();
 	}
 
-	protected String getRowKey(Sensor specification, DateTime time) {
-		return rowKeyUtils.getRowKey(specification, time);
+	protected String getRowKey(URI sensorId, URI propertyId, URI featureId,
+			Frequency frequency, DateTime time) {
+		return rowKeyUtils.getRowKey(sensorId, propertyId, featureId,
+				frequency, time);
 	}
 
-	protected Rollover getRollover(Sensor specification) {
-		return rowKeyUtils.getRollover(specification);
+	protected Rollover getRollover(URI sensorId, URI propertyId, URI featureId,
+			Frequency frequency) {
+		return rowKeyUtils.getRollover(sensorId, propertyId, featureId,
+				frequency);
 	}
 
 }

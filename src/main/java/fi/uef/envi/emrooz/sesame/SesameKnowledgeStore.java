@@ -8,7 +8,9 @@ package fi.uef.envi.emrooz.sesame;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -67,7 +69,7 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 
 	private Repository repository;
 	private RepositoryConnection connection;
-	private Set<Sensor> sensors;
+	private Map<URI, Sensor> sensors;
 	private ValueFactory vf;
 	private RDFEntityRepresenter representer;
 
@@ -118,7 +120,8 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 
 	@Override
 	public Set<Sensor> getSensors() {
-		return Collections.unmodifiableSet(sensors);
+		return Collections
+				.unmodifiableSet(new HashSet<Sensor>(sensors.values()));
 	}
 
 	@Override
@@ -174,7 +177,7 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 	}
 
 	private void loadSensors() {
-		sensors = new HashSet<Sensor>();
+		sensors = new HashMap<URI, Sensor>();
 
 		String sparql = "prefix ssn: <"
 				+ SSN.ns
@@ -216,13 +219,22 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 				URI sensorId = _uri(bs.getValue("sensorId"));
 				URI propertyId = _uri(bs.getValue("propertyId"));
 				URI featureId = _uri(bs.getValue("featureId"));
-
-				Sensor sensor = new Sensor(sensorId);
-				Property property = new Property(propertyId);
+				
+				Sensor sensor = sensors.get(sensorId);
+				Property property;
+				
+				if (sensor == null) {
+					sensor = new Sensor(sensorId);
+					sensors.put(sensorId, sensor);
+					property = new Property(propertyId);
+					sensor.setObservedProperty(property);
+				} else {
+					property = sensor.getObservedProperty();
+				}
+				
 				FeatureOfInterest feature = new FeatureOfInterest(featureId);
 
-				property.setPropertyOf(feature);
-				sensor.setObservedProperty(property);
+				property.addPropertyOf(feature);
 
 				if (bs.getValue("measCapabilityId") != null) {
 					// Measurement capability is set optional. For applications
@@ -247,8 +259,6 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 					quantityValue.setNumericValue(value);
 					quantityValue.setUnit(new Unit(QUDTUnit.Hertz));
 				}
-
-				sensors.add(sensor);
 			}
 
 		} catch (RepositoryException | MalformedQueryException

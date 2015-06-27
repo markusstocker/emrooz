@@ -25,6 +25,9 @@ import fi.uef.envi.emrooz.api.QueryHandler;
 import fi.uef.envi.emrooz.api.ResultSet;
 import fi.uef.envi.emrooz.entity.TemporalEntityVisitor;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
+import fi.uef.envi.emrooz.entity.ssn.Frequency;
+import fi.uef.envi.emrooz.entity.ssn.MeasurementCapability;
+import fi.uef.envi.emrooz.entity.ssn.MeasurementProperty;
 import fi.uef.envi.emrooz.entity.ssn.Property;
 import fi.uef.envi.emrooz.entity.ssn.Sensor;
 import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
@@ -58,13 +61,14 @@ public class Emrooz {
 	private KnowledgeStore ks;
 	private DataStore ds;
 
-	private Map<URI, Map<URI, Map<URI, Sensor>>> sensors;
+	private Map<URI, Map<URI, Sensor>> sensors;
 	private Map<URI, Sensor> sensorsById;
 
 	private DateTime instant = null;
 	private final TemporalEntityVisitor temporalEntityVisitor;
 	private final RDFEntityRepresenter representer;
 	private SensorObservationQueryRewriter sensorObservationQueryRewriter;
+	private Map<Sensor, Frequency> frequencyCache;
 
 	private static final Logger log = Logger.getLogger(Emrooz.class.getName());
 
@@ -79,12 +83,13 @@ public class Emrooz {
 		this.ks = ks;
 		this.ds = ds;
 
-		this.sensors = new HashMap<URI, Map<URI, Map<URI, Sensor>>>();
+		this.sensors = new HashMap<URI, Map<URI, Sensor>>();
 		this.sensorsById = new HashMap<URI, Sensor>();
 		this.temporalEntityVisitor = new EmroozTemporalEntityVisitor();
 		this.representer = new RDFEntityRepresenter();
 		this.sensorObservationQueryRewriter = new SensorObservationQueryRewriter(
 				ks);
+		this.frequencyCache = new HashMap<Sensor, Frequency>();
 
 		sensors();
 	}
@@ -116,11 +121,11 @@ public class Emrooz {
 
 		return ret;
 	}
-	
+
 	public void addSensorObservation(Set<Statement> statements) {
 		add(representer.createSensorObservation(statements));
 	}
-	
+
 	public void addSensorObservations(Set<Statement> statements) {
 		add(representer.createSensorObservations(statements));
 	}
@@ -129,7 +134,7 @@ public class Emrooz {
 		for (SensorObservation observation : observations)
 			add(observation);
 	}
-	
+
 	public void add(SensorObservation observation) {
 		if (observation == null)
 			return;
@@ -192,18 +197,31 @@ public class Emrooz {
 		if (sensors.isEmpty())
 			sensors();
 
-		Sensor specification = getSpecification(sensor.getId(),
-				property.getId(), feature.getId());
+		URI sensorId = sensor.getId();
+		URI propertyId = property.getId();
+		URI featureId = feature.getId();
+
+		Sensor specification = getSpecification(sensorId, propertyId);
 
 		if (specification == null) {
 			if (log.isLoggable(Level.WARNING))
-				log.warning("No specification found [sensor = " + sensor
-						+ "; property = " + property + "; feature = " + feature
-						+ "]");
+				log.warning("No specification found [sensorId = " + sensorId
+						+ "; propertyId = " + propertyId + "; featureId = "
+						+ featureId + "]");
 			return;
 		}
 
-		ds.addSensorObservation(specification, resultTime, statements);
+		Frequency frequency = getFrequency(specification);
+
+		if (frequency == null) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("No frequency specified [specification = "
+						+ specification + "]");
+			return;
+		}
+
+		ds.addSensorObservation(sensorId, propertyId, featureId, frequency,
+				resultTime, statements);
 	}
 
 	public ResultSet<BindingSet> evaluate(String query) {
@@ -254,7 +272,7 @@ public class Emrooz {
 			log.info("Query [query = " + query + "; original = "
 					+ original.getSourceString() + "]");
 
-		Map<SensorObservationQuery, Sensor> queriesMap = new HashMap<SensorObservationQuery, Sensor>();
+		Map<SensorObservationQuery, Frequency> queriesMap = new HashMap<SensorObservationQuery, Frequency>();
 		Set<SensorObservationQuery> rewrittenQueries = sensorObservationQueryRewriter
 				.rewrite(query);
 
@@ -298,18 +316,25 @@ public class Emrooz {
 				return null;
 			}
 
-			Sensor specification = getSpecification(sensorId, propertyId,
-					featureId);
+			Sensor specification = getSpecification(sensorId, propertyId);
 
 			if (specification == null) {
 				if (log.isLoggable(Level.WARNING))
 					log.warning("No specification found [sensorId = "
-							+ sensorId + "; propertyId = " + propertyId
-							+ "; featureId = " + featureId + "]");
+							+ sensorId + "; propertyId = " + propertyId + "]");
 				return null;
 			}
 
-			queriesMap.put(rewrittenQuery, specification);
+			Frequency frequency = getFrequency(specification);
+
+			if (frequency == null) {
+				if (log.isLoggable(Level.WARNING))
+					log.warning("No frequency specified [specification = "
+							+ specification + "]");
+				return null;
+			}
+
+			queriesMap.put(rewrittenQuery, frequency);
 		}
 
 		return ks.createQueryHandler(ds.createQueryHandler(queriesMap),
@@ -327,10 +352,10 @@ public class Emrooz {
 
 			sensorsById.put(sensorId, sensor);
 
-			Map<URI, Map<URI, Sensor>> m1 = this.sensors.get(sensorId);
+			Map<URI, Sensor> m1 = this.sensors.get(sensorId);
 
 			if (m1 == null) {
-				m1 = new HashMap<URI, Map<URI, Sensor>>();
+				m1 = new HashMap<URI, Sensor>();
 				this.sensors.put(sensorId, m1);
 			}
 
@@ -343,30 +368,12 @@ public class Emrooz {
 				continue;
 			}
 
-			URI propertyId = property.getId();
-
-			Map<URI, Sensor> m2 = m1.get(propertyId);
-
-			if (m2 == null) {
-				m2 = new HashMap<URI, Sensor>();
-				m1.put(propertyId, m2);
-			}
-
-			FeatureOfInterest feature = property.getPropertyOf();
-
-			if (feature == null) {
-				if (log.isLoggable(Level.WARNING))
-					log.warning("Property must specify the feature [sensor = "
-							+ sensor + "]");
-				continue;
-			}
-
-			m2.put(feature.getId(), sensor);
+			m1.put(property.getId(), sensor);
 		}
 	}
 
-	private Sensor getSpecification(URI sensorId, URI propertyId, URI featureId) {
-		Map<URI, Map<URI, Sensor>> m1 = sensors.get(sensorId);
+	private Sensor getSpecification(URI sensorId, URI propertyId) {
+		Map<URI, Sensor> m1 = sensors.get(sensorId);
 
 		if (m1 == null) {
 			sensors();
@@ -379,15 +386,16 @@ public class Emrooz {
 			}
 		}
 
-		Map<URI, Sensor> m2 = m1.get(propertyId);
+		Sensor specification = m1.get(propertyId);
 
-		if (m2 == null) {
+		if (specification == null) {
+			// Load sensors and check again, perhaps there are new sensors
 			sensors();
 			m1 = sensors.get(sensorId);
-			m2 = m1.get(propertyId);
-			if (m2 == null) {
+			specification = m1.get(propertyId);
+			if (specification == null) {
 				if (log.isLoggable(Level.WARNING))
-					log.warning("Failed to resolve sensor specification for property [sensorId = "
+					log.warning("Failed to resolve sensor specification for feature [sensorId = "
 							+ sensorId
 							+ "; propertyId = "
 							+ propertyId
@@ -396,28 +404,35 @@ public class Emrooz {
 			}
 		}
 
-		Sensor specification = m2.get(featureId);
+		return specification;
+	}
 
-		if (specification == null) {
-			sensors();
-			m1 = sensors.get(sensorId);
-			m2 = m1.get(propertyId);
-			specification = m2.get(featureId);
-			if (specification == null) {
-				if (log.isLoggable(Level.WARNING))
-					log.warning("Failed to resolve sensor specification for feature [sensorId = "
-							+ sensorId
-							+ "; propertyId = "
-							+ propertyId
-							+ "; featureId = "
-							+ featureId
-							+ "; sensors = "
-							+ sensors + "]");
-				return null;
+	private Frequency getFrequency(Sensor specification) {
+		Frequency ret = frequencyCache.get(specification);
+
+		if (ret != null)
+			return ret;
+
+		Set<MeasurementCapability> measCapabilities = specification
+				.getMeasurementCapabilities();
+
+		for (MeasurementCapability measCapability : measCapabilities) {
+			Set<MeasurementProperty> measProperties = measCapability
+					.getMeasurementProperties();
+
+			for (MeasurementProperty measProperty : measProperties) {
+				if (!(measProperty instanceof Frequency))
+					continue;
+
+				ret = (Frequency) measProperty;
+
+				frequencyCache.put(specification, ret);
+
+				return ret;
 			}
 		}
 
-		return specification;
+		return null;
 	}
 
 	private class EmroozTemporalEntityVisitor implements TemporalEntityVisitor {
@@ -428,69 +443,5 @@ public class Emrooz {
 		}
 
 	}
-
-	// private URI resolve(StatementPattern pattern,
-	// List<StatementPattern> patterns, Set<Statement> graph) {
-	// // Try to resolve resource subject by first getting the joined triple
-	// // patterns matching resource subject and then execute a SPARQL query
-	// // with the triple patterns over graph to resolve resource
-	//
-	// Set<StatementPattern> basicGraphPattern = new
-	// HashSet<StatementPattern>();
-	//
-	// Var findVar = pattern.getObjectVar();
-	//
-	// find(findVar, patterns, basicGraphPattern);
-	//
-	// GraphPattern gp = new GraphPattern();
-	//
-	// for (StatementPattern bgp : basicGraphPattern) {
-	// gp.addRequiredSP(bgp.getSubjectVar(), bgp.getPredicateVar(),
-	// bgp.getObjectVar());
-	// }
-	//
-	// TupleExpr query = new Projection(gp.buildTupleExpr(),
-	// new ProjectionElemList(new ProjectionElem(findVar.getName())));
-	//
-	// try {
-	// Repository repo = new SailRepository(new MemoryStore());
-	// repo.initialize();
-	//
-	// SailRepositoryConnection conn = (SailRepositoryConnection) repo
-	// .getConnection();
-	//
-	// for (Statement statement : graph) {
-	// conn.add(statement);
-	// }
-	//
-	// ParsedTupleQuery tp = new ParsedTupleQuery(query);
-	// SailTupleQuery q = new SailTupleQuery(tp, conn);
-	//
-	// TupleQueryResult r = q.evaluate();
-	//
-	// while (r.hasNext()) {
-	//
-	// }
-	//
-	// conn.close();
-	// } catch (RepositoryException | MalformedQueryException
-	// | QueryEvaluationException e) {
-	// e.printStackTrace();
-	// }
-	//
-	// return null;
-	// }
-
-	// private void find(Var s, List<StatementPattern> patterns,
-	// Set<StatementPattern> ret) {
-	// for (StatementPattern pattern : patterns) {
-	// if (!s.equals(pattern.getSubjectVar()))
-	// continue;
-	//
-	// ret.add(pattern);
-	//
-	// find(pattern.getObjectVar(), patterns, ret);
-	// }
-	// }
 
 }

@@ -38,7 +38,7 @@ import fi.uef.envi.emrooz.Emrooz;
 import fi.uef.envi.emrooz.api.DataStore;
 import fi.uef.envi.emrooz.api.QueryHandler;
 import fi.uef.envi.emrooz.api.ResultSet;
-import fi.uef.envi.emrooz.entity.ssn.Sensor;
+import fi.uef.envi.emrooz.entity.ssn.Frequency;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 import fi.uef.envi.emrooz.sesame.SesameKnowledgeStore;
 
@@ -76,30 +76,30 @@ public class EmroozTest {
 		em.loadKnowledgeBase(new File(kb));
 		em.addSensorObservations(statements);
 		ResultSet<BindingSet> rs = em.evaluate(query);
-		
+
 		Set<Map<String, String>> a = new HashSet<Map<String, String>>();
-		
+
 		while (rs.hasNext()) {
 			BindingSet bs = rs.next();
-			
+
 			Map<String, String> m = new HashMap<String, String>();
 			a.add(m);
-			
+
 			Iterator<Binding> it = bs.iterator();
-			
+
 			while (it.hasNext()) {
 				Binding b = it.next();
 				m.put(b.getName(), b.getValue().stringValue());
 			}
 		}
-		
+
 		if (assertType.equals("assertEquals")) {
 			assertTrue(CollectionUtils.isEqualCollection(e, a));
 			return;
 		}
 
 		assertFalse(CollectionUtils.isEqualCollection(e, a));
-		
+
 		em.close();
 	}
 
@@ -112,13 +112,9 @@ public class EmroozTest {
 		}
 
 		@Override
-		public void addSensorObservation(Sensor specification,
-				DateTime resultTime, Set<Statement> statements) {
-			URI sensorId = specification.getId();
-			URI propertyId = specification.getObservedProperty().getId();
-			URI featureId = specification.getObservedProperty().getPropertyOf()
-					.getId();
-
+		public void addSensorObservation(URI sensorId, URI propertyId,
+				URI featureId, Frequency frequency, DateTime resultTime,
+				Set<Statement> statements) {
 			Map<URI, Map<URI, Map<DateTime, Set<Statement>>>> m1 = store
 					.get(sensorId);
 
@@ -146,7 +142,7 @@ public class EmroozTest {
 
 		@Override
 		public QueryHandler<Statement> createQueryHandler(
-				Map<SensorObservationQuery, Sensor> queries) {
+				Map<SensorObservationQuery, Frequency> queries) {
 			return new ThisQueryHandler(Collections.unmodifiableMap(store),
 					queries);
 		}
@@ -161,11 +157,11 @@ public class EmroozTest {
 	private class ThisQueryHandler implements QueryHandler<Statement> {
 
 		private Map<URI, Map<URI, Map<URI, Map<DateTime, Set<Statement>>>>> store;
-		private Map<SensorObservationQuery, Sensor> queries;
+		private Map<SensorObservationQuery, Frequency> queries;
 
 		public ThisQueryHandler(
 				Map<URI, Map<URI, Map<URI, Map<DateTime, Set<Statement>>>>> store,
-				Map<SensorObservationQuery, Sensor> queries) {
+				Map<SensorObservationQuery, Frequency> queries) {
 			this.store = store;
 			this.queries = queries;
 		}
@@ -174,7 +170,7 @@ public class EmroozTest {
 		public ResultSet<Statement> evaluate() {
 			Set<Statement> ret = new HashSet<Statement>();
 
-			for (Map.Entry<SensorObservationQuery, Sensor> entry : queries
+			for (Map.Entry<SensorObservationQuery, Frequency> entry : queries
 					.entrySet()) {
 				SensorObservationQuery query = entry.getKey();
 				URI sensorId = query.getSensorId();

@@ -228,7 +228,7 @@ public class RDFEntityRepresenter {
 					_getObjectId(statements, property.getId(), SSN.isPropertyOf)));
 
 			if (feature != null)
-				property.setPropertyOf(feature);
+				property.addPropertyOf(feature);
 		}
 
 		Set<URI> measurementCapabilityIds = _getObjectIds(statements, id,
@@ -486,9 +486,9 @@ public class RDFEntityRepresenter {
 		ret.add(_statement(propertyId, RDF.TYPE, SSN.Property));
 		ret.add(_statement(propertyId, RDF.TYPE, property.getType()));
 
-		FeatureOfInterest feature = property.getPropertyOf();
+		Set<FeatureOfInterest> features = property.getPropertiesOf();
 
-		if (feature != null) {
+		for (FeatureOfInterest feature : features) {
 			ret.add(_statement(propertyId, SSN.isPropertyOf, feature.getId()));
 			ret.addAll(createRepresentation(feature));
 		}

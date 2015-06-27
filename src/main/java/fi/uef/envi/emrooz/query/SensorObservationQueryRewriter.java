@@ -65,30 +65,32 @@ public class SensorObservationQueryRewriter implements
 
 		for (Sensor sensor : sensors) {
 			Property property = sensor.getObservedProperty();
-			FeatureOfInterest feature = property.getPropertyOf();
+			Set<FeatureOfInterest> features = property.getPropertiesOf();
 
-			URI thisSensorId = sensor.getId();
-			URI thisPropertyId = property.getId();
-			URI thisFeatureId = feature.getId();
+			for (FeatureOfInterest feature : features) {
+				URI thisSensorId = sensor.getId();
+				URI thisPropertyId = property.getId();
+				URI thisFeatureId = feature.getId();
 
-			URI thatSensorId = sensorId;
-			URI thatPropertyId = propertyId;
-			URI thatFeatureId = featureId;
+				URI thatSensorId = sensorId;
+				URI thatPropertyId = propertyId;
+				URI thatFeatureId = featureId;
 
-			if (thatSensorId == null)
-				thatSensorId = thisSensorId;
-			if (thatPropertyId == null)
-				thatPropertyId = thisPropertyId;
-			if (thatFeatureId == null)
-				thatFeatureId = thisFeatureId;
+				if (thatSensorId == null)
+					thatSensorId = thisSensorId;
+				if (thatPropertyId == null)
+					thatPropertyId = thisPropertyId;
+				if (thatFeatureId == null)
+					thatFeatureId = thisFeatureId;
 
-			if (!(thatSensorId.equals(thisSensorId)
-					&& thatPropertyId.equals(thisPropertyId) && thatFeatureId
-						.equals(thisFeatureId)))
-				continue;
+				if (!(thatSensorId.equals(thisSensorId)
+						&& thatPropertyId.equals(thisPropertyId) && thatFeatureId
+							.equals(thisFeatureId)))
+					continue;
 
-			ret.add(SensorObservationQuery.create(thisSensorId, thisPropertyId,
-					thisFeatureId, timeFrom, timeTo));
+				ret.add(SensorObservationQuery.create(thisSensorId,
+						thisPropertyId, thisFeatureId, timeFrom, timeTo));
+			}
 		}
 
 		return Collections.unmodifiableSet(ret);

@@ -27,7 +27,7 @@ import com.datastax.driver.core.Session;
 import fi.uef.envi.emrooz.Rollover;
 import fi.uef.envi.emrooz.api.QueryHandler;
 import fi.uef.envi.emrooz.api.ResultSet;
-import fi.uef.envi.emrooz.entity.ssn.Sensor;
+import fi.uef.envi.emrooz.entity.ssn.Frequency;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 
 /**
@@ -52,14 +52,14 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 
 	private Session session;
 	private PreparedStatement sensorObservationSelectStatement;
-	private Map<SensorObservationQuery, Sensor> queries;
+	private Map<SensorObservationQuery, Frequency> queries;
 
 	private static final Logger log = Logger
 			.getLogger(CassandraQueryHandler.class.getName());
 
 	public CassandraQueryHandler(Session session,
 			PreparedStatement sensorObservationSelectStatement,
-			Map<SensorObservationQuery, Sensor> queries) {
+			Map<SensorObservationQuery, Frequency> queries) {
 		if (session == null)
 			throw new NullPointerException("[session = null]");
 		if (sensorObservationSelectStatement == null)
@@ -87,21 +87,24 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 	@Override
 	public ResultSet<Statement> evaluate() {
 		Set<Iterator<Row>> results = new HashSet<Iterator<Row>>();
-	
-		for (Map.Entry<SensorObservationQuery, Sensor> entry : queries.entrySet()) {
-			results.addAll(getSensorObservations(entry.getKey(), entry.getValue()));
+
+		for (Map.Entry<SensorObservationQuery, Frequency> entry : queries
+				.entrySet()) {
+			results.addAll(getSensorObservations(entry.getKey(),
+					entry.getValue()));
 		}
 
 		return new CassandraResultSet(results.iterator());
 	}
-	
-	private Set<Iterator<Row>> getSensorObservations(SensorObservationQuery query, Sensor specification) {
+
+	private Set<Iterator<Row>> getSensorObservations(
+			SensorObservationQuery query, Frequency frequency) {
 		URI sensorId = query.getSensorId();
 		URI propertyId = query.getPropertyId();
 		URI featureId = query.getFeatureOfInterestId();
 		DateTime timeFrom = query.getTimeFrom();
 		DateTime timeTo = query.getTimeTo();
-		
+
 		if (sensorId == null || propertyId == null || featureId == null
 				|| timeFrom == null || timeTo == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -112,18 +115,19 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 						+ "; featureId = "
 						+ featureId
 						+ "; timeFrom = "
-						+ timeFrom
-						+ "; timeTo = "
-						+ timeTo + "]");
+						+ timeFrom + "; timeTo = " + timeTo + "]");
 			return Collections.emptySet();
 		}
 
-		Rollover rollover = getRollover(specification);
+		Rollover rollover = getRollover(sensorId, propertyId, featureId,
+				frequency);
 
 		if (rollover == null) {
 			if (log.isLoggable(Level.SEVERE))
-				log.severe("Registration rollover is null [specification = "
-						+ specification + "]");
+				log.severe("Registration rollover is null [sensorId = "
+						+ sensorId + "; propertyId = " + propertyId
+						+ "; featureId = " + featureId + "; frequency = "
+						+ frequency + "]");
 			return Collections.emptySet();
 		}
 
@@ -132,7 +136,8 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 
 		while (time.isBefore(timeTo)) {
 			Iterator<Row> it = getSensorObservations(
-					getRowKey(specification, time), time, timeTo);
+					getRowKey(sensorId, propertyId, featureId, frequency, time),
+					time, timeTo);
 
 			if (it != null)
 				results.add(it);
@@ -151,7 +156,7 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 				throw new RuntimeException("Unsupported rollover [rollover = "
 						+ rollover + "]");
 		}
-	
+
 		return Collections.unmodifiableSet(results);
 	}
 

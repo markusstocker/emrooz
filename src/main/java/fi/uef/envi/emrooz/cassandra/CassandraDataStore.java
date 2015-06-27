@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 
 import org.joda.time.DateTime;
 import org.openrdf.model.Statement;
+import org.openrdf.model.URI;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.KeyspaceMetadata;
@@ -28,7 +29,7 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.TableMetadata;
 
 import fi.uef.envi.emrooz.api.DataStore;
-import fi.uef.envi.emrooz.entity.ssn.Sensor;
+import fi.uef.envi.emrooz.entity.ssn.Frequency;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 
 /**
@@ -85,30 +86,36 @@ public class CassandraDataStore implements DataStore {
 	}
 
 	@Override
-	public void addSensorObservation(Sensor specification, DateTime resultTime,
+	public void addSensorObservation(URI sensorId, URI propertyId,
+			URI featureId, Frequency frequency, DateTime resultTime,
 			Set<Statement> statements) {
-		if (specification == null || resultTime == null) {
+		if (sensorId == null || propertyId == null || featureId == null
+				|| frequency == null || resultTime == null) {
 			if (log.isLoggable(Level.WARNING))
-				log.warning("At least one parameter is null [specification = "
-						+ specification + "; resultTime = " + resultTime + "]");
+				log.warning("At least one parameter is null [sensorId = "
+						+ sensorId + "; propertyId = " + propertyId
+						+ "; featureId = " + featureId + "; frequency = "
+						+ frequency + "; resultTime = " + resultTime + "]");
 			return;
 		}
 
 		if (statements.isEmpty()) {
 			if (log.isLoggable(Level.WARNING))
-				log.warning("Empty collection of statements [specification = "
-						+ specification + "; resultTime = " + resultTime
+				log.warning("Empty collection of statements [[sensorId = "
+						+ sensorId + "; propertyId = " + propertyId
+						+ "; featureId = " + featureId + "; frequency = "
+						+ frequency + "; resultTime = " + resultTime
 						+ "; statements = " + statements + "]");
 			return;
 		}
 
-		cassandraAdder.addSensorObservation(specification, resultTime,
-				statements);
+		cassandraAdder.addSensorObservation(sensorId, propertyId, featureId,
+				frequency, resultTime, statements);
 	}
 
 	@Override
 	public CassandraQueryHandler createQueryHandler(
-			Map<SensorObservationQuery, Sensor> queries) {
+			Map<SensorObservationQuery, Frequency> queries) {
 		return new CassandraQueryHandler(session,
 				sensorObservationSelectStatement, queries);
 	}
