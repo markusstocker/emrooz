@@ -34,29 +34,36 @@ import static fi.uef.envi.emrooz.vocabulary.SSN.Property;
 
 public class Property extends AbstractEntity {
 
-	private Set<FeatureOfInterest> features;
+	private Set<FeatureOfInterest> features = new HashSet<FeatureOfInterest>();
 
 	public Property(URI id) {
 		this(id, Property);
 	}
 
-	public Property(URI id, FeatureOfInterest feature) {
-		this(id, Property, feature);
+	public Property(URI id, FeatureOfInterest... features) {
+		this(id, Property, features);
 	}
 
 	public Property(URI id, URI type) {
-		this(id, type, null);
+		this(id, type, new FeatureOfInterest[]{});
 	}
 
-	public Property(URI id, URI type, FeatureOfInterest feature) {
+	public Property(URI id, URI type, FeatureOfInterest... features) {
 		super(id, type);
-
-		features = new HashSet<FeatureOfInterest>();
 		
 		addType(Property);
-		addPropertyOf(feature);
+		addPropertiesOf(features);
 	}
 
+	public void addPropertiesOf(FeatureOfInterest... features) {
+		if (features == null)
+			return;
+		
+		for (FeatureOfInterest feature : features) {
+			addPropertyOf(feature);
+		}
+	}
+	
 	public void addPropertyOf(FeatureOfInterest feature) {
 		if (feature == null)
 			return;

@@ -1,0 +1,2 @@
+http://example.org#p1,http://example.org#f1,http://example.org#f2,http://example.org#p1,http://example.org#f1,http://example.org#f2,assertEquals
+http://example.org#p1,http://example.org#f1,http://example.org#f2,http://example.org#p1,http://example.org#f1,http://example.org#f3,assertNotEquals
