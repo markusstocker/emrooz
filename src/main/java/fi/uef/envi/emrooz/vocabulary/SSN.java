@@ -6,8 +6,6 @@
 package fi.uef.envi.emrooz.vocabulary;
 
 import org.openrdf.model.URI;
-import org.openrdf.model.ValueFactory;
-import org.openrdf.model.impl.ValueFactoryImpl;
 
 /**
  * <p>
@@ -26,12 +24,14 @@ import org.openrdf.model.impl.ValueFactoryImpl;
  * @author Markus Stocker
  */
 
-public class SSN {
-	
-	private static final ValueFactory vf = ValueFactoryImpl.getInstance();
+public class SSN extends AbstractVocabulary {
 	
 	/** http://purl.oclc.org/NET/ssnx/ssn */
-	public static final URI ns = vf.createURI("http://purl.oclc.org/NET/ssnx/ssn");
+	public static final URI ns = _("http://purl.oclc.org/NET/ssnx/ssn");
+	
+	static {
+		AbstractVocabulary.ns = ns.stringValue();
+	}
 
 	/** http://purl.oclc.org/NET/ssnx/ssn#Observation */
 	public static final URI Observation = _("Observation");
@@ -93,7 +93,4 @@ public class SSN {
 	/** http://purl.oclc.org/NET/ssnx/ssn#hasValue */
 	public static final URI hasValue = _("hasValue");
 
-	private static URI _(String fragment) {
-		return vf.createURI(ns + "#" + fragment);
-	}
 }

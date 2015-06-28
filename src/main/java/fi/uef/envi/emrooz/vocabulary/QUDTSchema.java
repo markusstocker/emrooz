@@ -6,8 +6,6 @@
 package fi.uef.envi.emrooz.vocabulary;
 
 import org.openrdf.model.URI;
-import org.openrdf.model.ValueFactory;
-import org.openrdf.model.impl.ValueFactoryImpl;
 
 /**
  * <p>
@@ -26,11 +24,13 @@ import org.openrdf.model.impl.ValueFactoryImpl;
  * @author Markus Stocker
  */
 
-public class QUDTSchema {
-
-	private static final ValueFactory vf = ValueFactoryImpl.getInstance();
+public class QUDTSchema extends AbstractVocabulary {
 	
-	public static final String ns = "http://qudt.org/schema/qudt"; 
+	public static final URI ns = _("http://qudt.org/schema/qudt"); 
+	
+	static {
+		AbstractVocabulary.ns = ns.stringValue();
+	}
 	
 	/** http://qudt.org/schema/qudt#QuantityValue */
 	public static final URI QuantityValue = _("QuantityValue");
@@ -43,8 +43,5 @@ public class QUDTSchema {
 	
 	/** http://qudt.org/schema/qudt#numericValue **/
 	public static final URI numericValue = _("numericValue");
-	
-	private static URI _(String fragment) {
-		return vf.createURI(ns + "#" + fragment);
-	}
+
 }

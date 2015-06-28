@@ -29,8 +29,16 @@ import org.joda.time.DateTimeZone;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
+import org.openrdf.repository.sail.SailRepository;
+import org.openrdf.sail.memory.MemoryStore;
 
+import fi.uef.envi.emrooz.Emrooz;
+import fi.uef.envi.emrooz.cassandra.CassandraDataStore;
+import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
+import fi.uef.envi.emrooz.entity.qudt.Unit;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
+import fi.uef.envi.emrooz.entity.ssn.Frequency;
+import fi.uef.envi.emrooz.entity.ssn.MeasurementCapability;
 import fi.uef.envi.emrooz.entity.ssn.ObservationValueDouble;
 import fi.uef.envi.emrooz.entity.ssn.Property;
 import fi.uef.envi.emrooz.entity.ssn.Sensor;
@@ -38,6 +46,11 @@ import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
 import fi.uef.envi.emrooz.entity.ssn.SensorOutput;
 import fi.uef.envi.emrooz.entity.time.Instant;
 import fi.uef.envi.emrooz.io.AbstractSensorObservationReader;
+import fi.uef.envi.emrooz.sesame.SesameKnowledgeStore;
+import fi.uef.envi.emrooz.vocabulary.QUDTUnit;
+import fi.uef.envi.emrooz.vocabulary.SWEETMatrCompound;
+import fi.uef.envi.emrooz.vocabulary.SWEETMatrOrganicCompound;
+import fi.uef.envi.emrooz.vocabulary.SWEETPropMass;
 
 /**
  * <p>
@@ -67,22 +80,28 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 	private static final int CARBON_DIOXIDE_COL = 22;
 	private static final int WATER_COL = 23;
 	private static final int METHANE_COL = 32;
+	private static final double SAMPLING_FREQUENCY = 10.0;
 
+	private static final String LINE_SEPARATOR = System
+			.getProperty("line.separator");
 	private static final ValueFactory vf = ValueFactoryImpl.getInstance();
 
-	private final Property massFraction = new Property(
-			vf.createURI("http://sweet.jpl.nasa.gov/2.3/propFraction.owl#MassFraction"));
-	private final FeatureOfInterest carbonDioxide = new FeatureOfInterest(
-			vf.createURI("http://sweet.jpl.nasa.gov/2.3/matrCompound.owl#CO2"));
-	private final FeatureOfInterest water = new FeatureOfInterest(
-			vf.createURI("http://sweet.jpl.nasa.gov/2.3/matrCompound.owl#H2O"));
-	private final FeatureOfInterest methane = new FeatureOfInterest(
-			vf.createURI("http://sweet.jpl.nasa.gov/2.3/matrCompound.owl#CH4"));
+	// The gas analyzers make in-situ *density* [mmol m-3] measurement of the
+	// gas (CO2, CH4, H2O) (Source:
+	// http://www.licor.com/env/pdf/gas_analyzers/7700/7700_brochure.pdf)
 
-	private Sensor carbonDioxideAnalyzer;
-	private Sensor waterAnalyzer;
+	private static final FeatureOfInterest carbonDioxide = new FeatureOfInterest(
+			SWEETMatrCompound.CarbonDioxide);
+	private static final FeatureOfInterest water = new FeatureOfInterest(
+			SWEETMatrCompound.Water);
+	private static final FeatureOfInterest methane = new FeatureOfInterest(
+			SWEETMatrOrganicCompound.Methane);
+	private static final Property density = new Property(SWEETPropMass.Density,
+			carbonDioxide, water, methane);
+
+	private Sensor carbonDioxideAndWaterAnalyzer;
 	private Sensor methaneAnalyzer;
-	private String ns;
+	private URI ns;
 
 	private SensorObservation next;
 	private Queue<File> files;
@@ -91,23 +110,20 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 	private static final Logger log = Logger
 			.getLogger(GHGSensorObservationReader.class.getName());
 
-	public GHGSensorObservationReader(File file, Sensor carbonDioxideAnalyzer,
-			Sensor waterAnalyzer, Sensor methaneAnalyzer, String ns) {
+	public GHGSensorObservationReader(File file, URI ns,
+			Sensor carbonDioxideAndWaterAnalyzer, Sensor methaneAnalyzer) {
 		if (file == null)
 			throw new NullPointerException("[file = null]");
-		if (carbonDioxideAnalyzer == null)
-			throw new NullPointerException("[carbonDioxideAnalyzer = null]");
-		if (waterAnalyzer == null)
-			throw new NullPointerException("[waterAnalyzer = null]");
-		if (methaneAnalyzer == null)
-			throw new NullPointerException("[methaneAnalyzer = null]");
 		if (ns == null)
 			throw new NullPointerException("[ns = null]");
+		if (carbonDioxideAndWaterAnalyzer == null)
+			throw new NullPointerException("[carbonDioxideAnalyzer = null]");
+		if (methaneAnalyzer == null)
+			throw new NullPointerException("[methaneAnalyzer = null]");
 
-		this.carbonDioxideAnalyzer = carbonDioxideAnalyzer;
-		this.waterAnalyzer = waterAnalyzer;
-		this.methaneAnalyzer = methaneAnalyzer;
 		this.ns = ns;
+		this.carbonDioxideAndWaterAnalyzer = carbonDioxideAndWaterAnalyzer;
+		this.methaneAnalyzer = methaneAnalyzer;
 
 		this.files = new LinkedList<File>();
 		this.observations = new LinkedList<SensorObservation>();
@@ -142,15 +158,14 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 				DateTime dateTime = getDateTime(cols[DATE_COL], cols[TIME_COL],
 						dateTimeZone);
 
-				observations.add(getSensorObservation(carbonDioxideAnalyzer,
-						massFraction, carbonDioxide, dateTime,
-						Double.valueOf(cols[CARBON_DIOXIDE_COL])));
-				observations.add(getSensorObservation(waterAnalyzer,
-						massFraction, water, dateTime,
-						Double.valueOf(cols[WATER_COL])));
-				observations.add(getSensorObservation(methaneAnalyzer,
-						massFraction, methane, dateTime,
-						Double.valueOf(cols[METHANE_COL])));
+				observations.add(getSensorObservation(
+						carbonDioxideAndWaterAnalyzer, density, carbonDioxide,
+						dateTime, Double.valueOf(cols[CARBON_DIOXIDE_COL])));
+				observations.add(getSensorObservation(
+						carbonDioxideAndWaterAnalyzer, density, water,
+						dateTime, Double.valueOf(cols[WATER_COL])));
+				observations.add(getSensorObservation(methaneAnalyzer, density,
+						methane, dateTime, Double.valueOf(cols[METHANE_COL])));
 			}
 
 			next = observations.poll();
@@ -282,6 +297,118 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 	}
 
 	private URI _id() {
+		return _id(ns);
+	}
+
+	private static URI _id(URI ns) {
+		String s = ns.stringValue();
+
+		if (s.endsWith("#"))
+			return vf.createURI(ns + UUID.randomUUID().toString());
+
 		return vf.createURI(ns + "#" + UUID.randomUUID().toString());
+	}
+
+	public static void main(String[] args) {
+		if (args.length == 0)
+			help();
+
+		File file = null;
+		URI ns = null;
+		URI carbonDioxideAndWaterAnalyzerId = null;
+		URI methaneAnalyzerId = null;
+		String dataStoreHost = "localhost";
+
+		for (int i = 0; i < args.length; i++) {
+			if (args[i].equals("-f"))
+				file = new File(args[++i]);
+			if (args[i].equals("-ns"))
+				ns = vf.createURI(args[++i]);
+			if (args[i].equals("-ca"))
+				carbonDioxideAndWaterAnalyzerId = vf.createURI(args[++i]);
+			if (args[i].equals("-ma"))
+				methaneAnalyzerId = vf.createURI(args[++i]);
+			if (args[i].equals("-ds"))
+				dataStoreHost = args[++i];
+		}
+
+		if (file == null || ns == null
+				|| carbonDioxideAndWaterAnalyzerId == null
+				|| methaneAnalyzerId == null)
+			help();
+
+		Sensor carbonDioxideAndWaterAnalyzer = new Sensor(
+				carbonDioxideAndWaterAnalyzerId, density,
+				new MeasurementCapability(_id(ns), new Frequency(_id(ns),
+						new QuantityValue(_id(ns), SAMPLING_FREQUENCY,
+								new Unit(QUDTUnit.Hertz)))));
+		Sensor methaneAnalyzer = new Sensor(methaneAnalyzerId, density,
+				new MeasurementCapability(_id(ns), new Frequency(_id(ns),
+						new QuantityValue(_id(ns), SAMPLING_FREQUENCY,
+								new Unit(QUDTUnit.Hertz)))));
+
+		SesameKnowledgeStore ks = new SesameKnowledgeStore(new SailRepository(
+				new MemoryStore()));
+		ks.addSensor(carbonDioxideAndWaterAnalyzer);
+		ks.addSensor(methaneAnalyzer);
+
+		CassandraDataStore ds = new CassandraDataStore(dataStoreHost);
+
+		Emrooz e = new Emrooz(ks, ds);
+
+		long start = System.currentTimeMillis();
+
+		status("Processing: " + file);
+		
+		GHGSensorObservationReader reader = new GHGSensorObservationReader(
+				file, ns, carbonDioxideAndWaterAnalyzer, methaneAnalyzer);
+
+		long numOfObservations = 0;
+		
+		while (reader.hasNext()) {
+			e.add(reader.next());
+			numOfObservations++;
+		}
+
+		long end = System.currentTimeMillis();
+
+		e.close();
+
+		summary(start, end, numOfObservations, dataStoreHost);
+	}
+
+	private static void help() {
+		StringBuffer sb = new StringBuffer();
+
+		sb.append(GHGSensorObservationReader.class.getName() + LINE_SEPARATOR);
+		sb.append("Arguments:" + LINE_SEPARATOR);
+		sb.append("  -f  [file name]  Name of the *.ghg file" + LINE_SEPARATOR);
+		sb.append("  -ns [URI]        Name space for sensor observations (e.g. http://example.org)"
+				+ LINE_SEPARATOR);
+		sb.append("  -ca [URI]        The URI identifier of the CO2/H2O analyzer"
+				+ LINE_SEPARATOR);
+		sb.append("  -ma [URI]        The URI identifier of the CH4 analyzer"
+				+ LINE_SEPARATOR);
+		sb.append("  -ds [host name]  Data store host name (default: localhost)"
+				+ LINE_SEPARATOR);
+
+		System.out.println(sb);
+
+		System.exit(0);
+	}
+
+	private static void status(String message) {
+		System.out.println(message);
+	}
+	
+	private static void summary(long start, long end, long numOfObservations,
+			String dataStoreHost) {
+		StringBuffer sb = new StringBuffer();
+
+		sb.append("Loaded " + numOfObservations + " observations in "
+				+ ((end - start) / 1000) + "." + ((end - start) % 1000)
+				+ " seconds on '" + dataStoreHost + "' data store");
+
+		System.out.println(sb);
 	}
 }

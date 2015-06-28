@@ -6,8 +6,6 @@
 package fi.uef.envi.emrooz.vocabulary;
 
 import org.openrdf.model.URI;
-import org.openrdf.model.ValueFactory;
-import org.openrdf.model.impl.ValueFactoryImpl;
 
 /**
  * <p>
@@ -26,11 +24,13 @@ import org.openrdf.model.impl.ValueFactoryImpl;
  * @author Markus Stocker
  */
 
-public class Time {
+public class Time extends AbstractVocabulary {
 
-	private static final ValueFactory vf = ValueFactoryImpl.getInstance();
+	public static final URI ns = _("http://www.w3.org/2006/time");
 	
-	public static final URI ns = vf.createURI("http://www.w3.org/2006/time");
+	static {
+		AbstractVocabulary.ns = ns.stringValue();
+	}
 	
 	/** http://www.w3.org/2006/time#Instant **/
 	public static final URI Instant = _("Instant");
@@ -43,9 +43,5 @@ public class Time {
 
 	/** http://www.w3.org/2006/time#hasEnd **/
 	public static final URI hasEnd = _("hasEnd");
-
-	private static URI _(String fragment) {
-		return vf.createURI(ns + "#" + fragment);
-	}
 	
 }

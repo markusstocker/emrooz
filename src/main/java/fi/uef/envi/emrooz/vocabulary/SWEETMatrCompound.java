@@ -9,7 +9,7 @@ import org.openrdf.model.URI;
 
 /**
  * <p>
- * Title: QUDTUnit
+ * Title: SWEETMatrCompound
  * </p>
  * <p>
  * Description:
@@ -24,15 +24,20 @@ import org.openrdf.model.URI;
  * @author Markus Stocker
  */
 
-public class QUDTUnit extends AbstractVocabulary {
-	
-	public static final URI ns = _("http://qudt.org/vocab/unit"); 
+public class SWEETMatrCompound extends AbstractVocabulary {
+
+	public static final URI ns = _("http://sweet.jpl.nasa.gov/2.3/matrCompound.owl");
 	
 	static {
 		AbstractVocabulary.ns = ns.stringValue();
 	}
 	
-	/** http://qudt.org/vocab/unit#Hertz */
-	public static final URI Hertz = _("Hertz");
+	public static final URI CO2 = _("CO2");
+	
+	public static final URI CarbonDioxide = _("CarbonDioxide");
+	
+	public static final URI H2O = _("H2O");
+	
+	public static final URI Water = _("Water");
 	
 }
