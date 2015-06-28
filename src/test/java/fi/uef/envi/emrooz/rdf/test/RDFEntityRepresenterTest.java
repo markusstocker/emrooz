@@ -65,8 +65,8 @@ public class RDFEntityRepresenterTest {
 	}
 
 	@Test
-	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testProperty.csv")
-	public void testProperty(
+	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testProperty-1.csv")
+	public void testProperty1(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
 			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
@@ -75,6 +75,31 @@ public class RDFEntityRepresenterTest {
 			type = SSN.Property;
 
 		Property propertyA = new Property(id, type);
+		Set<Statement> statementsA = representer
+				.createRepresentation(propertyA);
+		Property propertyE = representer.createProperty(statementsE);
+
+		if (assertType.equals("assertEquals")) {
+			assertEquals(statementsE, statementsA);
+			assertEquals(propertyE, propertyA);
+			return;
+		}
+
+		assertNotEquals(statementsE, statementsA);
+		assertNotEquals(propertyE, propertyA);
+	}
+
+	@Test
+	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testProperty-2.csv")
+	public void testProperty2(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI feature1Id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI feature2Id,
+			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
+			String assertType) {
+		Property propertyA = new Property(id,
+				new FeatureOfInterest(feature1Id), new FeatureOfInterest(
+						feature2Id));
 		Set<Statement> statementsA = representer
 				.createRepresentation(propertyA);
 		Property propertyE = representer.createProperty(statementsE);
@@ -305,8 +330,8 @@ public class RDFEntityRepresenterTest {
 	}
 
 	@Test
-	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testSensor.csv")
-	public void testSensor(
+	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testSensor-1.csv")
+	public void testSensor1(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI propertyId,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI featureId,
@@ -321,6 +346,28 @@ public class RDFEntityRepresenterTest {
 				new FeatureOfInterest(featureId)), new MeasurementCapability(
 				measCapaId, new Frequency(measPropId, new QuantityValue(
 						valueId, value, new Unit(unitId)))));
+		Set<Statement> statementsA = representer.createRepresentation(sensorA);
+		Sensor sensorE = representer.createSensor(statementsE);
+
+		if (assertType.equals("assertEquals")) {
+			assertEquals(statementsE, statementsA);
+			assertEquals(sensorE, sensorA);
+			return;
+		}
+
+		assertNotEquals(statementsE, statementsA);
+		assertNotEquals(sensorE, sensorA);
+	}
+	
+	@Test
+	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testSensor-2.csv")
+	public void testSensor2(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI property1Id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI property2Id,
+			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
+			String assertType) {
+		Sensor sensorA = new Sensor(id, new Property(property1Id), new Property(property2Id));
 		Set<Statement> statementsA = representer.createRepresentation(sensorA);
 		Sensor sensorE = representer.createSensor(statementsE);
 

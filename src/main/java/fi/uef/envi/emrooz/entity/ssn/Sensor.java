@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.entity.AbstractEntity;
@@ -37,15 +36,23 @@ import static fi.uef.envi.emrooz.vocabulary.SSN.Sensor;
 
 public class Sensor extends AbstractEntity {
 
-	private Property property;
+	private Map<URI, Property> properties;
 	private Map<URI, MeasurementCapability> capabilities;
 
 	public Sensor(URI id) {
-		this(id, Sensor, null);
+		this(id, Sensor);
 	}
 
 	public Sensor(URI id, URI type) {
-		this(id, type, null);
+		this(id, type, new Property[] {});
+	}
+
+	public Sensor(URI id, Property... properties) {
+		this(id, Sensor, properties);
+	}
+
+	public Sensor(URI id, URI type, Property... properties) {
+		this(id, type, properties, new MeasurementCapability[] {});
 	}
 
 	public Sensor(URI id, Property property,
@@ -55,17 +62,40 @@ public class Sensor extends AbstractEntity {
 
 	public Sensor(URI id, URI type, Property property,
 			MeasurementCapability... capabilities) {
+		this(id, type, new Property[] { property }, capabilities);
+	}
+
+	public Sensor(URI id, Property[] properties,
+			MeasurementCapability... capabilities) {
+		this(id, Sensor, properties, capabilities);
+	}
+
+	public Sensor(URI id, URI type, Property[] properties,
+			MeasurementCapability... capabilities) {
 		super(id, type);
 
-		this.property = property;
+		this.properties = new HashMap<URI, Property>();
 		this.capabilities = new HashMap<URI, MeasurementCapability>();
 
 		addType(Sensor);
+		addObservedProperty(properties);
 		addMeasurementCapability(capabilities);
 	}
 
-	public void setObservedProperty(Property property) {
-		this.property = property;
+	public void addObservedProperty(Property... properties) {
+		if (properties == null)
+			return;
+
+		for (Property property : properties) {
+			addObservedProperty(property);
+		}
+	}
+
+	public void addObservedProperty(Property property) {
+		if (property == null)
+			return;
+
+		properties.put(property.getId(), property);
 	}
 
 	public void addMeasurementCapability(MeasurementCapability... capabilities) {
@@ -88,8 +118,13 @@ public class Sensor extends AbstractEntity {
 				capabilities.values()));
 	}
 
-	public Property getObservedProperty() {
-		return property;
+	public Set<Property> getObservedProperties() {
+		return Collections.unmodifiableSet(new HashSet<Property>(properties
+				.values()));
+	}
+
+	public Property getObservedProperty(URI propertyId) {
+		return properties.get(propertyId);
 	}
 
 	public void accept(EntityVisitor visitor) {
@@ -104,7 +139,7 @@ public class Sensor extends AbstractEntity {
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		result = prime * result + types.hashCode();
 		result = prime * result
-				+ ((property == null) ? 0 : property.hashCode());
+				+ ((properties.isEmpty()) ? 0 : properties.hashCode());
 		result = prime * result
 				+ ((capabilities.isEmpty()) ? 0 : capabilities.hashCode());
 
@@ -136,14 +171,10 @@ public class Sensor extends AbstractEntity {
 		if (!types.equals(other.types))
 			return false;
 
-		if (property == null) {
-			if (other.property != null)
-				return false;
-		} else if (!property.equals(other.property))
+		if (!properties.equals(other.properties))
 			return false;
 
-		if (!CollectionUtils.isEqualCollection(capabilities.values(),
-				other.capabilities.values()))
+		if (!capabilities.equals(other.capabilities))
 			return false;
 
 		return true;
@@ -151,7 +182,7 @@ public class Sensor extends AbstractEntity {
 
 	public String toString() {
 		return "Sensor [id = " + id + "; type = " + type + "; types = " + types
-				+ "; property = " + property + "; capabilities = "
+				+ "; properties = " + properties + "; capabilities = "
 				+ capabilities + "]";
 	}
 

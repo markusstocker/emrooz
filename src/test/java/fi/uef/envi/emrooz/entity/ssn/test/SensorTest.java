@@ -154,4 +154,30 @@ public class SensorTest {
 		assertNotEquals(s1.hashCode(), s2.hashCode());
 	}
 
+	@Test
+	@FileParameters("src/test/resources/SensorTest-3.csv")
+	public void testSensor3(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id1,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI property1Id1,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI property2Id1,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id2,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI property1Id2,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI property2Id2,
+			String assertType) {
+
+		Sensor s1 = new Sensor(id1, new Property(property1Id1), new Property(
+				property2Id1));
+		Sensor s2 = new Sensor(id2, new Property(property1Id2), new Property(
+				property2Id2));
+
+		if (assertType.equals("assertEquals")) {
+			assertEquals(s1, s2);
+			assertEquals(s1.hashCode(), s2.hashCode());
+			return;
+		}
+
+		assertNotEquals(s1, s2);
+		assertNotEquals(s1.hashCode(), s2.hashCode());
+	}
+
 }

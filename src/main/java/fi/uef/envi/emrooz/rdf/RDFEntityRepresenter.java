@@ -173,9 +173,7 @@ public class RDFEntityRepresenter {
 		ret.add(_statement(sensorId, RDF.TYPE, SSN.Sensor));
 		ret.add(_statement(sensorId, RDF.TYPE, sensor.getType()));
 
-		Property property = sensor.getObservedProperty();
-
-		if (property != null) {
+		for (Property property : sensor.getObservedProperties()) {
 			ret.add(_statement(sensorId, SSN.observes, property.getId()));
 			ret.addAll(createRepresentation(property));
 		}
@@ -217,18 +215,23 @@ public class RDFEntityRepresenter {
 		Sensor ret = new Sensor(id, _getType(statements, id, SSN.Sensor));
 		ret.addTypes(_getTypes(statements, id));
 
-		Property property = createProperty(_matchSubject(statements,
-				_getObjectId(statements, id, SSN.observes)));
+		Set<URI> propertyIds = _getObjectIds(statements, id, SSN.observes);
 
-		if (property != null) {
-			ret.setObservedProperty(property);
+		for (URI propertyId : propertyIds) {
+			Property property = createProperty(_matchSubject(statements,
+					propertyId));
 
-			FeatureOfInterest feature = createFeatureOfInterest(_matchSubject(
-					statements,
-					_getObjectId(statements, property.getId(), SSN.isPropertyOf)));
+			if (property != null) {
+				ret.addObservedProperty(property);
 
-			if (feature != null)
-				property.addPropertyOf(feature);
+				FeatureOfInterest feature = createFeatureOfInterest(_matchSubject(
+						statements,
+						_getObjectId(statements, property.getId(),
+								SSN.isPropertyOf)));
+
+				if (feature != null)
+					property.addPropertyOf(feature);
+			}
 		}
 
 		Set<URI> measurementCapabilityIds = _getObjectIds(statements, id,
@@ -509,6 +512,13 @@ public class RDFEntityRepresenter {
 
 		Property ret = new Property(id, _getType(statements, id, SSN.Property));
 		ret.addTypes(_getTypes(statements, id));
+
+		Set<URI> featureIds = _getObjectIds(statements, id, SSN.isPropertyOf);
+
+		for (URI featureId : featureIds) {
+			ret.addPropertyOf(createFeatureOfInterest(_matchSubject(statements,
+					featureId)));
+		}
 
 		return ret;
 	}

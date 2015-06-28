@@ -6,7 +6,9 @@
 package fi.uef.envi.emrooz.entity.ssn;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.openrdf.model.URI;
@@ -34,7 +36,7 @@ import static fi.uef.envi.emrooz.vocabulary.SSN.Property;
 
 public class Property extends AbstractEntity {
 
-	private Set<FeatureOfInterest> features = new HashSet<FeatureOfInterest>();
+	private Map<URI, FeatureOfInterest> features;
 
 	public Property(URI id) {
 		this(id, Property);
@@ -45,12 +47,14 @@ public class Property extends AbstractEntity {
 	}
 
 	public Property(URI id, URI type) {
-		this(id, type, new FeatureOfInterest[]{});
+		this(id, type, new FeatureOfInterest[] {});
 	}
 
 	public Property(URI id, URI type, FeatureOfInterest... features) {
 		super(id, type);
-		
+
+		this.features = new HashMap<URI, FeatureOfInterest>();
+
 		addType(Property);
 		addPropertiesOf(features);
 	}
@@ -58,21 +62,26 @@ public class Property extends AbstractEntity {
 	public void addPropertiesOf(FeatureOfInterest... features) {
 		if (features == null)
 			return;
-		
+
 		for (FeatureOfInterest feature : features) {
 			addPropertyOf(feature);
 		}
 	}
-	
+
 	public void addPropertyOf(FeatureOfInterest feature) {
 		if (feature == null)
 			return;
 
-		features.add(feature);
+		features.put(feature.getId(), feature);
 	}
 
 	public Set<FeatureOfInterest> getPropertiesOf() {
-		return Collections.unmodifiableSet(features);
+		return Collections.unmodifiableSet(new HashSet<FeatureOfInterest>(
+				features.values()));
+	}
+	
+	public FeatureOfInterest getPropertyOf(URI featureId) {
+		return features.get(featureId);
 	}
 
 	public void accept(EntityVisitor visitor) {

@@ -219,22 +219,25 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 				URI sensorId = _uri(bs.getValue("sensorId"));
 				URI propertyId = _uri(bs.getValue("propertyId"));
 				URI featureId = _uri(bs.getValue("featureId"));
-				
+
 				Sensor sensor = sensors.get(sensorId);
-				Property property;
-				
+				Property property = null;
+
 				if (sensor == null) {
+					// This sensor doesn't exist, create it
 					sensor = new Sensor(sensorId);
 					sensors.put(sensorId, sensor);
-					property = new Property(propertyId);
-					sensor.setObservedProperty(property);
 				} else {
-					property = sensor.getObservedProperty();
+					// The sensor exists, check the property
+					property = sensor.getObservedProperty(propertyId);
 				}
 				
-				FeatureOfInterest feature = new FeatureOfInterest(featureId);
+				if (property == null) {
+					property = new Property(propertyId);
+					sensor.addObservedProperty(property);
+				}
 
-				property.addPropertyOf(feature);
+				property.addPropertyOf(new FeatureOfInterest(featureId));
 
 				if (bs.getValue("measCapabilityId") != null) {
 					// Measurement capability is set optional. For applications

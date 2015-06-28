@@ -359,16 +359,18 @@ public class Emrooz {
 				this.sensors.put(sensorId, m1);
 			}
 
-			Property property = sensor.getObservedProperty();
+			Set<Property> properties = sensor.getObservedProperties();
 
-			if (property == null) {
+			if (properties.isEmpty()) {
 				if (log.isLoggable(Level.WARNING))
-					log.warning("Sensor must specify the observed property [sensor = "
+					log.warning("Sensor must specify at least one observed property [sensor = "
 							+ sensor + "]");
 				continue;
 			}
 
-			m1.put(property.getId(), sensor);
+			for (Property property : properties) {
+				m1.put(property.getId(), sensor);
+			}
 		}
 	}
 

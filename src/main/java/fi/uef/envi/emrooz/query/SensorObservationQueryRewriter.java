@@ -64,32 +64,35 @@ public class SensorObservationQueryRewriter implements
 		Set<Sensor> sensors = ks.getSensors();
 
 		for (Sensor sensor : sensors) {
-			Property property = sensor.getObservedProperty();
-			Set<FeatureOfInterest> features = property.getPropertiesOf();
+			Set<Property> properties = sensor.getObservedProperties();
 
-			for (FeatureOfInterest feature : features) {
-				URI thisSensorId = sensor.getId();
-				URI thisPropertyId = property.getId();
-				URI thisFeatureId = feature.getId();
+			for (Property property : properties) {
+				Set<FeatureOfInterest> features = property.getPropertiesOf();
 
-				URI thatSensorId = sensorId;
-				URI thatPropertyId = propertyId;
-				URI thatFeatureId = featureId;
+				for (FeatureOfInterest feature : features) {
+					URI thisSensorId = sensor.getId();
+					URI thisPropertyId = property.getId();
+					URI thisFeatureId = feature.getId();
 
-				if (thatSensorId == null)
-					thatSensorId = thisSensorId;
-				if (thatPropertyId == null)
-					thatPropertyId = thisPropertyId;
-				if (thatFeatureId == null)
-					thatFeatureId = thisFeatureId;
+					URI thatSensorId = sensorId;
+					URI thatPropertyId = propertyId;
+					URI thatFeatureId = featureId;
 
-				if (!(thatSensorId.equals(thisSensorId)
-						&& thatPropertyId.equals(thisPropertyId) && thatFeatureId
-							.equals(thisFeatureId)))
-					continue;
+					if (thatSensorId == null)
+						thatSensorId = thisSensorId;
+					if (thatPropertyId == null)
+						thatPropertyId = thisPropertyId;
+					if (thatFeatureId == null)
+						thatFeatureId = thisFeatureId;
 
-				ret.add(SensorObservationQuery.create(thisSensorId,
-						thisPropertyId, thisFeatureId, timeFrom, timeTo));
+					if (!(thatSensorId.equals(thisSensorId)
+							&& thatPropertyId.equals(thisPropertyId) && thatFeatureId
+								.equals(thisFeatureId)))
+						continue;
+
+					ret.add(SensorObservationQuery.create(thisSensorId,
+							thisPropertyId, thisFeatureId, timeFrom, timeTo));
+				}
 			}
 		}
 
