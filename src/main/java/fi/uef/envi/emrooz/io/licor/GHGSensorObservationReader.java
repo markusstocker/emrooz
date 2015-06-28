@@ -12,7 +12,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -23,12 +22,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
 import org.apache.commons.io.FilenameUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
+
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
 import fi.uef.envi.emrooz.entity.ssn.ObservationValueDouble;
 import fi.uef.envi.emrooz.entity.ssn.Property;
@@ -36,6 +37,7 @@ import fi.uef.envi.emrooz.entity.ssn.Sensor;
 import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
 import fi.uef.envi.emrooz.entity.ssn.SensorOutput;
 import fi.uef.envi.emrooz.entity.time.Instant;
+import fi.uef.envi.emrooz.io.AbstractSensorObservationReader;
 
 /**
  * <p>
@@ -54,7 +56,7 @@ import fi.uef.envi.emrooz.entity.time.Instant;
  * @author Markus Stocker
  */
 
-public class GHGSensorObservationReader implements Iterator<SensorObservation> {
+public class GHGSensorObservationReader extends AbstractSensorObservationReader {
 
 	private static final String COLUMN_SEPARATOR = "\t";
 	private static final int DATA_ROW = 8;
@@ -161,11 +163,6 @@ public class GHGSensorObservationReader implements Iterator<SensorObservation> {
 	@Override
 	public SensorObservation next() {
 		return next;
-	}
-
-	@Override
-	public void remove() {
-		throw new UnsupportedOperationException("");
 	}
 
 	private void listFiles(File file) {
