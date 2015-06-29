@@ -20,6 +20,14 @@
       <directory>${project.basedir}/cli</directory>
       <outputDirectory>/bin</outputDirectory>
     </fileSet>
+    <fileSet>
+      <directory>${project.basedir}/src/examples/resources</directory>
+      <outputDirectory>/resources</outputDirectory>
+      <includes>
+        <include>example-1.data</include>
+        <include>example-1.rq</include>
+      </includes>
+    </fileSet>
   </fileSets>
   <dependencySets>
     <dependencySet>
