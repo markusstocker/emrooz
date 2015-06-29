@@ -32,12 +32,16 @@ public class SWEETMatrCompound extends AbstractVocabulary {
 		AbstractVocabulary.ns = ns.stringValue();
 	}
 	
+	/** http://sweet.jpl.nasa.gov/2.3/matrCompound.owl#CO2 */
 	public static final URI CO2 = _("CO2");
 	
+	/** http://sweet.jpl.nasa.gov/2.3/matrCompound.owl#CarbonDioxide */
 	public static final URI CarbonDioxide = _("CarbonDioxide");
 	
+	/** http://sweet.jpl.nasa.gov/2.3/matrCompound.owl#H2O */
 	public static final URI H2O = _("H2O");
 	
+	/** http://sweet.jpl.nasa.gov/2.3/matrCompound.owl#Water */
 	public static final URI Water = _("Water");
 	
 }

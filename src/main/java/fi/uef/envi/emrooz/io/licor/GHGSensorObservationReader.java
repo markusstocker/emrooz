@@ -77,9 +77,9 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 	private static final int TIMEZONE_COL = 1;
 	private static final int DATE_COL = 6;
 	private static final int TIME_COL = 7;
-	private static final int CARBON_DIOXIDE_COL = 22;
-	private static final int WATER_COL = 23;
-	private static final int METHANE_COL = 32;
+	private static final int CARBON_DIOXIDE_COL = 10; // Density in mmol m-3
+	private static final int WATER_COL = 12; // Density in mmol m-3
+	private static final int METHANE_COL = 33; // Density in mmol m-3
 	private static final double SAMPLING_FREQUENCY = 10.0;
 
 	private static final String LINE_SEPARATOR = System
@@ -317,6 +317,7 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 		URI ns = null;
 		URI carbonDioxideAndWaterAnalyzerId = null;
 		URI methaneAnalyzerId = null;
+		File knowledgeStoreFile = null;
 		String dataStoreHost = "localhost";
 
 		for (int i = 0; i < args.length; i++) {
@@ -328,13 +329,15 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 				carbonDioxideAndWaterAnalyzerId = vf.createURI(args[++i]);
 			if (args[i].equals("-ma"))
 				methaneAnalyzerId = vf.createURI(args[++i]);
+			if (args[i].equals("-ks"))
+				knowledgeStoreFile = new File(args[++i]);
 			if (args[i].equals("-ds"))
 				dataStoreHost = args[++i];
 		}
 
 		if (file == null || ns == null
 				|| carbonDioxideAndWaterAnalyzerId == null
-				|| methaneAnalyzerId == null)
+				|| methaneAnalyzerId == null || knowledgeStoreFile == null)
 			help();
 
 		Sensor carbonDioxideAndWaterAnalyzer = new Sensor(
@@ -348,7 +351,7 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 								new Unit(QUDTUnit.Hertz)))));
 
 		SesameKnowledgeStore ks = new SesameKnowledgeStore(new SailRepository(
-				new MemoryStore()));
+				new MemoryStore(knowledgeStoreFile)));
 		ks.addSensor(carbonDioxideAndWaterAnalyzer);
 		ks.addSensor(methaneAnalyzer);
 
@@ -359,12 +362,12 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 		long start = System.currentTimeMillis();
 
 		status("Processing: " + file);
-		
+
 		GHGSensorObservationReader reader = new GHGSensorObservationReader(
 				file, ns, carbonDioxideAndWaterAnalyzer, methaneAnalyzer);
 
 		long numOfObservations = 0;
-		
+
 		while (reader.hasNext()) {
 			e.add(reader.next());
 			numOfObservations++;
@@ -382,14 +385,17 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 
 		sb.append(GHGSensorObservationReader.class.getName() + LINE_SEPARATOR);
 		sb.append("Arguments:" + LINE_SEPARATOR);
-		sb.append("  -f  [file name]  Name of the *.ghg file" + LINE_SEPARATOR);
-		sb.append("  -ns [URI]        Name space for sensor observations (e.g. http://example.org)"
+		sb.append("  -f  [file name]       Name of the *.ghg file"
 				+ LINE_SEPARATOR);
-		sb.append("  -ca [URI]        The URI identifier of the CO2/H2O analyzer"
+		sb.append("  -ns [URI]             Name space for sensor observations (e.g. http://example.org)"
 				+ LINE_SEPARATOR);
-		sb.append("  -ma [URI]        The URI identifier of the CH4 analyzer"
+		sb.append("  -ca [URI]             The URI identifier of the CO2/H2O analyzer"
 				+ LINE_SEPARATOR);
-		sb.append("  -ds [host name]  Data store host name (default: localhost)"
+		sb.append("  -ma [URI]             The URI identifier of the CH4 analyzer"
+				+ LINE_SEPARATOR);
+		sb.append("  -ks [directory name]  Knowledge store data directory (e.g. /tmp/ks)"
+				+ LINE_SEPARATOR);
+		sb.append("  -ds [host name]       Data store host name (default: localhost)"
 				+ LINE_SEPARATOR);
 
 		System.out.println(sb);
@@ -400,7 +406,7 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 	private static void status(String message) {
 		System.out.println(message);
 	}
-	
+
 	private static void summary(long start, long end, long numOfObservations,
 			String dataStoreHost) {
 		StringBuffer sb = new StringBuffer();

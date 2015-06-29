@@ -32,6 +32,7 @@ public class SWEETPropMass extends AbstractVocabulary {
 		AbstractVocabulary.ns = ns.stringValue();
 	}
 	
+	/** http://sweet.jpl.nasa.gov/2.3/propMass.owl#Density */
 	public static final URI Density = _("Density");
 	
 }

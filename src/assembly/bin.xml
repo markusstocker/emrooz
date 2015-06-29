@@ -16,10 +16,14 @@
         <include>RELEASE_NOTES.txt</include>
       </includes>
     </fileSet>
+    <fileSet>
+      <directory>${project.basedir}/cli</directory>
+      <outputDirectory>/bin</outputDirectory>
+    </fileSet>
   </fileSets>
   <dependencySets>
     <dependencySet>
-      <outputDirectory>/</outputDirectory>
+      <outputDirectory>/lib</outputDirectory>
       <useProjectArtifact>true</useProjectArtifact>
       <scope>runtime</scope>
     </dependencySet>

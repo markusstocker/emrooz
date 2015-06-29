@@ -32,8 +32,10 @@ public class SWEETMatrOrganicCompound extends AbstractVocabulary {
 		AbstractVocabulary.ns = ns.stringValue();
 	}
 	
+	/** http://sweet.jpl.nasa.gov/2.3/matrOrganicCompound.owl#CH4 */
 	public static final URI CH4 = _("CH4");
 	
+	/** http://sweet.jpl.nasa.gov/2.3/matrOrganicCompound.owl#Methane */
 	public static final URI Methane = _("Methane");
 	
 }

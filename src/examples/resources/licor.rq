@@ -1,0 +1,19 @@
+prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#>
+prefix time: <http://www.w3.org/2006/time#>
+prefix dul: <http://www.loa-cnr.it/ontologies/DUL.owl#>
+prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+
+select ?time ?value
+where {
+[
+	ssn:observedBy <http://example.org#ca> ;
+    ssn:observedProperty <http://sweet.jpl.nasa.gov/2.3/propMass.owl#Density> ;
+    ssn:featureOfInterest <http://sweet.jpl.nasa.gov/2.3/matrCompound.owl#CarbonDioxide> ;
+    ssn:observationResultTime [ time:inXSDDateTime ?time ] ;
+    ssn:observationResult [ ssn:hasValue [ dul:hasRegionDataValue ?value ] ] 
+] 
+    filter (?time >= "2015-01-07T00:00:00.000+06:00"^^xsd:dateTime 
+    	&& ?time < "2015-01-07T00:00:01.000+06:00"^^xsd:dateTime)
+}
+
+order by asc(?time)
