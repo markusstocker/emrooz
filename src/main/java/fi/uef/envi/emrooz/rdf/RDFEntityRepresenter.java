@@ -838,6 +838,11 @@ public class RDFEntityRepresenter {
 		public void visit(ObservationValueDouble entity) {
 			statements.addAll(createRepresentation(entity));
 		}
+		
+		@Override
+		public void visit(QuantityValue entity) {
+			statements.addAll(createRepresentation(entity));
+		}
 
 	}
 

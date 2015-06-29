@@ -5,6 +5,7 @@
 
 package fi.uef.envi.emrooz.entity;
 
+import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.ssn.ObservationValueDouble;
 
 /**
@@ -27,5 +28,7 @@ import fi.uef.envi.emrooz.entity.ssn.ObservationValueDouble;
 public interface ObservationValueVisitor {
 
 	public void visit(ObservationValueDouble entity);
+	
+	public void visit(QuantityValue entity);
 	
 }

@@ -35,4 +35,10 @@ public class QUDTUnit extends AbstractVocabulary {
 	/** http://qudt.org/vocab/unit#Hertz */
 	public static final URI Hertz = _("Hertz");
 	
+	/** http://qudt.org/vocab/unit#DegreeCelsius */
+	public static final URI DegreeCelsius = _("DegreeCelsius");
+	
+	/** http://qudt.org/vocab/unit#MilliMolePerCubicMeter (added) */
+	public static final URI MilliMolePerCubicMeter = _("MilliMolePerCubicMeter");
+	
 }

@@ -3,17 +3,18 @@ prefix time: <http://www.w3.org/2006/time#>
 prefix dul: <http://www.loa-cnr.it/ontologies/DUL.owl#>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 prefix qudt: <http://qudt.org/schema/qudt#>
+prefix ex: <http://example.org#>
 
 select ?time ?value ?unit
 where {
 [
-	ssn:observedBy <http://example.org#ca> ;
-    ssn:observedProperty <http://sweet.jpl.nasa.gov/2.3/propMass.owl#Density> ;
-    ssn:featureOfInterest <http://sweet.jpl.nasa.gov/2.3/matrCompound.owl#CarbonDioxide> ;
+    ssn:observedBy ex:thermometer ;
+    ssn:observedProperty ex:temperature ;
+    ssn:featureOfInterest ex:air ;
     ssn:observationResultTime [ time:inXSDDateTime ?time ] ;
     ssn:observationResult [ ssn:hasValue [ qudt:numericValue ?value; qudt:unit ?unit ] ] 
 ] 
-    filter (?time >= "2015-01-07T00:00:00.000+06:00"^^xsd:dateTime 
-    	&& ?time < "2015-01-07T00:00:01.000+06:00"^^xsd:dateTime)
+    filter (?time >= "2015-06-01T12:00:00.000+03:00"^^xsd:dateTime 
+    	&& ?time < "2015-07-01T12:00:00.000+03:00"^^xsd:dateTime)
 }
 order by asc(?time)

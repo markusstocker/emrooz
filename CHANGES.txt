@@ -9,6 +9,9 @@ v0.3.0
 * Introduced data and knowledge stores
 * Sensor specifications now via the knowledge store
 * Implemented query rewriting to support variable sensorId, propertyId, and featureId
+* Included licor ghg sensor observation reader
+* Added licor and query cli tools
+* Support for multiple properties observed by sensors and multiple features for properties 
 
 v0.2.0
 ======

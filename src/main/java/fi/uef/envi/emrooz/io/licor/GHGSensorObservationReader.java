@@ -15,7 +15,6 @@ import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -27,8 +26,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.openrdf.model.URI;
-import org.openrdf.model.ValueFactory;
-import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
 
@@ -39,7 +36,6 @@ import fi.uef.envi.emrooz.entity.qudt.Unit;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
 import fi.uef.envi.emrooz.entity.ssn.Frequency;
 import fi.uef.envi.emrooz.entity.ssn.MeasurementCapability;
-import fi.uef.envi.emrooz.entity.ssn.ObservationValueDouble;
 import fi.uef.envi.emrooz.entity.ssn.Property;
 import fi.uef.envi.emrooz.entity.ssn.Sensor;
 import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
@@ -82,10 +78,6 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 	private static final int METHANE_COL = 33; // Density in mmol m-3
 	private static final double SAMPLING_FREQUENCY = 10.0;
 
-	private static final String LINE_SEPARATOR = System
-			.getProperty("line.separator");
-	private static final ValueFactory vf = ValueFactoryImpl.getInstance();
-
 	// The gas analyzers make in-situ *density* [mmol m-3] measurement of the
 	// gas (CO2, CH4, H2O) (Source:
 	// http://www.licor.com/env/pdf/gas_analyzers/7700/7700_brochure.pdf)
@@ -101,7 +93,6 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 
 	private Sensor carbonDioxideAndWaterAnalyzer;
 	private Sensor methaneAnalyzer;
-	private URI ns;
 
 	private SensorObservation next;
 	private Queue<File> files;
@@ -112,16 +103,15 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 
 	public GHGSensorObservationReader(File file, URI ns,
 			Sensor carbonDioxideAndWaterAnalyzer, Sensor methaneAnalyzer) {
+		super(ns);
+		
 		if (file == null)
 			throw new NullPointerException("[file = null]");
-		if (ns == null)
-			throw new NullPointerException("[ns = null]");
 		if (carbonDioxideAndWaterAnalyzer == null)
 			throw new NullPointerException("[carbonDioxideAnalyzer = null]");
 		if (methaneAnalyzer == null)
 			throw new NullPointerException("[methaneAnalyzer = null]");
 
-		this.ns = ns;
 		this.carbonDioxideAndWaterAnalyzer = carbonDioxideAndWaterAnalyzer;
 		this.methaneAnalyzer = methaneAnalyzer;
 
@@ -291,22 +281,9 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 			Property property, FeatureOfInterest feature, DateTime dateTime,
 			Double value) {
 		return new SensorObservation(_id(), sensor, property, feature,
-				new SensorOutput(_id(),
-						new ObservationValueDouble(_id(), value)), new Instant(
-						_id(), dateTime));
-	}
-
-	private URI _id() {
-		return _id(ns);
-	}
-
-	private static URI _id(URI ns) {
-		String s = ns.stringValue();
-
-		if (s.endsWith("#"))
-			return vf.createURI(ns + UUID.randomUUID().toString());
-
-		return vf.createURI(ns + "#" + UUID.randomUUID().toString());
+				new SensorOutput(_id(), new QuantityValue(_id(), value,
+						new Unit(QUDTUnit.MilliMolePerCubicMeter))),
+				new Instant(_id(), dateTime));
 	}
 
 	public static void main(String[] args) {

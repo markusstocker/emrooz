@@ -30,7 +30,7 @@ import static fi.uef.envi.emrooz.vocabulary.SSN.ObservationValue;
 
 public class ObservationValueDouble extends ObservationValue {
 
-	private Double value;
+	protected Double value;
 
 	public ObservationValueDouble(URI id) {
 		this(id, ObservationValue);
@@ -47,8 +47,7 @@ public class ObservationValueDouble extends ObservationValue {
 	public ObservationValueDouble(URI id, URI type, Double value) {
 		super(id, type);
 
-		this.value = value;
-		
+		setValue(value);
 		addType(ObservationValue);
 	}
 

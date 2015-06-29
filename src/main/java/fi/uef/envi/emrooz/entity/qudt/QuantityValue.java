@@ -7,8 +7,9 @@ package fi.uef.envi.emrooz.entity.qudt;
 
 import org.openrdf.model.URI;
 
-import fi.uef.envi.emrooz.entity.AbstractEntity;
 import fi.uef.envi.emrooz.entity.EntityVisitor;
+import fi.uef.envi.emrooz.entity.ObservationValueVisitor;
+import fi.uef.envi.emrooz.entity.ssn.ObservationValueDouble;
 import static fi.uef.envi.emrooz.vocabulary.QUDTSchema.QuantityValue;
 
 /**
@@ -28,9 +29,8 @@ import static fi.uef.envi.emrooz.vocabulary.QUDTSchema.QuantityValue;
  * @author Markus Stocker
  */
 
-public class QuantityValue extends AbstractEntity {
+public class QuantityValue extends ObservationValueDouble {
 
-	public Double value;
 	public Unit unit;
 
 	public QuantityValue(URI id) {
@@ -46,10 +46,9 @@ public class QuantityValue extends AbstractEntity {
 	}
 
 	public QuantityValue(URI id, URI type, Double value, Unit unit) {
-		super(id, type);
+		super(id, type, value);
 
 		addType(QuantityValue);
-		setNumericValue(value);
 		setUnit(unit);
 	}
 
@@ -71,6 +70,11 @@ public class QuantityValue extends AbstractEntity {
 
 	@Override
 	public void accept(EntityVisitor visitor) {
+		visitor.visit(this);
+	}
+	
+	@Override
+	public void accept(ObservationValueVisitor visitor) {
 		visitor.visit(this);
 	}
 
