@@ -121,7 +121,7 @@ The Java code to execute the SPARQL query. Read the SPARQL query from file or, a
 
     // Process the results by printing time and value to `System.out`
     while (results.hasNext()) {
-	  Sstem.out.println(results.next());
+	  Sytem.out.println(results.next());
     }
 
     results.close();
