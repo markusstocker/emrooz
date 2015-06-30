@@ -7,7 +7,7 @@ prefix qudt: <http://qudt.org/schema/qudt#>
 select ?time ?value ?unit
 where {
 [
-	ssn:observedBy <http://example.org#ca> ;
+    ssn:observedBy <http://example.org#ca> ;
     ssn:observedProperty <http://sweet.jpl.nasa.gov/2.3/propMass.owl#Density> ;
     ssn:featureOfInterest <http://sweet.jpl.nasa.gov/2.3/matrCompound.owl#CarbonDioxide> ;
     ssn:observationResultTime [ time:inXSDDateTime ?time ] ;

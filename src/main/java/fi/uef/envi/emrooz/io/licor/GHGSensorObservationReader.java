@@ -104,7 +104,7 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 	public GHGSensorObservationReader(File file, URI ns,
 			Sensor carbonDioxideAndWaterAnalyzer, Sensor methaneAnalyzer) {
 		super(ns);
-		
+
 		if (file == null)
 			throw new NullPointerException("[file = null]");
 		if (carbonDioxideAndWaterAnalyzer == null)
@@ -130,6 +130,10 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 
 		if (!files.isEmpty()) {
 			File file = files.poll();
+
+			if (log.isLoggable(Level.INFO))
+				log.info("Processing file [file = " + file + "]");
+
 			List<String> lines = readFile(file);
 
 			DateTimeZone dateTimeZone = getDateTimeZone(lines.get(TIMEZONE_ROW));
@@ -172,10 +176,12 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 
 	private void listFiles(File file) {
 		if (file.isFile()) {
+			// It is a file
 			considerFile(file);
 			return;
 		}
 
+		// It is a directory
 		File[] lof = file.listFiles();
 		Arrays.sort(lof);
 
@@ -362,7 +368,7 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 
 		sb.append(GHGSensorObservationReader.class.getName() + LINE_SEPARATOR);
 		sb.append("Arguments:" + LINE_SEPARATOR);
-		sb.append("  -f  [file name]       Name of the *.ghg file"
+		sb.append("  -f  [file name]       Name of the *.ghg file or a directory containing files"
 				+ LINE_SEPARATOR);
 		sb.append("  -ns [URI]             Name space for sensor observations (e.g. http://example.org)"
 				+ LINE_SEPARATOR);
