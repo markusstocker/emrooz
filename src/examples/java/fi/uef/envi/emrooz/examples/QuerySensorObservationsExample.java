@@ -37,8 +37,9 @@ import fi.uef.envi.emrooz.sesame.SesameKnowledgeStore;
 public class QuerySensorObservationsExample {
 
 	public static void main(String[] args) {
-		// String sparql = sparql1(); // Fully specified query
-		String sparql = sparql2(); // Minimally specified query
+		String sparql = sparql1(); // Fully specified query
+		// String sparql = sparql2(); // Minimally specified query
+		// String sparql = sparql3(); // Observations with value and unit
 
 		EntityFactory f = EntityFactory.getInstance("http://example.org#");
 
@@ -89,6 +90,24 @@ public class QuerySensorObservationsExample {
 				+ "ssn:featureOfInterest <http://example.org#air> ;"
 				+ "ssn:observationResultTime [ time:inXSDDateTime ?time ] ;"
 				+ "ssn:observationResult [ ssn:hasValue [ dul:hasRegionDataValue ?value ] ]"
+				+ "]"
+				+ "filter (?time >= \"2015-04-21T00:00:00.000+03:00\"^^xsd:dateTime && ?time < \"2015-04-21T02:00:00.000+03:00\"^^xsd:dateTime)"
+				+ "} order by ?sensor desc (?time)";
+	}
+
+	private static String sparql3() {
+		return "prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#>"
+				+ "prefix time: <http://www.w3.org/2006/time#>"
+				+ "prefix dul: <http://www.loa-cnr.it/ontologies/DUL.owl#>"
+				+ "prefix qudt: <http://qudt.org/schema/qudt#>"
+				+ "select ?sensor ?property ?time ?value ?unit "
+				+ "where {"
+				+ "["
+				+ "ssn:observedBy ?sensor ;"
+				+ "ssn:observedProperty ?property ;"
+				+ "ssn:featureOfInterest <http://example.org#air> ;"
+				+ "ssn:observationResultTime [ time:inXSDDateTime ?time ] ;"
+				+ "ssn:observationResult [ ssn:hasValue [ qudt:numericValue ?value; qudt:unit ?unit ] ]"
 				+ "]"
 				+ "filter (?time >= \"2015-04-21T00:00:00.000+03:00\"^^xsd:dateTime && ?time < \"2015-04-21T02:00:00.000+03:00\"^^xsd:dateTime)"
 				+ "} order by ?sensor desc (?time)";

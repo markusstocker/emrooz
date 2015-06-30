@@ -386,10 +386,12 @@ public class RDFEntityRepresenter {
 
 		URI valueId = value.getId();
 
+		Literal literal = _literal(value.getNumericValue());
+		
 		ret.add(_statement(valueId, RDF.TYPE, QUDTSchema.QuantityValue));
 		ret.add(_statement(valueId, RDF.TYPE, value.getType()));
-		ret.add(_statement(valueId, QUDTSchema.numericValue,
-				_literal(value.getNumericValue())));
+		ret.add(_statement(valueId, DUL.hasRegionDataValue, literal));
+		ret.add(_statement(valueId, QUDTSchema.numericValue, literal));
 
 		Unit unit = value.getUnit();
 

@@ -41,4 +41,7 @@ public class QUDTUnit extends AbstractVocabulary {
 	/** http://qudt.org/vocab/unit#MilliMolePerCubicMeter (added) */
 	public static final URI MilliMolePerCubicMeter = _("MilliMolePerCubicMeter");
 	
+	/** http://qudt.org/vocab/unit#RelativeHumidity (added) */
+	public static final URI RelativeHumidity = _("RelativeHumidity");
+	
 }

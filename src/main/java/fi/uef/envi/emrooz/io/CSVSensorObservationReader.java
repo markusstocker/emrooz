@@ -202,14 +202,24 @@ public class CSVSensorObservationReader extends AbstractSensorObservationReader 
 
 		Emrooz e = new Emrooz(ks, ds);
 
+		long start = System.currentTimeMillis();
+		
+		status("Processing: " + file);
+		
 		CSVSensorObservationReader reader = new CSVSensorObservationReader(
 				file, ns, sensorId, propertyId, featureId, unitId);
 
+		long numOfObservations = 0;
+		
 		while (reader.hasNext()) {
 			e.add(reader.next());
 		}
+		
+		long end = System.currentTimeMillis();
 
 		e.close();
+		
+		summary(start, end, numOfObservations, dataStoreHost);
 	}
 
 	private static void help() {
@@ -227,7 +237,7 @@ public class CSVSensorObservationReader extends AbstractSensorObservationReader 
 				+ LINE_SEPARATOR);
 		sb.append("  -fid [URI]             The URI identifier for the feature"
 				+ LINE_SEPARATOR);
-		sb.append("  -sf  [number]          The sampling frequency"
+		sb.append("  -sf  [number]          The sampling frequency [Hz]"
 				+ LINE_SEPARATOR);
 		sb.append("  -uid [URI]             The URI identifier for the unit"
 				+ LINE_SEPARATOR);

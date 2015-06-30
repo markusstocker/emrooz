@@ -193,6 +193,14 @@ public class EntityFactory {
 						resultTime));
 	}
 
+	public SensorObservation createSensorObservation(Sensor sensor,
+			Property property, FeatureOfInterest feature, Double result,
+			Unit unit, DateTime resultTime) {
+		return new SensorObservation(randomUUID(), sensor, property, feature,
+				new SensorOutput(randomUUID(), new QuantityValue(randomUUID(),
+						result, unit)), new Instant(randomUUID(), resultTime));
+	}
+
 	/**
 	 * The sensor, property, and feature string are relative to the namespace of
 	 * this factory.
@@ -211,6 +219,38 @@ public class EntityFactory {
 				new FeatureOfInterest(vf.createURI(ns + feature)),
 				new SensorOutput(randomUUID(), new ObservationValueDouble(
 						randomUUID(), result)), new Instant(randomUUID(),
+						resultTime));
+	}
+
+	public SensorObservation createSensorObservation(String sensor,
+			String property, String feature, Double result, Unit unit,
+			DateTime resultTime) {
+		return new SensorObservation(randomUUID(), new Sensor(vf.createURI(ns
+				+ sensor)), new Property(vf.createURI(ns + property)),
+				new FeatureOfInterest(vf.createURI(ns + feature)),
+				new SensorOutput(randomUUID(), new QuantityValue(randomUUID(),
+						result, unit)), new Instant(randomUUID(), resultTime));
+	}
+
+	public SensorObservation createSensorObservation(String sensor,
+			String property, String feature, Double result, String unit,
+			DateTime resultTime) {
+		return new SensorObservation(randomUUID(), new Sensor(vf.createURI(ns
+				+ sensor)), new Property(vf.createURI(ns + property)),
+				new FeatureOfInterest(vf.createURI(ns + feature)),
+				new SensorOutput(randomUUID(), new QuantityValue(randomUUID(),
+						result, new Unit(vf.createURI(ns + unit)))),
+				new Instant(randomUUID(), resultTime));
+	}
+
+	public SensorObservation createSensorObservation(String sensor,
+			String property, String feature, Double result, URI unit,
+			DateTime resultTime) {
+		return new SensorObservation(randomUUID(), new Sensor(vf.createURI(ns
+				+ sensor)), new Property(vf.createURI(ns + property)),
+				new FeatureOfInterest(vf.createURI(ns + feature)),
+				new SensorOutput(randomUUID(), new QuantityValue(randomUUID(),
+						result, new Unit(unit))), new Instant(randomUUID(),
 						resultTime));
 	}
 
@@ -233,6 +273,39 @@ public class EntityFactory {
 				new FeatureOfInterest(vf.createURI(ns + feature)),
 				new SensorOutput(randomUUID(), new ObservationValueDouble(
 						randomUUID(), result)), new Instant(randomUUID(),
+						dtf.parseDateTime(resultTime)));
+	}
+
+	public SensorObservation createSensorObservation(String sensor,
+			String property, String feature, Double result, Unit unit,
+			String resultTime) {
+		return new SensorObservation(randomUUID(), new Sensor(vf.createURI(ns
+				+ sensor)), new Property(vf.createURI(ns + property)),
+				new FeatureOfInterest(vf.createURI(ns + feature)),
+				new SensorOutput(randomUUID(), new QuantityValue(randomUUID(),
+						result, unit)), new Instant(randomUUID(),
+						dtf.parseDateTime(resultTime)));
+	}
+
+	public SensorObservation createSensorObservation(String sensor,
+			String property, String feature, Double result, String unit,
+			String resultTime) {
+		return new SensorObservation(randomUUID(), new Sensor(vf.createURI(ns
+				+ sensor)), new Property(vf.createURI(ns + property)),
+				new FeatureOfInterest(vf.createURI(ns + feature)),
+				new SensorOutput(randomUUID(), new QuantityValue(randomUUID(),
+						result, new Unit(vf.createURI(ns + unit)))),
+				new Instant(randomUUID(), dtf.parseDateTime(resultTime)));
+	}
+
+	public SensorObservation createSensorObservation(String sensor,
+			String property, String feature, Double result, URI unit,
+			String resultTime) {
+		return new SensorObservation(randomUUID(), new Sensor(vf.createURI(ns
+				+ sensor)), new Property(vf.createURI(ns + property)),
+				new FeatureOfInterest(vf.createURI(ns + feature)),
+				new SensorOutput(randomUUID(), new QuantityValue(randomUUID(),
+						result, new Unit(unit))), new Instant(randomUUID(),
 						dtf.parseDateTime(resultTime)));
 	}
 

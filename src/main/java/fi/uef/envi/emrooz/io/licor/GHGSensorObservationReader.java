@@ -368,7 +368,7 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 
 		sb.append(GHGSensorObservationReader.class.getName() + LINE_SEPARATOR);
 		sb.append("Arguments:" + LINE_SEPARATOR);
-		sb.append("  -f  [file name]       Name of the *.ghg file or a directory containing files"
+		sb.append("  -f  [file name]       Name of the *.ghg file or a directory containing files (10 Hz)"
 				+ LINE_SEPARATOR);
 		sb.append("  -ns [URI]             Name space for sensor observations (e.g. http://example.org)"
 				+ LINE_SEPARATOR);
@@ -385,19 +385,5 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 
 		System.exit(0);
 	}
-
-	private static void status(String message) {
-		System.out.println(message);
-	}
-
-	private static void summary(long start, long end, long numOfObservations,
-			String dataStoreHost) {
-		StringBuffer sb = new StringBuffer();
-
-		sb.append("Loaded " + numOfObservations + " observations in "
-				+ ((end - start) / 1000) + "." + ((end - start) % 1000)
-				+ " seconds on '" + dataStoreHost + "' data store");
-
-		System.out.println(sb);
-	}
+	
 }

@@ -63,5 +63,20 @@ public abstract class AbstractSensorObservationReader implements
 
 		return vf.createURI(ns + "#" + UUID.randomUUID().toString());
 	}
+	
+	protected static void status(String message) {
+		System.out.println(message);
+	}
+	
+	protected static void summary(long start, long end, long numOfObservations,
+			String dataStoreHost) {
+		StringBuffer sb = new StringBuffer();
+
+		sb.append("Loaded " + numOfObservations + " observations in "
+				+ ((end - start) / 1000) + "." + ((end - start) % 1000)
+				+ " seconds on '" + dataStoreHost + "' data store");
+
+		System.out.println(sb);
+	}
 
 }
