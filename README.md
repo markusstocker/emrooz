@@ -21,7 +21,7 @@ Emrooz can be used from the command line (experimental) and programmatically. To
 * Navigate to the Emrooz `bin/` folder
 * Run `load.sh` and `query.sh`
 
-    $ ./load.sh -f ../resources/example-1.data \
+    ./load.sh -f ../resources/example-1.data \
                 -ns http://example.org \
                 -sid http://example.org#thermometer \
                 -pid http://example.org#temperature \
@@ -31,7 +31,7 @@ Emrooz can be used from the command line (experimental) and programmatically. To
                 -ks /tmp/ks \
                 -ds localhost
 
-    $ ./query.sh -q ../resources/example-1.rq \
+    ./query.sh -q ../resources/example-1.rq \
                  -ks /tmp/ks \
                  -ds localhost
                  
