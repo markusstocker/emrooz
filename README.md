@@ -16,10 +16,7 @@ Emrooz is a database for sensor data, specifically [SSN](http://www.w3.org/2005/
 
 ## Usage
 
-Emrooz can be used from the command line (experimental) and programmatically. To start, and test if things work, you can try loading and querying the test data. To do so follow these steps:
-
-* Navigate to the Emrooz `bin/` folder
-* Run `load.sh` and `query.sh` as follows
+Emrooz can be used from the command line (experimental) and programmatically. To start, and test if things work, you can try loading and querying the test data. Navigate to the Emrooz `bin/` folder and then run `load.sh` and `query.sh` as follows:
 
     load.sh -f ../resources/example-1.data \
                 -ns http://example.org \
@@ -83,7 +80,8 @@ Emrooz supports adding sensor observations in several forms. The following examp
 
     EntityFactory f = EntityFactory.getInstance("http://example.org#");
 
-    // Create and add a sensor observation made by the thermometer for temperature of air on April 21, 2015 at 1 am
+    // Create and add a sensor observation made by the thermometer 
+    // for temperature of air on April 21, 2015 at 1 am
     emrooz.add(f.createSensorObservation("thermometer", "temperature", "air", 
                                          7.6, "2015-04-21T01:00:00.000+03:00"));
 
