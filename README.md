@@ -19,9 +19,9 @@ Emrooz is a database for sensor data, specifically [SSN](http://www.w3.org/2005/
 Emrooz can be used from the command line (experimental) and programmatically. To start, and test if things work, you can try loading and querying the test data. To do so follow these steps:
 
 * Navigate to the Emrooz `bin/` folder
-* Run `load.sh` and `query.sh`
+* Run `load.sh` and `query.sh` as follows
 
-    ./load.sh -f ../resources/example-1.data \
+    load.sh -f ../resources/example-1.data \
                 -ns http://example.org \
                 -sid http://example.org#thermometer \
                 -pid http://example.org#temperature \
@@ -31,7 +31,7 @@ Emrooz can be used from the command line (experimental) and programmatically. To
                 -ks /tmp/ks \
                 -ds localhost
 
-    ./query.sh -q ../resources/example-1.rq \
+    query.sh -q ../resources/example-1.rq \
                  -ks /tmp/ks \
                  -ds localhost
                  
