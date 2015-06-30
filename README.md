@@ -114,7 +114,7 @@ First, the SPARQL query.
 
 The Java code to execute the SPARQL query. Read the SPARQL query from file or, as suggested in this example, set it as value of the `String query` variable.
 
-    String query = "...";
+    String sparql = "...";
 
     // Execute the query
     ResultSet<BindingSet> results = emrooz.evaluate(sparql);
