@@ -76,11 +76,8 @@ public class CompletePersistentExample {
 
 		long start = System.currentTimeMillis();
 
-		e.evaluate(sparql, new SPARQLResultsTSVWriter(System.out)); // There are
-																	// also CSV,
-																	// JSON, and
-																	// XML
-																	// writers
+		// In addition to the SPARQL writer, there are also CSV, JSON, and XML writers
+		e.evaluate(sparql, new SPARQLResultsTSVWriter(System.out));
 
 		long end = System.currentTimeMillis();
 
