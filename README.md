@@ -34,7 +34,7 @@ Emrooz can be used from the command line (experimental) and programmatically. To
                  
 We first load the [`resources/example-1.data`](https://raw.githubusercontent.com/markusstocker/emrooz/master/src/examples/resources/example-1.data) using the URIs for the sensor (`-sid`), the property (`-pid`), the feature (`-fid`), and the unit (`-uid`). These URIs correspond to those in the data, which is a CSV text file. We also specify the sampling frequency [Hz] of the sensor (`-sf`). Finally, we specify the directory to which the knowledge store is persisted (`-ks`) and the host on which the (Cassandra) data store runs.
 
-Then we query the example data with the example query `example-1.rq` by specifying the knowledge and the data stores.
+Then we query the example data with the example query [`example-1.rq`](https://raw.githubusercontent.com/markusstocker/emrooz/master/src/examples/resources/example-1.rq) by specifying the knowledge and the data stores.
 
 You should get a list of results.
 
