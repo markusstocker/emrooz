@@ -1,7 +1,10 @@
 # Emrooz
 
-Emrooz is a database for sensor data, specifically [SSN](http://www.w3.org/2005/Incubator/ssn/ssnx/ssn) observations. It supports the persistence and [SPARQL](http://www.w3.org/TR/rdf-sparql-query/) retrieval of SSN observations. Emrooz builds on [Apache Cassandra](http://cassandra.apache.org/) and [Sesame](http://rdf4j.org/).
- 
+Emrooz is a scalable database for sensor data, specifically [SSN](http://www.w3.org/2005/Incubator/ssn/ssnx/ssn) observations. It supports the persistence and [SPARQL](http://www.w3.org/TR/rdf-sparql-query/) retrieval of SSN observations. Emrooz builds on [Apache Cassandra](http://cassandra.apache.org/) and [Sesame](http://rdf4j.org/).
+
+[![GitHub version](https://badge.fury.io/gh/markusstocker%2Femrooz.svg)](http://badge.fury.io/gh/markusstocker%2Femrooz)
+[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.19191.svg)](http://dx.doi.org/10.5281/zenodo.19191)
+
 ## Requirements
 
 * [Java](http://www.oracle.com/technetwork/java/javase/downloads/index.html) (Java 7u25 or later)
