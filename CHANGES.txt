@@ -1,3 +1,8 @@
+v0.4.0
+======
+
+* Support for dataset observations
+
 v0.3.0
 ======
 

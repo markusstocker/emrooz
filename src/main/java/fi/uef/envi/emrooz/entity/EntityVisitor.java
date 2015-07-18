@@ -5,6 +5,13 @@
 
 package fi.uef.envi.emrooz.entity;
 
+import fi.uef.envi.emrooz.entity.qb.AttributeProperty;
+import fi.uef.envi.emrooz.entity.qb.ComponentSpecification;
+import fi.uef.envi.emrooz.entity.qb.DataStructureDefinition;
+import fi.uef.envi.emrooz.entity.qb.Dataset;
+import fi.uef.envi.emrooz.entity.qb.DatasetObservation;
+import fi.uef.envi.emrooz.entity.qb.DimensionProperty;
+import fi.uef.envi.emrooz.entity.qb.MeasureProperty;
 import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.qudt.Unit;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
@@ -63,5 +70,19 @@ public interface EntityVisitor {
 	public void visit(QuantityValue entity);
 	
 	public void visit(Unit entity);
+	
+	public void visit(Dataset entity);
+	
+	public void visit(DataStructureDefinition entity);
+	
+	public void visit(ComponentSpecification entity);
+	
+	public void visit(DimensionProperty entity);
+	
+	public void visit(MeasureProperty entity);
+	
+	public void visit(AttributeProperty entity);
+	
+	public void visit(DatasetObservation entity);
 	
 }
