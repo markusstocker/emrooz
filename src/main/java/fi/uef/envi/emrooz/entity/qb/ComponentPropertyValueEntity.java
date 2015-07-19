@@ -5,6 +5,7 @@
 
 package fi.uef.envi.emrooz.entity.qb;
 
+import fi.uef.envi.emrooz.entity.ComponentPropertyValueVisitor;
 import fi.uef.envi.emrooz.entity.Entity;
 
 /**

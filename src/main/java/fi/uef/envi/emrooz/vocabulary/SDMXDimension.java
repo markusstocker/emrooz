@@ -33,6 +33,7 @@ public class SDMXDimension extends AbstractVocabulary  {
 		AbstractVocabulary.ns = ns.stringValue();
 	}
 	
+	/** http://purl.org/linked-data/sdmx/2009/dimension#timePeriod */
 	public static final URI timePeriod = _("timePeriod");
 	
 }

@@ -32,6 +32,9 @@ public class Time extends AbstractVocabulary {
 		AbstractVocabulary.ns = ns.stringValue();
 	}
 	
+	/** http://www.w3.org/2006/time#TemporalEntity **/
+	public static final URI TemporalEntity = _("TemporalEntity");
+	
 	/** http://www.w3.org/2006/time#Instant **/
 	public static final URI Instant = _("Instant");
 	

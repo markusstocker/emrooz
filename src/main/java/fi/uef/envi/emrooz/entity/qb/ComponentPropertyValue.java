@@ -5,6 +5,8 @@
 
 package fi.uef.envi.emrooz.entity.qb;
 
+import fi.uef.envi.emrooz.entity.ComponentPropertyValueVisitor;
+
 /**
  * <p>
  * Title: ComponentPropertyValue
@@ -25,5 +27,7 @@ package fi.uef.envi.emrooz.entity.qb;
 public abstract class ComponentPropertyValue {
 
 	public abstract Object getValue();
+	
+	public abstract void accept(ComponentPropertyValueVisitor visitor);
 	
 }

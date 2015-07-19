@@ -56,5 +56,8 @@ public class QB extends AbstractVocabulary {
 	
 	/** http://purl.org/linked-data/cube#AttributeProperty */
 	public static final URI AttributeProperty = _("AttributeProperty");
+	
+	/** http://purl.org/linked-data/cube#dataSet */
+	public static final URI dataSet = _("dataSet");
 
 }

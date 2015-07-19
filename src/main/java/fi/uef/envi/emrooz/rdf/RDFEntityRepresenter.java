@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,9 +26,22 @@ import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.model.vocabulary.XMLSchema;
 
+import fi.uef.envi.emrooz.entity.ComponentPropertyValueVisitor;
+import fi.uef.envi.emrooz.entity.Entity;
+import fi.uef.envi.emrooz.entity.EntityVisitor;
 import fi.uef.envi.emrooz.entity.MeasurementPropertyVisitor;
 import fi.uef.envi.emrooz.entity.ObservationValueVisitor;
 import fi.uef.envi.emrooz.entity.TemporalEntityVisitor;
+import fi.uef.envi.emrooz.entity.qb.AttributeProperty;
+import fi.uef.envi.emrooz.entity.qb.ComponentProperty;
+import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValue;
+import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueEntity;
+import fi.uef.envi.emrooz.entity.qb.ComponentSpecification;
+import fi.uef.envi.emrooz.entity.qb.DataStructureDefinition;
+import fi.uef.envi.emrooz.entity.qb.Dataset;
+import fi.uef.envi.emrooz.entity.qb.DatasetObservation;
+import fi.uef.envi.emrooz.entity.qb.DimensionProperty;
+import fi.uef.envi.emrooz.entity.qb.MeasureProperty;
 import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.qudt.Unit;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
@@ -43,7 +57,9 @@ import fi.uef.envi.emrooz.entity.ssn.SensorOutput;
 import fi.uef.envi.emrooz.entity.time.Instant;
 import fi.uef.envi.emrooz.entity.time.TemporalEntity;
 import fi.uef.envi.emrooz.vocabulary.DUL;
+import fi.uef.envi.emrooz.vocabulary.QB;
 import fi.uef.envi.emrooz.vocabulary.QUDTSchema;
+import fi.uef.envi.emrooz.vocabulary.SDMXDimension;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 import fi.uef.envi.emrooz.vocabulary.Time;
 
@@ -67,9 +83,13 @@ import fi.uef.envi.emrooz.vocabulary.Time;
 public class RDFEntityRepresenter {
 
 	private Set<Statement> statements;
+	private URI componentPropertyId;
+	private URI datasetObservationId;
+	private final EntityVisitor entityVisitor;
 	private final ObservationValueVisitor observationValueVisitor;
 	private final MeasurementPropertyVisitor measurementPropertyVisitor;
 	private final TemporalEntityVisitor temporalEntityVisitor;
+	private final ComponentPropertyValueVisitor componentPropertyValueVisitor;
 	private final static ValueFactory vf = ValueFactoryImpl.getInstance();
 	private final static DateTimeFormatter dtf = ISODateTimeFormat.dateTime()
 			.withOffsetParsed();
@@ -77,16 +97,341 @@ public class RDFEntityRepresenter {
 			.getLogger(RDFEntityRepresenter.class.getName());
 
 	public RDFEntityRepresenter() {
+		entityVisitor = new RepresenterEntityVisitor();
 		observationValueVisitor = new RepresenterObservationValueVisitor();
 		measurementPropertyVisitor = new RepresenterMeasurementPropertyVisitor();
 		temporalEntityVisitor = new RepresenterTemporalEntityVisitor();
+		componentPropertyValueVisitor = new RepresenterComponentPropertyValueVisitor();
+	}
+
+	public Set<Statement> createRepresentation(Entity entity) {
+		if (entity == null)
+			return Collections.emptySet();
+
+		Set<Statement> ret = new HashSet<Statement>();
+
+		statements = new HashSet<Statement>();
+
+		entity.accept(entityVisitor);
+
+		ret.addAll(statements);
+
+		return Collections.unmodifiableSet(ret);
+	}
+
+	public Set<Statement> createRepresentation(DatasetObservation observation) {
+		if (observation == null)
+			return Collections.emptySet();
+
+		Set<Statement> ret = new HashSet<Statement>();
+
+		Set<URI> types = observation.getTypes();
+		Dataset dataset = observation.getDataset();
+		Map<ComponentProperty, ComponentPropertyValue> components = observation
+				.getComponents();
+
+		datasetObservationId = observation.getId();
+		URI datasetId = dataset.getId();
+
+		for (URI type : types)
+			ret.add(_statement(datasetObservationId, RDF.TYPE, type));
+
+		ret.add(_statement(datasetObservationId, QB.dataSet, datasetId));
+		ret.addAll(createRepresentation(dataset));
+
+		for (Map.Entry<ComponentProperty, ComponentPropertyValue> entry : components
+				.entrySet()) {
+			ComponentProperty componentProperty = entry.getKey();
+			ComponentPropertyValue value = entry.getValue();
+
+			componentPropertyId = componentProperty.getId();
+
+			statements = new HashSet<Statement>();
+
+			value.accept(componentPropertyValueVisitor);
+
+			ret.addAll(statements);
+			ret.addAll(createRepresentation(componentProperty));
+		}
+
+		return Collections.unmodifiableSet(ret);
+	}
+
+	public DatasetObservation createDatasetObservation(Set<Statement> statements) {
+		if (statements == null)
+			return null;
+		if (statements.isEmpty())
+			return null;
+
+		URI id = _getId(statements, QB.Observation);
+
+		if (id == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to extract observation id [id = null; statements = "
+						+ statements + "]");
+			return null;
+		}
+
+		URI datasetId = _getObjectId(statements, id, QB.dataSet);
+
+		if (datasetId == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to extract dataset id for observation [id = "
+						+ id + "; statements = " + statements + "]");
+			return null;
+		}
+
+		Dataset dataset = createDataset(_matchSubject(statements, datasetId));
+
+		if (dataset == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to create dataset [datasetId = " + datasetId
+						+ "; statements = " + statements + "]");
+			return null;
+		}
+
+		URI temporalEntityId = _getObjectId(statements, id,
+				SDMXDimension.timePeriod);
+
+		TemporalEntity temporalEntity = createTemporalEntity(_matchSubject(
+				statements, temporalEntityId));
+
+		DatasetObservation ret = new DatasetObservation(id, _getType(
+				statements, id, QB.Observation), dataset, temporalEntity);
+		ret.addTypes(_getTypes(statements, id));
+
+		Set<URI> componentPropertyIds = _getIds(statements,
+				QB.ComponentProperty);
+
+		for (URI componentPropertyId : componentPropertyIds) {
+			if (componentPropertyId.equals(SDMXDimension.timePeriod))
+				continue;
+
+			ComponentProperty property = createComponentProperty(_matchSubject(
+					statements, componentPropertyId));
+
+			Value object = _getObject(statements, id, componentPropertyId);
+
+			if (object instanceof URI) {
+				ComponentPropertyValue value = createComponentPropertyValueEntity(_matchSubject(
+						statements, (URI) object));
+				ret.addComponent(property, value);
+			} else {
+				throw new RuntimeException("Unsupported object type [object = "
+						+ object + "; id = " + id + "; componentPropertyId = "
+						+ componentPropertyId + "; statements = " + statements
+						+ "]");
+			}
+		}
+
+		return ret;
+	}
+
+	public ComponentPropertyValueEntity createComponentPropertyValueEntity(
+			Set<Statement> statements) {
+		if (statements == null)
+			return null;
+		if (statements.isEmpty())
+			return null;
+
+		if (_getId(statements, Time.TemporalEntity) != null) {
+			return new ComponentPropertyValueEntity(
+					createTemporalEntity(statements));
+		}
+
+		if (_getId(statements, QUDTSchema.QuantityValue) != null) {
+			return new ComponentPropertyValueEntity(
+					createQuantityValue(statements));
+		}
+
+		if (log.isLoggable(Level.WARNING))
+			log.warning("Failed to create component property value entity [statements = "
+					+ statements + "]");
+
+		return null;
+	}
+
+	public Set<Statement> createRepresentation(Dataset dataset) {
+		if (dataset == null)
+			return Collections.emptySet();
+
+		Set<Statement> ret = new HashSet<Statement>();
+
+		URI id = dataset.getId();
+		Set<URI> types = dataset.getTypes();
+
+		for (URI type : types)
+			ret.add(_statement(id, RDF.TYPE, type));
+
+		return Collections.unmodifiableSet(ret);
+	}
+
+	public Dataset createDataset(Set<Statement> statements) {
+		if (statements == null)
+			return null;
+		if (statements.isEmpty())
+			return null;
+
+		URI id = _getId(statements, QB.DataSet);
+
+		if (id == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to extract dataset id [id = null; statements = "
+						+ statements + "]");
+			return null;
+		}
+
+		Dataset ret = new Dataset(id, _getType(statements, id, QB.DataSet));
+		ret.addTypes(_getTypes(statements, id));
+
+		return ret;
+	}
+
+	public ComponentProperty createComponentProperty(Set<Statement> statements) {
+		if (statements == null)
+			return null;
+		if (statements.isEmpty())
+			return null;
+
+		URI id = _getId(statements, QB.ComponentProperty);
+
+		if (id == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to extract component property id [id = null; statements = "
+						+ statements + "]");
+			return null;
+		}
+
+		Set<URI> types = _getTypes(statements, id);
+
+		if (types.contains(QB.DimensionProperty))
+			return createDimensionProperty(statements);
+		else if (types.contains(QB.MeasureProperty))
+			return createMeasureProperty(statements);
+		else if (types.contains(QB.AttributeProperty))
+			return createAttributeProperty(statements);
+		else {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to create component property; cannot determine type [types = "
+						+ types + "; statements = " + statements + "]");
+		}
+
+		return null;
+	}
+
+	public Set<Statement> createRepresentation(DimensionProperty property) {
+		if (property == null)
+			return Collections.emptySet();
+
+		Set<Statement> ret = new HashSet<Statement>();
+
+		URI id = property.getId();
+		Set<URI> types = property.getTypes();
+
+		for (URI type : types)
+			ret.add(_statement(id, RDF.TYPE, type));
+
+		return Collections.unmodifiableSet(ret);
+	}
+
+	public DimensionProperty createDimensionProperty(Set<Statement> statements) {
+		if (statements == null)
+			return null;
+		if (statements.isEmpty())
+			return null;
+
+		URI id = _getId(statements, QB.DimensionProperty);
+
+		if (id == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to extract dimension property id [id = null; statements = "
+						+ statements + "]");
+			return null;
+		}
+
+		DimensionProperty ret = new DimensionProperty(id);
+		ret.addTypes(_getTypes(statements, id));
+
+		return ret;
+	}
+
+	public Set<Statement> createRepresentation(MeasureProperty property) {
+		if (property == null)
+			return Collections.emptySet();
+
+		Set<Statement> ret = new HashSet<Statement>();
+
+		URI id = property.getId();
+		Set<URI> types = property.getTypes();
+
+		for (URI type : types)
+			ret.add(_statement(id, RDF.TYPE, type));
+
+		return Collections.unmodifiableSet(ret);
+	}
+
+	public MeasureProperty createMeasureProperty(Set<Statement> statements) {
+		if (statements == null)
+			return null;
+		if (statements.isEmpty())
+			return null;
+
+		URI id = _getId(statements, QB.MeasureProperty);
+
+		if (id == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to extract measure property id [id = null; statements = "
+						+ statements + "]");
+			return null;
+		}
+
+		MeasureProperty ret = new MeasureProperty(id);
+		ret.addTypes(_getTypes(statements, id));
+
+		return ret;
+	}
+
+	public Set<Statement> createRepresentation(AttributeProperty property) {
+		if (property == null)
+			return Collections.emptySet();
+
+		Set<Statement> ret = new HashSet<Statement>();
+
+		URI id = property.getId();
+		Set<URI> types = property.getTypes();
+
+		for (URI type : types)
+			ret.add(_statement(id, RDF.TYPE, type));
+
+		return Collections.unmodifiableSet(ret);
+	}
+
+	public AttributeProperty createAttributeProperty(Set<Statement> statements) {
+		if (statements == null)
+			return null;
+		if (statements.isEmpty())
+			return null;
+
+		URI id = _getId(statements, QB.AttributeProperty);
+
+		if (id == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to extract attribute property id [id = null; statements = "
+						+ statements + "]");
+			return null;
+		}
+
+		AttributeProperty ret = new AttributeProperty(id);
+		ret.addTypes(_getTypes(statements, id));
+
+		return ret;
 	}
 
 	public Set<Statement> createRepresentation(SensorObservation observation) {
-		Set<Statement> ret = new HashSet<Statement>();
-
 		if (observation == null)
-			return Collections.unmodifiableSet(ret);
+			return Collections.emptySet();
+
+		Set<Statement> ret = new HashSet<Statement>();
 
 		Sensor sensor = observation.getSensor();
 		Property property = observation.getProperty();
@@ -387,7 +732,7 @@ public class RDFEntityRepresenter {
 		URI valueId = value.getId();
 
 		Literal literal = _literal(value.getNumericValue());
-		
+
 		ret.add(_statement(valueId, RDF.TYPE, QUDTSchema.QuantityValue));
 		ret.add(_statement(valueId, RDF.TYPE, value.getType()));
 		ret.add(_statement(valueId, DUL.hasRegionDataValue, literal));
@@ -681,8 +1026,11 @@ public class RDFEntityRepresenter {
 
 		URI id = instant.getId();
 
-		ret.add(_statement(id, RDF.TYPE, Time.Instant));
-		ret.add(_statement(id, RDF.TYPE, instant.getType()));
+		Set<URI> types = instant.getTypes();
+
+		for (URI type : types)
+			ret.add(_statement(id, RDF.TYPE, type));
+
 		ret.add(_statement(id, Time.inXSDDateTime, vf.createLiteral(
 				dtf.print(instant.getValue()), XMLSchema.DATETIME)));
 
@@ -717,8 +1065,8 @@ public class RDFEntityRepresenter {
 						+ statements + "]");
 		}
 
-		Instant ret = new Instant(id, _getType(statements, id, Time.Instant),
-				value);
+		Instant ret = new Instant(id, _getType(statements, id, Time.Instant,
+				Time.TemporalEntity), value);
 		ret.addTypes(_getTypes(statements, id));
 
 		return ret;
@@ -791,6 +1139,16 @@ public class RDFEntityRepresenter {
 
 	private static URI _getObjectId(Set<Statement> statements, URI subject,
 			URI predicate) {
+		Value ret = _getObject(statements, subject, predicate);
+
+		if (ret == null)
+			return null;
+
+		return vf.createURI(ret.stringValue());
+	}
+
+	private static Value _getObject(Set<Statement> statements, URI subject,
+			URI predicate) {
 		for (Statement statement : statements) {
 			if (statement.getSubject().equals(subject)
 					&& statement.getPredicate().equals(predicate))
@@ -833,6 +1191,110 @@ public class RDFEntityRepresenter {
 		return Collections.unmodifiableSet(ret);
 	}
 
+	private class RepresenterEntityVisitor implements EntityVisitor {
+
+		@Override
+		public void visit(SensorObservation entity) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void visit(Sensor entity) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void visit(Property entity) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void visit(FeatureOfInterest entity) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void visit(SensorOutput entity) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void visit(ObservationValue entity) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void visit(ObservationValueDouble entity) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void visit(MeasurementCapability entity) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void visit(Frequency entity) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void visit(TemporalEntity entity) {
+			statements.addAll(createRepresentation(entity));
+		}
+
+		@Override
+		public void visit(Instant entity) {
+			statements.addAll(createRepresentation(entity));
+		}
+
+		@Override
+		public void visit(QuantityValue entity) {
+			statements.addAll(createRepresentation(entity));
+		}
+
+		@Override
+		public void visit(Unit entity) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void visit(Dataset entity) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void visit(DataStructureDefinition entity) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void visit(ComponentSpecification entity) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void visit(DimensionProperty entity) {
+			statements.addAll(createRepresentation(entity));
+		}
+
+		@Override
+		public void visit(MeasureProperty entity) {
+			statements.addAll(createRepresentation(entity));
+		}
+
+		@Override
+		public void visit(AttributeProperty entity) {
+			statements.addAll(createRepresentation(entity));
+		}
+
+		@Override
+		public void visit(DatasetObservation entity) {
+			throw new UnsupportedOperationException();
+		}
+
+	}
+
 	private class RepresenterObservationValueVisitor implements
 			ObservationValueVisitor {
 
@@ -840,7 +1302,7 @@ public class RDFEntityRepresenter {
 		public void visit(ObservationValueDouble entity) {
 			statements.addAll(createRepresentation(entity));
 		}
-		
+
 		@Override
 		public void visit(QuantityValue entity) {
 			statements.addAll(createRepresentation(entity));
@@ -864,6 +1326,28 @@ public class RDFEntityRepresenter {
 		@Override
 		public void visit(Instant entity) {
 			statements.addAll(createRepresentation(entity));
+		}
+	}
+
+	private class RepresenterComponentPropertyValueVisitor implements
+			ComponentPropertyValueVisitor {
+
+		@Override
+		public void visit(ComponentPropertyValueEntity value) {
+			if (datasetObservationId == null || componentPropertyId == null)
+				throw new NullPointerException("[datasetObservationId = "
+						+ datasetObservationId + "; componentPropertyId = "
+						+ componentPropertyId + "]");
+
+			Entity entity = value.getValue();
+
+			Set<Statement> ret = new HashSet<Statement>();
+
+			ret.add(_statement(datasetObservationId, componentPropertyId,
+					entity.getId()));
+			ret.addAll(createRepresentation(entity));
+
+			statements.addAll(ret);
 		}
 	}
 

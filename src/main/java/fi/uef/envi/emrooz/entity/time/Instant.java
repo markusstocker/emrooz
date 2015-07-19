@@ -11,6 +11,7 @@ import org.openrdf.model.URI;
 import fi.uef.envi.emrooz.entity.EntityVisitor;
 import fi.uef.envi.emrooz.entity.TemporalEntityVisitor;
 import static fi.uef.envi.emrooz.vocabulary.Time.Instant;
+import static fi.uef.envi.emrooz.vocabulary.Time.TemporalEntity;
 
 /**
  * <p>
@@ -41,6 +42,7 @@ public class Instant extends TemporalEntity {
 		super(id, type);
 
 		addType(Instant);
+		addType(TemporalEntity);
 		
 		if (value == null)
 			throw new NullPointerException("[value = null]");

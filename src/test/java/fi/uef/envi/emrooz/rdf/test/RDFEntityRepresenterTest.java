@@ -21,6 +21,12 @@ import org.joda.time.DateTime;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 
+import fi.uef.envi.emrooz.entity.EntityVisitor;
+import fi.uef.envi.emrooz.entity.qb.ComponentProperty;
+import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueEntity;
+import fi.uef.envi.emrooz.entity.qb.Dataset;
+import fi.uef.envi.emrooz.entity.qb.DatasetObservation;
+import fi.uef.envi.emrooz.entity.qb.MeasureProperty;
 import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.qudt.Unit;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
@@ -34,6 +40,7 @@ import fi.uef.envi.emrooz.entity.ssn.SensorOutput;
 import fi.uef.envi.emrooz.entity.time.Instant;
 import fi.uef.envi.emrooz.rdf.RDFEntityRepresenter;
 import fi.uef.envi.emrooz.test.ParamsConverterTest;
+import fi.uef.envi.emrooz.vocabulary.QB;
 import fi.uef.envi.emrooz.vocabulary.QUDTSchema;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 import fi.uef.envi.emrooz.vocabulary.Time;
@@ -358,7 +365,7 @@ public class RDFEntityRepresenterTest {
 		assertNotEquals(statementsE, statementsA);
 		assertNotEquals(sensorE, sensorA);
 	}
-	
+
 	@Test
 	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testSensor-2.csv")
 	public void testSensor2(
@@ -367,7 +374,8 @@ public class RDFEntityRepresenterTest {
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI property2Id,
 			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
 			String assertType) {
-		Sensor sensorA = new Sensor(id, new Property(property1Id), new Property(property2Id));
+		Sensor sensorA = new Sensor(id, new Property(property1Id),
+				new Property(property2Id));
 		Set<Statement> statementsA = representer.createRepresentation(sensorA);
 		Sensor sensorE = representer.createSensor(statementsE);
 
@@ -433,6 +441,75 @@ public class RDFEntityRepresenterTest {
 
 		assertNotEquals(statementsE, statementsA);
 		assertNotEquals(unitE, unitA);
+	}
+
+	@Test
+	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testDatasetObservation-1.csv")
+	public void testDatasetObservation1(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI datasetId,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI instantId,
+			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime instantValue,
+			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
+			String assertType) {
+		if (type == null)
+			type = QB.Observation;
+
+		DatasetObservation observationA = new DatasetObservation(id, type,
+				new Dataset(datasetId), new Instant(instantId, instantValue));
+		Set<Statement> statementsA = representer
+				.createRepresentation(observationA);
+		DatasetObservation observationE = representer
+				.createDatasetObservation(statementsE);
+
+		if (assertType.equals("assertEquals")) {
+			assertEquals(statementsE, statementsA);
+			assertEquals(observationE, observationA);
+			return;
+		}
+
+		assertNotEquals(statementsE, statementsA);
+		assertNotEquals(observationE, observationA);
+	}
+
+	@Test
+	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testDatasetObservation-2.csv")
+	public void testDatasetObservation2(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI datasetId,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI instantId,
+			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime instantValue,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI componentPropertyId,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI componentPropertyValueId,
+			@ConvertParam(value = ParamsConverterTest.StringToDoubleConverter.class) Double value,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI unitId,
+			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
+			String assertType) {
+		if (type == null)
+			type = QB.Observation;
+
+		DatasetObservation observationA = new DatasetObservation(id, type,
+				new Dataset(datasetId), new Instant(instantId, instantValue));
+
+		observationA.addComponent(new MeasureProperty(componentPropertyId),
+				new ComponentPropertyValueEntity(new QuantityValue(
+						componentPropertyValueId, value, new Unit(unitId))));
+
+		Set<Statement> statementsA = representer
+				.createRepresentation(observationA);
+		DatasetObservation observationE = representer
+				.createDatasetObservation(statementsE);
+
+		if (assertType.equals("assertEquals")) {
+			assertEquals(statementsE, statementsA);
+			assertEquals(observationE, observationA);
+			return;
+		}
+
+		assertNotEquals(statementsE, statementsA);
+		assertNotEquals(observationE, observationA);
 	}
 
 }
