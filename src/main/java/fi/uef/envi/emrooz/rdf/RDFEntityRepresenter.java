@@ -35,7 +35,9 @@ import fi.uef.envi.emrooz.entity.TemporalEntityVisitor;
 import fi.uef.envi.emrooz.entity.qb.AttributeProperty;
 import fi.uef.envi.emrooz.entity.qb.ComponentProperty;
 import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValue;
+import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueDouble;
 import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueEntity;
+import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueString;
 import fi.uef.envi.emrooz.entity.qb.ComponentSpecification;
 import fi.uef.envi.emrooz.entity.qb.DataStructureDefinition;
 import fi.uef.envi.emrooz.entity.qb.Dataset;
@@ -213,9 +215,29 @@ public class RDFEntityRepresenter {
 			Value object = _getObject(statements, id, componentPropertyId);
 
 			if (object instanceof URI) {
-				ComponentPropertyValue value = createComponentPropertyValueEntity(_matchSubject(
-						statements, (URI) object));
-				ret.addComponent(property, value);
+				ret.addComponent(
+						property,
+						createComponentPropertyValueEntity(_matchSubject(
+								statements, (URI) object)));
+			} else if (object instanceof Literal) {
+				Literal literal = (Literal) object;
+				URI datatype = literal.getDatatype();
+
+				if (datatype.equals(XMLSchema.DOUBLE)) {
+					ret.addComponent(
+							property,
+							new ComponentPropertyValueDouble(literal
+									.doubleValue()));
+				} else if (datatype.equals(XMLSchema.STRING)) {
+					ret.addComponent(
+							property,
+							new ComponentPropertyValueString(literal
+									.stringValue()));
+				} else {
+					if (log.isLoggable(Level.WARNING))
+						log.warning("Failed to create primitive component property value; unrecognized datatype [datatype = "
+								+ datatype + "]");
+				}
 			} else {
 				throw new RuntimeException("Unsupported object type [object = "
 						+ object + "; id = " + id + "; componentPropertyId = "
@@ -1152,7 +1174,7 @@ public class RDFEntityRepresenter {
 		for (Statement statement : statements) {
 			if (statement.getSubject().equals(subject)
 					&& statement.getPredicate().equals(predicate))
-				return vf.createURI(statement.getObject().stringValue());
+				return statement.getObject();
 		}
 
 		return null;
@@ -1348,6 +1370,30 @@ public class RDFEntityRepresenter {
 			ret.addAll(createRepresentation(entity));
 
 			statements.addAll(ret);
+		}
+
+		@Override
+		public void visit(ComponentPropertyValueString value) {
+			if (datasetObservationId == null || componentPropertyId == null)
+				throw new NullPointerException("[datasetObservationId = "
+						+ datasetObservationId + "; componentPropertyId = "
+						+ componentPropertyId + "]");
+
+			statements.add(_statement(datasetObservationId,
+					componentPropertyId,
+					vf.createLiteral(value.getValue(), XMLSchema.STRING)));
+		}
+
+		@Override
+		public void visit(ComponentPropertyValueDouble value) {
+			if (datasetObservationId == null || componentPropertyId == null)
+				throw new NullPointerException("[datasetObservationId = "
+						+ datasetObservationId + "; componentPropertyId = "
+						+ componentPropertyId + "]");
+
+			statements.add(_statement(datasetObservationId,
+					componentPropertyId, vf.createLiteral(value.getValue()
+							.toString(), XMLSchema.DOUBLE)));
 		}
 	}
 

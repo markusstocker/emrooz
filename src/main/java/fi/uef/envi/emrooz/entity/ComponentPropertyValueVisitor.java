@@ -5,7 +5,9 @@
 
 package fi.uef.envi.emrooz.entity;
 
+import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueDouble;
 import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueEntity;
+import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueString;
 
 /**
  * <p>
@@ -27,5 +29,9 @@ import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueEntity;
 public interface ComponentPropertyValueVisitor {
 
 	public void visit(ComponentPropertyValueEntity value);
+	
+	public void visit(ComponentPropertyValueString value);
+	
+	public void visit(ComponentPropertyValueDouble value);
 	
 }

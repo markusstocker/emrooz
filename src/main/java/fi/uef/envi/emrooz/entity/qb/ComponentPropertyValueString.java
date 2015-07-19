@@ -6,11 +6,10 @@
 package fi.uef.envi.emrooz.entity.qb;
 
 import fi.uef.envi.emrooz.entity.ComponentPropertyValueVisitor;
-import fi.uef.envi.emrooz.entity.Entity;
 
 /**
  * <p>
- * Title: ComponentPropertyValueEntity
+ * Title: ComponentPropertyValueString
  * </p>
  * <p>
  * Description:
@@ -25,14 +24,11 @@ import fi.uef.envi.emrooz.entity.Entity;
  * @author Markus Stocker
  */
 
-public class ComponentPropertyValueEntity extends ComponentPropertyValue {
+public class ComponentPropertyValueString extends ComponentPropertyValuePrimitive {
 
-	private Entity value;
+	private String value;
 
-	public ComponentPropertyValueEntity(Entity value) {
-		if (value == null)
-			throw new NullPointerException("[value = null]");
-
+	public ComponentPropertyValueString(String value) {
 		this.value = value;
 	}
 
@@ -41,7 +37,7 @@ public class ComponentPropertyValueEntity extends ComponentPropertyValue {
 	}
 
 	@Override
-	public Entity getValue() {
+	public String getValue() {
 		return value;
 	}
 
@@ -59,7 +55,7 @@ public class ComponentPropertyValueEntity extends ComponentPropertyValue {
 		if (getClass() != obj.getClass())
 			return false;
 
-		ComponentPropertyValueEntity other = (ComponentPropertyValueEntity) obj;
+		ComponentPropertyValueString other = (ComponentPropertyValueString) obj;
 
 		if (value == null) {
 			if (other.value != null)
@@ -72,7 +68,7 @@ public class ComponentPropertyValueEntity extends ComponentPropertyValue {
 
 	@Override
 	public String toString() {
-		return "ComponentPropertyValueEntity [value = " + value + "]";
+		return "ComponentPropertyValueString [value = " + value + "]";
 	}
 
 }
