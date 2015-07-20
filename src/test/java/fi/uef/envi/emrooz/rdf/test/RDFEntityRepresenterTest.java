@@ -553,7 +553,7 @@ public class RDFEntityRepresenterTest {
 	}
 
 	@Test
-	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testDataset.csv")
+	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testDataset-1.csv")
 	public void testDataset1(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
