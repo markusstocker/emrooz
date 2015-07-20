@@ -536,7 +536,7 @@ public class RDFEntityRepresenterTest {
 				new ComponentPropertyValueDouble(componentPropertyValue1));
 		observationA.addComponent(new MeasureProperty(componentProperty2Id),
 				new ComponentPropertyValueString(componentPropertyValue2));
-		
+
 		Set<Statement> statementsA = representer
 				.createRepresentation(observationA);
 		DatasetObservation observationE = representer
@@ -550,6 +550,31 @@ public class RDFEntityRepresenterTest {
 
 		assertNotEquals(statementsE, statementsA);
 		assertNotEquals(observationE, observationA);
+	}
+
+	@Test
+	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testDataset.csv")
+	public void testDataset1(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
+			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
+			String assertType) {
+		if (type == null)
+			type = QB.DataSet;
+
+		Dataset datasetA = new Dataset(id, type);
+
+		Set<Statement> statementsA = representer.createRepresentation(datasetA);
+		Dataset datasetE = representer.createDataset(statementsE);
+
+		if (assertType.equals("assertEquals")) {
+			assertEquals(statementsE, statementsA);
+			assertEquals(datasetE, datasetA);
+			return;
+		}
+
+		assertNotEquals(statementsE, statementsA);
+		assertNotEquals(datasetE, datasetA);
 	}
 
 }
