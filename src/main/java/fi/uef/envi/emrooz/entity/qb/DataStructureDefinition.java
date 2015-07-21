@@ -5,6 +5,7 @@
 
 package fi.uef.envi.emrooz.entity.qb;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -12,7 +13,6 @@ import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.entity.AbstractEntity;
 import fi.uef.envi.emrooz.entity.EntityVisitor;
-
 import static fi.uef.envi.emrooz.vocabulary.QB.DataStructureDefinition;
 
 /**
@@ -64,6 +64,10 @@ public class DataStructureDefinition extends AbstractEntity {
 			return;
 
 		this.components.add(component);
+	}
+	
+	public Set<ComponentSpecification> getComponents() {
+		return Collections.unmodifiableSet(components);
 	}
 
 	@Override

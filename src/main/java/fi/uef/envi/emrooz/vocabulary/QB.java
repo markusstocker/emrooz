@@ -59,5 +59,29 @@ public class QB extends AbstractVocabulary {
 	
 	/** http://purl.org/linked-data/cube#dataSet */
 	public static final URI dataSet = _("dataSet");
+	
+	/** http://purl.org/linked-data/cube#structure */
+	public static final URI structure = _("structure");
+	
+	/** http://purl.org/linked-data/cube#component */
+	public static final URI component = _("component");
+	
+	/** http://purl.org/linked-data/cube#componentProperty */
+	public static final URI componentProperty = _("componentProperty");
+	
+	/** http://purl.org/linked-data/cube#dimension */
+	public static final URI dimension = _("dimension");
+	
+	/** http://purl.org/linked-data/cube#measure */
+	public static final URI measure = _("measure");
+	
+	/** http://purl.org/linked-data/cube#attribute */
+	public static final URI attribute = _("attribute");
+	
+	/** http://purl.org/linked-data/cube#componentRequired */
+	public static final URI componentRequired = _("componentRequired");
+	
+	/** http://purl.org/linked-data/cube#order */
+	public static final URI order = _("order");
 
 }

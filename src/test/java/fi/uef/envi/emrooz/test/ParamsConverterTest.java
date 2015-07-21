@@ -414,6 +414,10 @@ public class ParamsConverterTest {
 						o = vf.createLiteral(label, XMLSchema.DOUBLE);
 					} else if (datatype.equals(XMLSchema.STRING.stringValue())) {
 						o = vf.createLiteral(label, XMLSchema.STRING);
+					} else if (datatype.equals(XMLSchema.BOOLEAN.stringValue())) {
+						o = vf.createLiteral(label, XMLSchema.BOOLEAN);
+					} else if (datatype.equals(XMLSchema.INT.stringValue())) {
+						o = vf.createLiteral(label, XMLSchema.INT);
 					} else {
 						if (log.isLoggable(Level.WARNING)) {
 							log.warning("Unrecognized datatype [datatype = "

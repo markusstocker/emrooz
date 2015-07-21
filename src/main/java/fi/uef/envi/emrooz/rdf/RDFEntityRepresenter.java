@@ -285,6 +285,13 @@ public class RDFEntityRepresenter {
 		for (URI type : types)
 			ret.add(_statement(id, RDF.TYPE, type));
 
+		DataStructureDefinition structure = dataset.getStructure();
+
+		if (structure != null) {
+			ret.add(_statement(id, QB.structure, structure.getId()));
+			ret.addAll(createRepresentation(structure));
+		}
+
 		return Collections.unmodifiableSet(ret);
 	}
 
@@ -306,7 +313,182 @@ public class RDFEntityRepresenter {
 		Dataset ret = new Dataset(id, _getType(statements, id, QB.DataSet));
 		ret.addTypes(_getTypes(statements, id));
 
+		URI structureId = _getObjectId(statements, id, QB.structure);
+
+		if (structureId != null) {
+			ret.setStructure(createDataStructureDefinition(_matchSubject(
+					statements, structureId)));
+		}
+
 		return ret;
+	}
+
+	public Set<Statement> createRepresentation(DataStructureDefinition structure) {
+		if (structure == null)
+			return Collections.emptySet();
+
+		Set<Statement> ret = new HashSet<Statement>();
+
+		URI id = structure.getId();
+		Set<URI> types = structure.getTypes();
+
+		for (URI type : types)
+			ret.add(_statement(id, RDF.TYPE, type));
+
+		Set<ComponentSpecification> components = structure.getComponents();
+
+		for (ComponentSpecification component : components) {
+			ret.add(_statement(id, QB.component, component.getId()));
+			ret.addAll(createRepresentation(component));
+		}
+
+		return Collections.unmodifiableSet(ret);
+	}
+
+	public DataStructureDefinition createDataStructureDefinition(
+			Set<Statement> statements) {
+		if (statements == null)
+			return null;
+		if (statements.isEmpty())
+			return null;
+
+		URI id = _getId(statements, QB.DataStructureDefinition);
+
+		if (id == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to extract data structure definition id [id = null; statements = "
+						+ statements + "]");
+			return null;
+		}
+
+		DataStructureDefinition ret = new DataStructureDefinition(id, _getType(
+				statements, id, QB.DataStructureDefinition));
+		ret.addTypes(_getTypes(statements, id));
+
+		Set<URI> componentIds = _getObjectIds(statements, id, QB.component);
+
+		for (URI componentId : componentIds) {
+			ret.addComponent(createComponentSpecification(_matchSubject(
+					statements, componentId)));
+		}
+
+		return ret;
+	}
+
+	public Set<Statement> createRepresentation(ComponentSpecification component) {
+		if (component == null)
+			return Collections.emptySet();
+
+		Set<Statement> ret = new HashSet<Statement>();
+
+		URI id = component.getId();
+		Set<URI> types = component.getTypes();
+
+		for (URI type : types)
+			ret.add(_statement(id, RDF.TYPE, type));
+
+		ComponentProperty property = component.getProperty();
+		URI propertyId = property.getId();
+
+		ret.add(_statement(id, QB.componentProperty, propertyId));
+
+		Set<URI> propertyTypes = property.getTypes();
+
+		if (propertyTypes.contains(QB.DimensionProperty))
+			ret.add(_statement(id, QB.dimension, propertyId));
+		else if (propertyTypes.contains(QB.MeasureProperty))
+			ret.add(_statement(id, QB.measure, propertyId));
+		else if (propertyTypes.contains(QB.AttributeProperty))
+			ret.add(_statement(id, QB.attribute, propertyId));
+		else {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("Failed to identify component property type [propertyTypes = "
+						+ propertyTypes + "; component = " + component + "]");
+		}
+
+		ret.addAll(createRepresentation(property));
+
+		boolean isRequired = component.isRequired();
+
+		if (isRequired)
+			ret.add(_statement(id, QB.componentRequired,
+					vf.createLiteral("true", XMLSchema.BOOLEAN)));
+		else
+			ret.add(_statement(id, QB.componentRequired,
+					vf.createLiteral("false", XMLSchema.BOOLEAN)));
+
+		Integer order = component.getOrder();
+
+		if (component.getOrder() > -1)
+			ret.add(_statement(id, QB.order,
+					vf.createLiteral(order.toString(), XMLSchema.INT)));
+
+		return Collections.unmodifiableSet(ret);
+	}
+
+	public ComponentSpecification createComponentSpecification(
+			Set<Statement> statements) {
+		if (statements == null)
+			return null;
+		if (statements.isEmpty())
+			return null;
+
+		URI id = _getId(statements, QB.ComponentSpecification);
+
+		if (id == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to extract component specification id [id = null; statements = "
+						+ statements + "]");
+			return null;
+		}
+
+		URI componentPropertyId = _getObjectId(statements, id,
+				QB.componentProperty);
+
+		if (componentPropertyId == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to extract component property id [componentPropertyId = null; id = "
+						+ id + "; statements = " + statements + "]");
+			return null;
+		}
+
+		ComponentSpecification ret = new ComponentSpecification(id, _getType(
+				statements, id, QB.ComponentSpecification),
+				createComponentProperty(_matchSubject(statements,
+						componentPropertyId)));
+		ret.addTypes(_getTypes(statements, id));
+
+		Value required = _getObject(statements, id, QB.componentRequired);
+
+		if (required != null) {
+			if (required.stringValue().equalsIgnoreCase("true"))
+				ret.setRequired(true);
+			else
+				ret.setRequired(false);
+		}
+
+		Value order = _getObject(statements, id, QB.order);
+
+		if (order != null) {
+			ret.setOrder(Integer.valueOf(order.stringValue()));
+		}
+
+		return ret;
+	}
+
+	public Set<Statement> createRepresentation(ComponentProperty property) {
+		if (property == null)
+			return Collections.emptySet();
+
+		Set<Statement> ret = new HashSet<Statement>();
+
+		URI id = property.getId();
+		Set<URI> types = property.getTypes();
+
+		for (URI type : types)
+			ret.add(_statement(id, RDF.TYPE, type));
+
+		return Collections.unmodifiableSet(ret);
 	}
 
 	public ComponentProperty createComponentProperty(Set<Statement> statements) {
@@ -1292,7 +1474,7 @@ public class RDFEntityRepresenter {
 
 		@Override
 		public void visit(ComponentSpecification entity) {
-			throw new UnsupportedOperationException();
+			statements.addAll(createRepresentation(entity));
 		}
 
 		@Override

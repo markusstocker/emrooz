@@ -24,8 +24,11 @@ import org.openrdf.model.URI;
 import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueDouble;
 import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueEntity;
 import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueString;
+import fi.uef.envi.emrooz.entity.qb.ComponentSpecification;
+import fi.uef.envi.emrooz.entity.qb.DataStructureDefinition;
 import fi.uef.envi.emrooz.entity.qb.Dataset;
 import fi.uef.envi.emrooz.entity.qb.DatasetObservation;
+import fi.uef.envi.emrooz.entity.qb.DimensionProperty;
 import fi.uef.envi.emrooz.entity.qb.MeasureProperty;
 import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.qudt.Unit;
@@ -563,6 +566,43 @@ public class RDFEntityRepresenterTest {
 			type = QB.DataSet;
 
 		Dataset datasetA = new Dataset(id, type);
+
+		Set<Statement> statementsA = representer.createRepresentation(datasetA);
+		Dataset datasetE = representer.createDataset(statementsE);
+
+		if (assertType.equals("assertEquals")) {
+			assertEquals(statementsE, statementsA);
+			assertEquals(datasetE, datasetA);
+			return;
+		}
+
+		assertNotEquals(statementsE, statementsA);
+		assertNotEquals(datasetE, datasetA);
+	}
+
+	@Test
+	@FileParameters("src/test/resources/RDFEntityRepresenterTest-testDataset-2.csv")
+	public void testDataset2(
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI structureId,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI specification1Id,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI property1Id,
+			boolean property1Required,
+			int property1Order,
+			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
+			String assertType) {
+		if (type == null)
+			type = QB.DataSet;
+
+		DataStructureDefinition structure = new DataStructureDefinition(
+				structureId);
+
+		structure.addComponent(new ComponentSpecification(specification1Id,
+				new DimensionProperty(property1Id), property1Required,
+				property1Order));
+
+		Dataset datasetA = new Dataset(id, type, structure);
 
 		Set<Statement> statementsA = representer.createRepresentation(datasetA);
 		Dataset datasetE = representer.createDataset(statementsE);
