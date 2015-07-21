@@ -24,6 +24,7 @@ import fi.uef.envi.emrooz.api.KnowledgeStore;
 import fi.uef.envi.emrooz.api.QueryHandler;
 import fi.uef.envi.emrooz.api.ResultSet;
 import fi.uef.envi.emrooz.entity.TemporalEntityVisitor;
+import fi.uef.envi.emrooz.entity.qb.Dataset;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
 import fi.uef.envi.emrooz.entity.ssn.Frequency;
 import fi.uef.envi.emrooz.entity.ssn.MeasurementCapability;
@@ -63,6 +64,8 @@ public class Emrooz {
 
 	private Map<URI, Map<URI, Sensor>> sensors;
 	private Map<URI, Sensor> sensorsById;
+	private Map<URI, Map<URI, Dataset>> datasets;
+	private Map<URI, Dataset> datasetsById;
 
 	private DateTime instant = null;
 	private final TemporalEntityVisitor temporalEntityVisitor;
@@ -85,6 +88,8 @@ public class Emrooz {
 
 		this.sensors = new HashMap<URI, Map<URI, Sensor>>();
 		this.sensorsById = new HashMap<URI, Sensor>();
+		this.datasets = new HashMap<URI, Map<URI, Dataset>>();
+		this.datasetsById = new HashMap<URI, Dataset>();
 		this.temporalEntityVisitor = new EmroozTemporalEntityVisitor();
 		this.representer = new RDFEntityRepresenter();
 		this.sensorObservationQueryRewriter = new SensorObservationQueryRewriter(
@@ -97,11 +102,17 @@ public class Emrooz {
 	public void loadKnowledgeBase(File file) {
 		ks.load(file);
 		sensors();
+		datasets();
 	}
 
 	public void add(Sensor sensor) {
 		ks.addSensor(sensor);
 		sensors();
+	}
+	
+	public void add(Dataset dataset) {
+		ks.addDataset(dataset);
+		datasets();
 	}
 
 	public Sensor getSensorById(URI sensorId) {
@@ -372,6 +383,13 @@ public class Emrooz {
 				m1.put(property.getId(), sensor);
 			}
 		}
+	}
+	
+	private void datasets() {
+		datasets.clear();
+		datasetsById.clear();
+		
+		// TODO
 	}
 
 	private Sensor getSpecification(URI sensorId, URI propertyId) {

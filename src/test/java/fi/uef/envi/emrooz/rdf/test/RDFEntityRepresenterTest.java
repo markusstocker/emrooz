@@ -45,6 +45,7 @@ import fi.uef.envi.emrooz.rdf.RDFEntityRepresenter;
 import fi.uef.envi.emrooz.test.ParamsConverterTest;
 import fi.uef.envi.emrooz.vocabulary.QB;
 import fi.uef.envi.emrooz.vocabulary.QUDTSchema;
+import fi.uef.envi.emrooz.vocabulary.QUDTUnit;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 import fi.uef.envi.emrooz.vocabulary.Time;
 
@@ -452,6 +453,8 @@ public class RDFEntityRepresenterTest {
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI datasetId,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI frequencyId,
+			double frequencyValue,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI instantId,
 			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime instantValue,
 			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
@@ -460,7 +463,9 @@ public class RDFEntityRepresenterTest {
 			type = QB.Observation;
 
 		DatasetObservation observationA = new DatasetObservation(id, type,
-				new Dataset(datasetId), new Instant(instantId, instantValue));
+				new Dataset(datasetId, new QuantityValue(frequencyId,
+						frequencyValue, new Unit(QUDTUnit.Hertz))),
+				new Instant(instantId, instantValue));
 		Set<Statement> statementsA = representer
 				.createRepresentation(observationA);
 		DatasetObservation observationE = representer
@@ -482,6 +487,8 @@ public class RDFEntityRepresenterTest {
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI datasetId,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI frequencyId,
+			double frequencyValue,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI instantId,
 			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime instantValue,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI componentPropertyId,
@@ -494,7 +501,9 @@ public class RDFEntityRepresenterTest {
 			type = QB.Observation;
 
 		DatasetObservation observationA = new DatasetObservation(id, type,
-				new Dataset(datasetId), new Instant(instantId, instantValue));
+				new Dataset(datasetId, new QuantityValue(frequencyId,
+						frequencyValue, new Unit(QUDTUnit.Hertz))),
+				new Instant(instantId, instantValue));
 
 		observationA.addComponent(new MeasureProperty(componentPropertyId),
 				new ComponentPropertyValueEntity(new QuantityValue(
@@ -521,6 +530,8 @@ public class RDFEntityRepresenterTest {
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI datasetId,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI frequencyId,
+			double frequencyValue,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI instantId,
 			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime instantValue,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI componentProperty1Id,
@@ -533,7 +544,9 @@ public class RDFEntityRepresenterTest {
 			type = QB.Observation;
 
 		DatasetObservation observationA = new DatasetObservation(id, type,
-				new Dataset(datasetId), new Instant(instantId, instantValue));
+				new Dataset(datasetId, new QuantityValue(frequencyId,
+						frequencyValue, new Unit(QUDTUnit.Hertz))),
+				new Instant(instantId, instantValue));
 
 		observationA.addComponent(new MeasureProperty(componentProperty1Id),
 				new ComponentPropertyValueDouble(componentPropertyValue1));
@@ -560,12 +573,15 @@ public class RDFEntityRepresenterTest {
 	public void testDataset1(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI frequencyId,
+			double frequencyValue,
 			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
 			String assertType) {
 		if (type == null)
 			type = QB.DataSet;
 
-		Dataset datasetA = new Dataset(id, type);
+		Dataset datasetA = new Dataset(id, type, new QuantityValue(frequencyId,
+				frequencyValue, new Unit(QUDTUnit.Hertz)));
 
 		Set<Statement> statementsA = representer.createRepresentation(datasetA);
 		Dataset datasetE = representer.createDataset(statementsE);
@@ -585,6 +601,8 @@ public class RDFEntityRepresenterTest {
 	public void testDataset2(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI frequencyId,
+			double frequencyValue,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI structureId,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI specification1Id,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI property1Id,
@@ -602,7 +620,8 @@ public class RDFEntityRepresenterTest {
 				new DimensionProperty(property1Id), property1Required,
 				property1Order));
 
-		Dataset datasetA = new Dataset(id, type, structure);
+		Dataset datasetA = new Dataset(id, type, new QuantityValue(frequencyId,
+				frequencyValue, new Unit(QUDTUnit.Hertz)), structure);
 
 		Set<Statement> statementsA = representer.createRepresentation(datasetA);
 		Dataset datasetE = representer.createDataset(statementsE);

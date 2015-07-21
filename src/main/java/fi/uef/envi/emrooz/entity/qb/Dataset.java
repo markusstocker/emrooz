@@ -5,11 +5,18 @@
 
 package fi.uef.envi.emrooz.entity.qb;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.entity.AbstractEntity;
 import fi.uef.envi.emrooz.entity.EntityVisitor;
+import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 
+import static fi.uef.envi.emrooz.vocabulary.SDMXMetadata.freq;
 import static fi.uef.envi.emrooz.vocabulary.QB.DataSet;
 
 /**
@@ -32,24 +39,52 @@ import static fi.uef.envi.emrooz.vocabulary.QB.DataSet;
 public class Dataset extends AbstractEntity {
 
 	private DataStructureDefinition structure;
+	private Map<ComponentProperty, ComponentPropertyValue> components;
 
-	public Dataset(URI id) {
-		this(id, DataSet);
+	public Dataset(URI id, QuantityValue frequency) {
+		this(id, DataSet, frequency);
 	}
 
-	public Dataset(URI id, DataStructureDefinition structure) {
-		this(id, DataSet, structure);
-	}
-	
-	public Dataset(URI id, URI type) {
-		this(id, type, null);
+	public Dataset(URI id, QuantityValue frequency,
+			DataStructureDefinition structure) {
+		this(id, DataSet, frequency, structure);
 	}
 
-	public Dataset(URI id, URI type, DataStructureDefinition structure) {
+	public Dataset(URI id, URI type, QuantityValue frequency) {
+		this(id, type, frequency, null);
+	}
+
+	public Dataset(URI id, URI type, QuantityValue frequency,
+			DataStructureDefinition structure) {
 		super(id, type);
+
+		this.components = new HashMap<ComponentProperty, ComponentPropertyValue>();
 
 		addType(DataSet);
 		setStructure(structure);
+		addComponent(new AttributeProperty(freq),
+				new ComponentPropertyValueEntity(frequency));
+	}
+
+	public void addComponent(ComponentProperty property,
+			ComponentPropertyValue value) {
+		if (property == null || value == null)
+			return;
+
+		components.put(property, value);
+	}
+
+	public Set<ComponentProperty> getComponentProperties() {
+		return Collections.unmodifiableSet(components.keySet());
+	}
+
+	public Map<ComponentProperty, ComponentPropertyValue> getComponents() {
+		return Collections.unmodifiableMap(components);
+	}
+
+	public ComponentPropertyValue getComponentPropertyValue(
+			ComponentProperty property) {
+		return components.get(property);
 	}
 
 	public void setStructure(DataStructureDefinition structure) {
@@ -75,6 +110,7 @@ public class Dataset extends AbstractEntity {
 		result = prime * result + types.hashCode();
 		result = prime * result
 				+ ((structure == null) ? 0 : structure.hashCode());
+		result = prime * result + components.hashCode();
 
 		return result;
 	}
@@ -111,13 +147,17 @@ public class Dataset extends AbstractEntity {
 		} else if (!structure.equals(other.structure))
 			return false;
 
+		if (!components.equals(other.components))
+			return false;
+
 		return true;
 	}
 
 	@Override
 	public String toString() {
 		return "Dataset [id = " + id + "; type = " + type + "; types = "
-				+ types + "; structure = " + structure + "]";
+				+ types + "; structure = " + structure + "; components = "
+				+ components + "]";
 	}
 
 }

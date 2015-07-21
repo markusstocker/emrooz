@@ -36,6 +36,7 @@ import org.openrdf.rio.RDFParseException;
 
 import fi.uef.envi.emrooz.api.KnowledgeStore;
 import fi.uef.envi.emrooz.api.QueryHandler;
+import fi.uef.envi.emrooz.entity.qb.Dataset;
 import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.qudt.Unit;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
@@ -44,6 +45,7 @@ import fi.uef.envi.emrooz.entity.ssn.MeasurementCapability;
 import fi.uef.envi.emrooz.entity.ssn.Property;
 import fi.uef.envi.emrooz.entity.ssn.Sensor;
 import fi.uef.envi.emrooz.rdf.RDFEntityRepresenter;
+import fi.uef.envi.emrooz.vocabulary.QB;
 import fi.uef.envi.emrooz.vocabulary.QUDTSchema;
 import fi.uef.envi.emrooz.vocabulary.QUDTUnit;
 import fi.uef.envi.emrooz.vocabulary.SSN;
@@ -70,6 +72,7 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 	private Repository repository;
 	private RepositoryConnection connection;
 	private Map<URI, Sensor> sensors;
+	private Map<URI, Dataset> datasets;
 	private ValueFactory vf;
 	private RDFEntityRepresenter representer;
 
@@ -94,6 +97,7 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 		this.representer = new RDFEntityRepresenter();
 
 		loadSensors();
+		loadDatasets();
 	}
 
 	@Override
@@ -119,9 +123,37 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 	}
 
 	@Override
+	public void addDataset(Dataset dataset) {
+		URI datasetId = dataset.getId();
+
+		try {
+			if (!connection.hasStatement(datasetId, RDF.TYPE, QB.DataSet,
+					false, new Resource[] {})) {
+				load(representer.createRepresentation(dataset));
+				return;
+			}
+		} catch (RepositoryException e) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to check if dataset exists in knowledge store [dataset = "
+						+ dataset + "]");
+		}
+
+		if (log.isLoggable(Level.INFO)) {
+			log.info("Dataset already exists in knowledge store [dataset = "
+					+ dataset + "]");
+		}
+	}
+
+	@Override
 	public Set<Sensor> getSensors() {
 		return Collections
 				.unmodifiableSet(new HashSet<Sensor>(sensors.values()));
+	}
+
+	@Override
+	public Set<Dataset> getDatasets() {
+		return Collections.unmodifiableSet(new HashSet<Dataset>(datasets
+				.values()));
 	}
 
 	@Override
@@ -231,7 +263,7 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 					// The sensor exists, check the property
 					property = sensor.getObservedProperty(propertyId);
 				}
-				
+
 				if (property == null) {
 					property = new Property(propertyId);
 					sensor.addObservedProperty(property);
@@ -272,6 +304,105 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 
 		if (log.isLoggable(Level.INFO))
 			log.info("Loaded sensors (" + sensors.size() + ") {" + sensors
+					+ "}");
+	}
+
+	private void loadDatasets() {
+		datasets = new HashMap<URI, Dataset>();
+
+		String sparql = "prefix ssn: <"
+				+ SSN.ns
+				+ "#>"
+				+ "prefix qudt: <"
+				+ QUDTSchema.ns
+				+ "#>"
+				+ "prefix rdf: <"
+				+ RDF.NAMESPACE
+				+ ">"
+				+ "prefix unit: <"
+				+ QUDTUnit.ns
+				+ "#>"
+				+ "select ?sensorId ?propertyId ?featureId ?measCapabilityId ?measPropertyId ?valueId ?value "
+				+ "where {"
+				+ "?sensorId rdf:type ssn:Sensor ."
+				+ "?sensorId ssn:observes ?propertyId ."
+				+ "?propertyId rdf:type ssn:Property ."
+				+ "?propertyId ssn:isPropertyOf ?featureId ."
+				+ "?featureId rdf:type ssn:FeatureOfInterest ."
+				+ "optional {"
+				+ "?sensorId ssn:hasMeasurementCapability ?measCapabilityId ."
+				+ "?measCapabilityId rdf:type ssn:MeasurementCapability ."
+				+ "?measCapabilityId ssn:hasMeasurementProperty ?measPropertyId ."
+				+ "?measPropertyId rdf:type ssn:Frequency ."
+				+ "?measPropertyId ssn:hasValue ?valueId ."
+				+ "?valueId rdf:type qudt:QuantityValue ."
+				+ "?valueId qudt:unit unit:Hertz ."
+				+ "?valueId qudt:numericValue ?value ." + "} }";
+
+		try {
+			TupleQuery query = connection.prepareTupleQuery(
+					QueryLanguage.SPARQL, sparql);
+			TupleQueryResult rs = query.evaluate();
+
+			while (rs.hasNext()) {
+				BindingSet bs = rs.next();
+
+				URI sensorId = _uri(bs.getValue("sensorId"));
+				URI propertyId = _uri(bs.getValue("propertyId"));
+				URI featureId = _uri(bs.getValue("featureId"));
+
+				Sensor sensor = sensors.get(sensorId);
+				Property property = null;
+
+				if (sensor == null) {
+					// This sensor doesn't exist, create it
+					sensor = new Sensor(sensorId);
+					sensors.put(sensorId, sensor);
+				} else {
+					// The sensor exists, check the property
+					property = sensor.getObservedProperty(propertyId);
+				}
+
+				if (property == null) {
+					property = new Property(propertyId);
+					sensor.addObservedProperty(property);
+				}
+
+				property.addPropertyOf(new FeatureOfInterest(featureId));
+
+				if (bs.getValue("measCapabilityId") != null) {
+					// Measurement capability is set optional. For applications
+					// the frequency must be set, otherwise Cassandra doesn't
+					// know when to rollover. However, for testing purposes it
+					// is convenient not to have to specify the measurement
+					// capability for each sensor.
+					URI measCapabilityId = _uri(bs.getValue("measCapabilityId"));
+					URI measPropertyId = _uri(bs.getValue("measPropertyId"));
+					URI valueId = _uri(bs.getValue("valueId"));
+					Double value = Double.valueOf(bs.getValue("value")
+							.stringValue());
+
+					MeasurementCapability measCapability = new MeasurementCapability(
+							measCapabilityId);
+					Frequency measProperty = new Frequency(measPropertyId);
+					QuantityValue quantityValue = new QuantityValue(valueId);
+
+					sensor.addMeasurementCapability(measCapability);
+					measCapability.addMeasurementProperty(measProperty);
+					measProperty.setQuantityValue(quantityValue);
+					quantityValue.setNumericValue(value);
+					quantityValue.setUnit(new Unit(QUDTUnit.Hertz));
+				}
+			}
+
+		} catch (RepositoryException | MalformedQueryException
+				| QueryEvaluationException e) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe(e.getMessage());
+		}
+
+		if (log.isLoggable(Level.INFO))
+			log.info("Loaded datasets (" + datasets.size() + ") {" + datasets
 					+ "}");
 	}
 

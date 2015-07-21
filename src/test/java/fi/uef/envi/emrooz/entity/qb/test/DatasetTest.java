@@ -23,8 +23,11 @@ import fi.uef.envi.emrooz.entity.qb.ComponentSpecification;
 import fi.uef.envi.emrooz.entity.qb.DataStructureDefinition;
 import fi.uef.envi.emrooz.entity.qb.Dataset;
 import fi.uef.envi.emrooz.entity.qb.DimensionProperty;
+import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
+import fi.uef.envi.emrooz.entity.qudt.Unit;
 import fi.uef.envi.emrooz.test.ParamsConverterTest;
 import fi.uef.envi.emrooz.vocabulary.QB;
+import fi.uef.envi.emrooz.vocabulary.QUDTUnit;
 
 /**
  * <p>
@@ -51,11 +54,15 @@ public class DatasetTest {
 	public void testDataset(
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type1,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI frequency1Id,
+			double frequency1Value,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI structureId1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI componentId1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI propertyId1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id2,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type2,
+			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI frequency2Id,
+			double frequency2Value,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI structureId2,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI componentId2,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI propertyId2,
@@ -65,8 +72,10 @@ public class DatasetTest {
 		if (type2 == null)
 			type2 = QB.DataSet;
 
-		Dataset d1 = new Dataset(id1, type1);
-		Dataset d2 = new Dataset(id2, type2);
+		Dataset d1 = new Dataset(id1, type1, new QuantityValue(frequency1Id,
+				frequency1Value, new Unit(QUDTUnit.Hertz)));
+		Dataset d2 = new Dataset(id2, type2, new QuantityValue(frequency2Id,
+				frequency2Value, new Unit(QUDTUnit.Hertz)));
 
 		DataStructureDefinition s1 = new DataStructureDefinition(structureId1,
 				new ComponentSpecification(componentId1, new DimensionProperty(

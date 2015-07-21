@@ -83,5 +83,8 @@ public class QB extends AbstractVocabulary {
 	
 	/** http://purl.org/linked-data/cube#order */
 	public static final URI order = _("order");
+	
+	/** http://purl.org/linked-data/cube#componentAttachment */
+	public static final URI componentAttachment = _("componentAttachment");
 
 }

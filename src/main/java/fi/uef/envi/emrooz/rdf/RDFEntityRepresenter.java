@@ -18,6 +18,7 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.openrdf.model.Literal;
+import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
@@ -62,6 +63,7 @@ import fi.uef.envi.emrooz.vocabulary.DUL;
 import fi.uef.envi.emrooz.vocabulary.QB;
 import fi.uef.envi.emrooz.vocabulary.QUDTSchema;
 import fi.uef.envi.emrooz.vocabulary.SDMXDimension;
+import fi.uef.envi.emrooz.vocabulary.SDMXMetadata;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 import fi.uef.envi.emrooz.vocabulary.Time;
 
@@ -86,7 +88,7 @@ public class RDFEntityRepresenter {
 
 	private Set<Statement> statements;
 	private URI componentPropertyId;
-	private URI datasetObservationId;
+	private URI id;
 	private final EntityVisitor entityVisitor;
 	private final ObservationValueVisitor observationValueVisitor;
 	private final MeasurementPropertyVisitor measurementPropertyVisitor;
@@ -132,14 +134,18 @@ public class RDFEntityRepresenter {
 		Map<ComponentProperty, ComponentPropertyValue> components = observation
 				.getComponents();
 
-		datasetObservationId = observation.getId();
+		URI id = observation.getId();
 		URI datasetId = dataset.getId();
 
 		for (URI type : types)
-			ret.add(_statement(datasetObservationId, RDF.TYPE, type));
+			ret.add(_statement(id, RDF.TYPE, type));
 
-		ret.add(_statement(datasetObservationId, QB.dataSet, datasetId));
+		ret.add(_statement(id, QB.dataSet, datasetId));
 		ret.addAll(createRepresentation(dataset));
+
+		// Assigned this hear, because createRepresentation(dataset) above will
+		// otherwise override this.id
+		this.id = id;
 
 		for (Map.Entry<ComponentProperty, ComponentPropertyValue> entry : components
 				.entrySet()) {
@@ -202,7 +208,7 @@ public class RDFEntityRepresenter {
 				statements, id, QB.Observation), dataset, temporalEntity);
 		ret.addTypes(_getTypes(statements, id));
 
-		Set<URI> componentPropertyIds = _getIds(statements,
+		Set<URI> componentPropertyIds = _getPredicateIds(statements, id,
 				QB.ComponentProperty);
 
 		for (URI componentPropertyId : componentPropertyIds) {
@@ -292,6 +298,26 @@ public class RDFEntityRepresenter {
 			ret.addAll(createRepresentation(structure));
 		}
 
+		Map<ComponentProperty, ComponentPropertyValue> components = dataset
+				.getComponents();
+
+		this.id = id;
+
+		for (Map.Entry<ComponentProperty, ComponentPropertyValue> entry : components
+				.entrySet()) {
+			ComponentProperty componentProperty = entry.getKey();
+			ComponentPropertyValue value = entry.getValue();
+
+			componentPropertyId = componentProperty.getId();
+
+			statements = new HashSet<Statement>();
+
+			value.accept(componentPropertyValueVisitor);
+
+			ret.addAll(statements);
+			ret.addAll(createRepresentation(componentProperty));
+		}
+
 		return Collections.unmodifiableSet(ret);
 	}
 
@@ -310,7 +336,17 @@ public class RDFEntityRepresenter {
 			return null;
 		}
 
-		Dataset ret = new Dataset(id, _getType(statements, id, QB.DataSet));
+		URI frequencyId = _getObjectId(statements, id, SDMXMetadata.freq);
+
+		if (frequencyId == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to extract frequency id attribute property for dataset [frequencyId = null; id = "
+						+ id + "; statements = " + statements + "]");
+			return null;
+		}
+
+		Dataset ret = new Dataset(id, _getType(statements, id, QB.DataSet),
+				createQuantityValue(_matchSubject(statements, frequencyId)));
 		ret.addTypes(_getTypes(statements, id));
 
 		URI structureId = _getObjectId(statements, id, QB.structure);
@@ -318,6 +354,52 @@ public class RDFEntityRepresenter {
 		if (structureId != null) {
 			ret.setStructure(createDataStructureDefinition(_matchSubject(
 					statements, structureId)));
+		}
+
+		// Get all possible other component properties attached to this dataset
+		// (in addition to the mandatory SDMXMetadata FREQ property)
+		Set<URI> componentPropertyIds = _getPredicateIds(statements, id,
+				QB.ComponentProperty);
+
+		for (URI componentPropertyId : componentPropertyIds) {
+			if (componentPropertyId.equals(SDMXMetadata.freq))
+				continue;
+
+			ComponentProperty property = createComponentProperty(_matchSubject(
+					statements, componentPropertyId));
+
+			Value object = _getObject(statements, id, componentPropertyId);
+
+			if (object instanceof URI) {
+				ret.addComponent(
+						property,
+						createComponentPropertyValueEntity(_matchSubject(
+								statements, (URI) object)));
+			} else if (object instanceof Literal) {
+				Literal literal = (Literal) object;
+				URI datatype = literal.getDatatype();
+
+				if (datatype.equals(XMLSchema.DOUBLE)) {
+					ret.addComponent(
+							property,
+							new ComponentPropertyValueDouble(literal
+									.doubleValue()));
+				} else if (datatype.equals(XMLSchema.STRING)) {
+					ret.addComponent(
+							property,
+							new ComponentPropertyValueString(literal
+									.stringValue()));
+				} else {
+					if (log.isLoggable(Level.WARNING))
+						log.warning("Failed to create primitive component property value; unrecognized datatype [datatype = "
+								+ datatype + "]");
+				}
+			} else {
+				throw new RuntimeException("Unsupported object type [object = "
+						+ object + "; id = " + id + "; componentPropertyId = "
+						+ componentPropertyId + "; statements = " + statements
+						+ "]");
+			}
 		}
 
 		return ret;
@@ -423,6 +505,11 @@ public class RDFEntityRepresenter {
 			ret.add(_statement(id, QB.order,
 					vf.createLiteral(order.toString(), XMLSchema.INT)));
 
+		URI attachment = component.getComponentAttachment();
+
+		if (attachment != null)
+			ret.add(_statement(id, QB.componentAttachment, attachment));
+
 		return Collections.unmodifiableSet(ret);
 	}
 
@@ -442,20 +529,34 @@ public class RDFEntityRepresenter {
 			return null;
 		}
 
-		URI componentPropertyId = _getObjectId(statements, id,
-				QB.componentProperty);
+		URI propertyId = _getObjectId(statements, id, QB.componentProperty);
 
-		if (componentPropertyId == null) {
+		if (propertyId == null) {
 			if (log.isLoggable(Level.SEVERE))
-				log.severe("Failed to extract component property id [componentPropertyId = null; id = "
+				log.severe("Failed to extract component property id [propertyId = null; id = "
 						+ id + "; statements = " + statements + "]");
 			return null;
 		}
 
+		System.out.println(propertyId + " " + statements);
+		System.out.println(_matchSubject(statements, propertyId));
+
+		ComponentProperty property = createComponentProperty(_matchSubject(
+				statements, propertyId));
+
+		if (property == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to create component property [property = null; propertyId = "
+						+ propertyId
+						+ "; id = "
+						+ id
+						+ "; statements = "
+						+ statements + "]");
+			return null;
+		}
+
 		ComponentSpecification ret = new ComponentSpecification(id, _getType(
-				statements, id, QB.ComponentSpecification),
-				createComponentProperty(_matchSubject(statements,
-						componentPropertyId)));
+				statements, id, QB.ComponentSpecification), property);
 		ret.addTypes(_getTypes(statements, id));
 
 		Value required = _getObject(statements, id, QB.componentRequired);
@@ -471,6 +572,12 @@ public class RDFEntityRepresenter {
 
 		if (order != null) {
 			ret.setOrder(Integer.valueOf(order.stringValue()));
+		}
+
+		URI attachment = _getObjectId(statements, id, QB.componentAttachment);
+
+		if (attachment != null) {
+			ret.setComponentAttachment(attachment);
 		}
 
 		return ret;
@@ -1341,6 +1448,32 @@ public class RDFEntityRepresenter {
 		return ret;
 	}
 
+	private static Set<URI> _getPredicateIds(Set<Statement> statements,
+			URI subject, URI type) {
+		if (subject == null)
+			return Collections.emptySet();
+
+		Set<URI> ret = new HashSet<URI>();
+
+		for (Statement statement : statements) {
+			Resource s = statement.getSubject();
+
+			if (!s.equals(subject))
+				continue;
+
+			URI p = statement.getPredicate();
+
+			if (type != null) {
+				if (_getTypes(statements, p).contains(type))
+					ret.add(p);
+			} else {
+				ret.add(p);
+			}
+		}
+
+		return ret;
+	}
+
 	private static URI _getObjectId(Set<Statement> statements, URI subject,
 			URI predicate) {
 		Value ret = _getObject(statements, subject, predicate);
@@ -1538,17 +1671,16 @@ public class RDFEntityRepresenter {
 
 		@Override
 		public void visit(ComponentPropertyValueEntity value) {
-			if (datasetObservationId == null || componentPropertyId == null)
-				throw new NullPointerException("[datasetObservationId = "
-						+ datasetObservationId + "; componentPropertyId = "
-						+ componentPropertyId + "]");
+			if (id == null || componentPropertyId == null)
+				throw new NullPointerException("[id = " + id
+						+ "; componentPropertyId = " + componentPropertyId
+						+ "]");
 
 			Entity entity = value.getValue();
 
 			Set<Statement> ret = new HashSet<Statement>();
 
-			ret.add(_statement(datasetObservationId, componentPropertyId,
-					entity.getId()));
+			ret.add(_statement(id, componentPropertyId, entity.getId()));
 			ret.addAll(createRepresentation(entity));
 
 			statements.addAll(ret);
@@ -1556,26 +1688,25 @@ public class RDFEntityRepresenter {
 
 		@Override
 		public void visit(ComponentPropertyValueString value) {
-			if (datasetObservationId == null || componentPropertyId == null)
-				throw new NullPointerException("[datasetObservationId = "
-						+ datasetObservationId + "; componentPropertyId = "
-						+ componentPropertyId + "]");
+			if (id == null || componentPropertyId == null)
+				throw new NullPointerException("[id = " + id
+						+ "; componentPropertyId = " + componentPropertyId
+						+ "]");
 
-			statements.add(_statement(datasetObservationId,
-					componentPropertyId,
+			statements.add(_statement(id, componentPropertyId,
 					vf.createLiteral(value.getValue(), XMLSchema.STRING)));
 		}
 
 		@Override
 		public void visit(ComponentPropertyValueDouble value) {
-			if (datasetObservationId == null || componentPropertyId == null)
-				throw new NullPointerException("[datasetObservationId = "
-						+ datasetObservationId + "; componentPropertyId = "
-						+ componentPropertyId + "]");
+			if (id == null || componentPropertyId == null)
+				throw new NullPointerException("[id = " + id
+						+ "; componentPropertyId = " + componentPropertyId
+						+ "]");
 
-			statements.add(_statement(datasetObservationId,
-					componentPropertyId, vf.createLiteral(value.getValue()
-							.toString(), XMLSchema.DOUBLE)));
+			statements.add(_statement(id, componentPropertyId, vf
+					.createLiteral(value.getValue().toString(),
+							XMLSchema.DOUBLE)));
 		}
 	}
 

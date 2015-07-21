@@ -34,6 +34,7 @@ public class ComponentSpecification extends AbstractEntity {
 	private ComponentProperty property;
 	private Boolean required;
 	private Integer order;
+	private URI componentAttachment;
 
 	public ComponentSpecification(URI id, ComponentProperty property) {
 		this(id, ComponentSpecification, property);
@@ -101,6 +102,14 @@ public class ComponentSpecification extends AbstractEntity {
 	public int getOrder() {
 		return order;
 	}
+	
+	public void setComponentAttachment(URI attachment) {
+		this.componentAttachment = attachment;
+	}
+	
+	public URI getComponentAttachment() {
+		return componentAttachment;
+	}
 
 	@Override
 	public void accept(EntityVisitor visitor) {
@@ -120,6 +129,10 @@ public class ComponentSpecification extends AbstractEntity {
 		result = prime * result
 				+ ((required == null) ? 0 : required.hashCode());
 		result = prime * result + ((order == null) ? 0 : order.hashCode());
+		result = prime
+				* result
+				+ ((componentAttachment == null) ? 0 : componentAttachment
+						.hashCode());
 
 		return result;
 	}
@@ -168,6 +181,12 @@ public class ComponentSpecification extends AbstractEntity {
 		} else if (!order.equals(other.order))
 			return false;
 
+		if (componentAttachment == null) {
+			if (other.componentAttachment != null)
+				return false;
+		} else if (!componentAttachment.equals(other.componentAttachment))
+			return false;
+
 		return true;
 	}
 
@@ -175,7 +194,8 @@ public class ComponentSpecification extends AbstractEntity {
 	public String toString() {
 		return "ComponentSpecification [id = " + id + "; type = " + type
 				+ "; types = " + types + "; property = " + property
-				+ "; required = " + required + "; order = " + order + "]";
+				+ "; required = " + required + "; order = " + order
+				+ "; componentAttachment = " + componentAttachment + "]";
 	}
 
 }
