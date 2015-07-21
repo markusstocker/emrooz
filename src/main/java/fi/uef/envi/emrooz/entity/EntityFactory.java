@@ -14,6 +14,13 @@ import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 
+import fi.uef.envi.emrooz.entity.qb.AttributeProperty;
+import fi.uef.envi.emrooz.entity.qb.ComponentProperty;
+import fi.uef.envi.emrooz.entity.qb.ComponentSpecification;
+import fi.uef.envi.emrooz.entity.qb.DataStructureDefinition;
+import fi.uef.envi.emrooz.entity.qb.Dataset;
+import fi.uef.envi.emrooz.entity.qb.DimensionProperty;
+import fi.uef.envi.emrooz.entity.qb.MeasureProperty;
 import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.qudt.Unit;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
@@ -60,6 +67,56 @@ public class EntityFactory {
 			throw new NullPointerException("[ns = null]");
 
 		this.ns = ns;
+	}
+
+	public Dataset createDataset(String datasetFragment, QuantityValue frequency) {
+		return createDataset(vf.createURI(ns + datasetFragment), frequency);
+	}
+
+	public Dataset createDataset(URI dataset, QuantityValue frequency) {
+		return new Dataset(dataset, frequency);
+	}
+
+	public ComponentSpecification createComponentSpecification(
+			ComponentProperty property) {
+		return createComponentSpecification(randomUUID(), property);
+	}
+
+	public ComponentSpecification createComponentSpecification(URI id,
+			ComponentProperty property) {
+		return new ComponentSpecification(id, property);
+	}
+
+	public DimensionProperty createDimensionProperty(String fragment) {
+		return createDimensionProperty(vf.createURI(ns + fragment));
+	}
+
+	public DimensionProperty createDimensionProperty(URI id) {
+		return new DimensionProperty(id);
+	}
+
+	public MeasureProperty createMeasureProperty(String fragment) {
+		return createMeasureProperty(vf.createURI(ns + fragment));
+	}
+
+	public MeasureProperty createMeasureProperty(URI id) {
+		return new MeasureProperty(id);
+	}
+
+	public AttributeProperty createAttributeProperty(String fragment) {
+		return createAttributeProperty(vf.createURI(ns + fragment));
+	}
+
+	public AttributeProperty createAttributeProperty(URI id) {
+		return new AttributeProperty(id);
+	}
+	
+	public DataStructureDefinition createDataStructureDefinition(String fragment) {
+		return createDataStructureDefinition(vf.createURI(ns + fragment));
+	}
+	
+	public DataStructureDefinition createDataStructureDefinition(URI id) {
+		return new DataStructureDefinition(id);
 	}
 
 	public Sensor createSensor(String sensorFragment, String propertyFragment,

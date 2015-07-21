@@ -102,8 +102,12 @@ public class DataStructureDefinition extends AbstractEntity {
 
 		if (components.containsKey(id)) {
 			if (log.isLoggable(Level.INFO))
-				log.info("Component already specified in data structure definition [component = "
-						+ component + "; components = " + components + "]");
+				log.info("Component already specified in data structure definition [id = "
+						+ id
+						+ "; component = "
+						+ component
+						+ "; components = "
+						+ components + "]");
 			return;
 		}
 

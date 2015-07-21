@@ -298,14 +298,14 @@ public class RDFEntityRepresenter {
 			ret.addAll(createRepresentation(structure));
 		}
 
-		Map<ComponentProperty, ComponentPropertyValue> components = dataset
+		Map<AttributeProperty, ComponentPropertyValue> components = dataset
 				.getComponents();
 
 		this.id = id;
 
-		for (Map.Entry<ComponentProperty, ComponentPropertyValue> entry : components
+		for (Map.Entry<AttributeProperty, ComponentPropertyValue> entry : components
 				.entrySet()) {
-			ComponentProperty componentProperty = entry.getKey();
+			AttributeProperty componentProperty = entry.getKey();
 			ComponentPropertyValue value = entry.getValue();
 
 			componentPropertyId = componentProperty.getId();
@@ -365,7 +365,7 @@ public class RDFEntityRepresenter {
 			if (componentPropertyId.equals(SDMXMetadata.freq))
 				continue;
 
-			ComponentProperty property = createComponentProperty(_matchSubject(
+			AttributeProperty property = createAttributeProperty(_matchSubject(
 					statements, componentPropertyId));
 
 			Value object = _getObject(statements, id, componentPropertyId);

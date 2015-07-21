@@ -15,7 +15,7 @@ import org.openrdf.model.URI;
 import fi.uef.envi.emrooz.entity.AbstractEntity;
 import fi.uef.envi.emrooz.entity.EntityVisitor;
 import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
-
+import fi.uef.envi.emrooz.vocabulary.EV;
 import static fi.uef.envi.emrooz.vocabulary.SDMXMetadata.freq;
 import static fi.uef.envi.emrooz.vocabulary.QB.DataSet;
 
@@ -39,7 +39,7 @@ import static fi.uef.envi.emrooz.vocabulary.QB.DataSet;
 public class Dataset extends AbstractEntity {
 
 	private DataStructureDefinition structure;
-	private Map<ComponentProperty, ComponentPropertyValue> components;
+	private Map<AttributeProperty, ComponentPropertyValue> components;
 
 	public Dataset(URI id, QuantityValue frequency) {
 		this(id, DataSet, frequency);
@@ -51,14 +51,15 @@ public class Dataset extends AbstractEntity {
 	}
 
 	public Dataset(URI id, URI type, QuantityValue frequency) {
-		this(id, type, frequency, null);
+		this(id, type, frequency, new DataStructureDefinition(
+				EV.defaultDataStructureDefinition));
 	}
 
 	public Dataset(URI id, URI type, QuantityValue frequency,
 			DataStructureDefinition structure) {
 		super(id, type);
 
-		this.components = new HashMap<ComponentProperty, ComponentPropertyValue>();
+		this.components = new HashMap<AttributeProperty, ComponentPropertyValue>();
 
 		addType(DataSet);
 		setStructure(structure);
@@ -66,7 +67,7 @@ public class Dataset extends AbstractEntity {
 				new ComponentPropertyValueEntity(frequency));
 	}
 
-	public void addComponent(ComponentProperty property,
+	public void addComponent(AttributeProperty property,
 			ComponentPropertyValue value) {
 		if (property == null || value == null)
 			return;
@@ -74,11 +75,11 @@ public class Dataset extends AbstractEntity {
 		components.put(property, value);
 	}
 
-	public Set<ComponentProperty> getComponentProperties() {
+	public Set<AttributeProperty> getComponentProperties() {
 		return Collections.unmodifiableSet(components.keySet());
 	}
 
-	public Map<ComponentProperty, ComponentPropertyValue> getComponents() {
+	public Map<AttributeProperty, ComponentPropertyValue> getComponents() {
 		return Collections.unmodifiableMap(components);
 	}
 

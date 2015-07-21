@@ -38,5 +38,8 @@ public class EV extends AbstractVocabulary {
 	
 	/** http://envi.uef.fi/emrooz#timePeriodComponentSpecification */
 	public static final URI timePeriodComponentSpecification = _("timePeriodComponentSpecification");
+	
+	/** http://envi.uef.fi/emrooz#defaultDataStructureDefinition */
+	public static final URI defaultDataStructureDefinition = _("defaultDataStructureDefinition");
 
 }

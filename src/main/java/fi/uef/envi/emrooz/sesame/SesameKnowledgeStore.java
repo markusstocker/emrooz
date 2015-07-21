@@ -36,7 +36,13 @@ import org.openrdf.rio.RDFParseException;
 
 import fi.uef.envi.emrooz.api.KnowledgeStore;
 import fi.uef.envi.emrooz.api.QueryHandler;
+import fi.uef.envi.emrooz.entity.qb.AttributeProperty;
+import fi.uef.envi.emrooz.entity.qb.ComponentProperty;
+import fi.uef.envi.emrooz.entity.qb.ComponentSpecification;
+import fi.uef.envi.emrooz.entity.qb.DataStructureDefinition;
 import fi.uef.envi.emrooz.entity.qb.Dataset;
+import fi.uef.envi.emrooz.entity.qb.DimensionProperty;
+import fi.uef.envi.emrooz.entity.qb.MeasureProperty;
 import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.qudt.Unit;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
@@ -45,9 +51,11 @@ import fi.uef.envi.emrooz.entity.ssn.MeasurementCapability;
 import fi.uef.envi.emrooz.entity.ssn.Property;
 import fi.uef.envi.emrooz.entity.ssn.Sensor;
 import fi.uef.envi.emrooz.rdf.RDFEntityRepresenter;
+import fi.uef.envi.emrooz.vocabulary.EV;
 import fi.uef.envi.emrooz.vocabulary.QB;
 import fi.uef.envi.emrooz.vocabulary.QUDTSchema;
 import fi.uef.envi.emrooz.vocabulary.QUDTUnit;
+import fi.uef.envi.emrooz.vocabulary.SDMXMetadata;
 import fi.uef.envi.emrooz.vocabulary.SSN;
 
 /**
@@ -191,6 +199,7 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 		}
 
 		loadSensors();
+		loadDatasets();
 	}
 
 	public void load(File file, String baseURI) {
@@ -206,6 +215,7 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 		}
 
 		loadSensors();
+		loadDatasets();
 	}
 
 	private void loadSensors() {
@@ -310,8 +320,11 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 	private void loadDatasets() {
 		datasets = new HashMap<URI, Dataset>();
 
-		String sparql = "prefix ssn: <"
-				+ SSN.ns
+		String sparql = "prefix qb: <"
+				+ QB.ns
+				+ "#>"
+				+ "prefix sdmx-metadata: <"
+				+ SDMXMetadata.ns
 				+ "#>"
 				+ "prefix qudt: <"
 				+ QUDTSchema.ns
@@ -322,22 +335,21 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 				+ "prefix unit: <"
 				+ QUDTUnit.ns
 				+ "#>"
-				+ "select ?sensorId ?propertyId ?featureId ?measCapabilityId ?measPropertyId ?valueId ?value "
-				+ "where {"
-				+ "?sensorId rdf:type ssn:Sensor ."
-				+ "?sensorId ssn:observes ?propertyId ."
-				+ "?propertyId rdf:type ssn:Property ."
-				+ "?propertyId ssn:isPropertyOf ?featureId ."
-				+ "?featureId rdf:type ssn:FeatureOfInterest ."
-				+ "optional {"
-				+ "?sensorId ssn:hasMeasurementCapability ?measCapabilityId ."
-				+ "?measCapabilityId rdf:type ssn:MeasurementCapability ."
-				+ "?measCapabilityId ssn:hasMeasurementProperty ?measPropertyId ."
-				+ "?measPropertyId rdf:type ssn:Frequency ."
-				+ "?measPropertyId ssn:hasValue ?valueId ."
-				+ "?valueId rdf:type qudt:QuantityValue ."
-				+ "?valueId qudt:unit unit:Hertz ."
-				+ "?valueId qudt:numericValue ?value ." + "} }";
+				+ "select ?datasetId ?frequencyId ?frequencyValue ?structureId ?componentId ?propertyId ?propertyType ?required ?order "
+				+ "where {" + "?datasetId rdf:type qb:DataSet ."
+				+ "?datasetId sdmx-metadata:freq ?frequencyId ."
+				+ "sdmx-metadata:freq rdf:type qb:AttributeProperty ."
+				+ "?frequencyId rdf:type qudt:QuantityValue ."
+				+ "?frequencyId qudt:unit unit:Hertz ."
+				+ "?frequencyId qudt:numericValue ?frequencyValue ."
+				+ "optional {" + "?datasetId qb:structure ?structureId ."
+				+ "?structureId rdf:type qb:DataStructureDefinition ."
+				+ "?structureId qb:component ?componentId ."
+				+ "?componentId rdf:type qb:ComponentSpecification ."
+				+ "?componentId qb:componentProperty ?propertyId ."
+				+ "?propertyId rdf:type ?propertyType ." + "optional {"
+				+ "?componentId qb:componentRequired ?required ."
+				+ "?componentId qb:order ?order ." + "}" + "}" + "}";
 
 		try {
 			TupleQuery query = connection.prepareTupleQuery(
@@ -347,51 +359,66 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 			while (rs.hasNext()) {
 				BindingSet bs = rs.next();
 
-				URI sensorId = _uri(bs.getValue("sensorId"));
-				URI propertyId = _uri(bs.getValue("propertyId"));
-				URI featureId = _uri(bs.getValue("featureId"));
+				URI datasetId = _uri(bs.getValue("datasetId"));
 
-				Sensor sensor = sensors.get(sensorId);
-				Property property = null;
+				Dataset dataset = datasets.get(datasetId);
+				DataStructureDefinition structure = null;
 
-				if (sensor == null) {
-					// This sensor doesn't exist, create it
-					sensor = new Sensor(sensorId);
-					sensors.put(sensorId, sensor);
+				if (dataset == null) {
+					// This dataset doesn't exist, create it
+					URI frequencyId = _uri(bs.getValue("frequencyId"));
+					Double frequencyValue = Double.valueOf(bs.getValue(
+							"frequencyValue").stringValue());
+
+					dataset = new Dataset(datasetId, new QuantityValue(
+							frequencyId, frequencyValue, new Unit(
+									QUDTUnit.Hertz)));
+					datasets.put(datasetId, dataset);
 				} else {
-					// The sensor exists, check the property
-					property = sensor.getObservedProperty(propertyId);
+					structure = dataset.getStructure();
 				}
 
-				if (property == null) {
-					property = new Property(propertyId);
-					sensor.addObservedProperty(property);
-				}
+				if (bs.getValue("structureId") != null) {
+					URI structureId = _uri(bs.getValue("structureId"));
 
-				property.addPropertyOf(new FeatureOfInterest(featureId));
+					if (structure == null) {
+						structure = new DataStructureDefinition(structureId);
+					}
 
-				if (bs.getValue("measCapabilityId") != null) {
-					// Measurement capability is set optional. For applications
-					// the frequency must be set, otherwise Cassandra doesn't
-					// know when to rollover. However, for testing purposes it
-					// is convenient not to have to specify the measurement
-					// capability for each sensor.
-					URI measCapabilityId = _uri(bs.getValue("measCapabilityId"));
-					URI measPropertyId = _uri(bs.getValue("measPropertyId"));
-					URI valueId = _uri(bs.getValue("valueId"));
-					Double value = Double.valueOf(bs.getValue("value")
-							.stringValue());
+					URI componentId = _uri(bs.getValue("componentId"));
 
-					MeasurementCapability measCapability = new MeasurementCapability(
-							measCapabilityId);
-					Frequency measProperty = new Frequency(measPropertyId);
-					QuantityValue quantityValue = new QuantityValue(valueId);
+					// These are defined by default, so skip them
+					if (!(componentId.equals(EV.freqComponentSpecification) || componentId
+							.equals(EV.timePeriodComponentSpecification))) {
+						URI propertyId = _uri(bs.getValue("propertyId"));
+						URI propertyType = _uri(bs.getValue("propertyType"));
+						Value required = bs.getValue("required");
+						Value order = bs.getValue("order");
 
-					sensor.addMeasurementCapability(measCapability);
-					measCapability.addMeasurementProperty(measProperty);
-					measProperty.setQuantityValue(quantityValue);
-					quantityValue.setNumericValue(value);
-					quantityValue.setUnit(new Unit(QUDTUnit.Hertz));
+						ComponentProperty property = null;
+
+						if (propertyType.equals(QB.DimensionProperty))
+							property = new DimensionProperty(propertyId);
+						else if (propertyType.equals(QB.MeasureProperty))
+							property = new MeasureProperty(propertyId);
+						else if (propertyType.equals(QB.AttributeProperty))
+							property = new AttributeProperty(propertyId);
+
+						if (property != null) {
+							ComponentSpecification component = new ComponentSpecification(
+									componentId, property);
+
+							if (required != null)
+								component.setRequired(Boolean.valueOf(required
+										.stringValue()));
+
+							if (order != null)
+								component.setOrder(Integer.valueOf(order
+										.stringValue()));
+
+							structure.addComponent(component);
+						}
+					}
 				}
 			}
 
