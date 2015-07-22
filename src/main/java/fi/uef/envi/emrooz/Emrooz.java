@@ -51,7 +51,9 @@ import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
 import fi.uef.envi.emrooz.entity.ssn.SensorOutput;
 import fi.uef.envi.emrooz.entity.time.Instant;
 import fi.uef.envi.emrooz.entity.time.TemporalEntity;
+import fi.uef.envi.emrooz.query.DatasetObservationQuery;
 import fi.uef.envi.emrooz.query.EmptyResultSet;
+import fi.uef.envi.emrooz.query.ObservationQuery;
 import fi.uef.envi.emrooz.query.QueryFactory;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 import fi.uef.envi.emrooz.query.SensorObservationQueryRewriter;
@@ -372,12 +374,33 @@ public class Emrooz {
 	}
 
 	private ResultSet<BindingSet> evaluate(ParsedQuery query) {
-		return evaluate(query, QueryFactory.createSensorObservationQuery(query));
+		return evaluate(query, QueryFactory.createObservationQuery(query));
+	}
+
+	private ResultSet<BindingSet> evaluate(ParsedQuery original,
+			ObservationQuery query) {
+		if (query.isSensorObservationQuery())
+			return evaluate(original, (SensorObservationQuery) query);
+		if (query.isDatasetObservationQuery())
+			return evaluate(original, (DatasetObservationQuery) query);
+
+		if (log.isLoggable(Level.SEVERE))
+			log.severe("Failed to deterine observation query type, sensor or dataset [original = "
+					+ original + "; query = " + query + "]");
+
+		return new EmptyResultSet<BindingSet>();
 	}
 
 	private void evaluate(ParsedQuery query, TupleQueryResultHandler handler) {
-		evaluate(query, QueryFactory.createSensorObservationQuery(query),
-				handler);
+		evaluate(query, QueryFactory.createObservationQuery(query), handler);
+	}
+
+	private void evaluate(ParsedQuery original, ObservationQuery query,
+			TupleQueryResultHandler handler) {
+		if (query instanceof SensorObservationQuery)
+			evaluate(original, (SensorObservationQuery) query, handler);
+		else
+			evaluate(original, (DatasetObservationQuery) query, handler);
 	}
 
 	private ResultSet<BindingSet> evaluate(ParsedQuery original,
@@ -390,7 +413,27 @@ public class Emrooz {
 		return qh.evaluate();
 	}
 
+	private ResultSet<BindingSet> evaluate(ParsedQuery original,
+			DatasetObservationQuery query) {
+		QueryHandler<BindingSet> qh = createQueryHandler(original, query);
+
+		if (qh == null)
+			return new EmptyResultSet<BindingSet>();
+
+		return qh.evaluate();
+	}
+
 	private void evaluate(ParsedQuery original, SensorObservationQuery query,
+			TupleQueryResultHandler handler) {
+		QueryHandler<BindingSet> qh = createQueryHandler(original, query);
+
+		if (qh == null)
+			return;
+
+		qh.evaluate(handler);
+	}
+
+	private void evaluate(ParsedQuery original, DatasetObservationQuery query,
 			TupleQueryResultHandler handler) {
 		QueryHandler<BindingSet> qh = createQueryHandler(original, query);
 
@@ -476,8 +519,42 @@ public class Emrooz {
 			queriesMap.put(rewrittenQuery, frequency);
 		}
 
-		return ks.createQueryHandler(ds.createQueryHandler(queriesMap),
-				original);
+		return ks.createQueryHandler(
+				ds.createSensorObservationQueryHandler(queriesMap), original);
+	}
+
+	private QueryHandler<BindingSet> createQueryHandler(ParsedQuery original,
+			DatasetObservationQuery query) {
+		if (log.isLoggable(Level.INFO))
+			log.info("Query [query = " + query + "; original = "
+					+ original.getSourceString() + "]");
+
+		Map<DatasetObservationQuery, QuantityValue> queriesMap = new HashMap<DatasetObservationQuery, QuantityValue>();
+
+		URI datasetId = query.getDatasetId();
+
+		Dataset specification = getDatasetSpecification(datasetId);
+
+		if (specification == null) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("No specification found [datasetId = " + datasetId
+						+ "]");
+			return null;
+		}
+
+		QuantityValue frequency = getDatasetFrequency(specification);
+
+		if (frequency == null) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("No frequency specified [specification = "
+						+ specification + "]");
+			return null;
+		}
+
+		queriesMap.put(query, frequency);
+
+		return ks.createQueryHandler(
+				ds.createDatasetObservationQueryHandler(queriesMap), original);
 	}
 
 	private void sensors() {

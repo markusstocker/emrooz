@@ -18,12 +18,12 @@ import org.openrdf.query.algebra.helpers.StatementPatternCollector;
 import org.openrdf.query.parser.ParsedQuery;
 import org.openrdf.query.parser.sparql.SPARQLParser;
 
-import fi.uef.envi.emrooz.vocabulary.SSN;
+import fi.uef.envi.emrooz.vocabulary.QB;
 import fi.uef.envi.emrooz.vocabulary.Time;
 
 /**
  * <p>
- * Title: SensorObservationQuery
+ * Title: DatasetObservationQuery
  * </p>
  * <p>
  * Description:
@@ -38,11 +38,9 @@ import fi.uef.envi.emrooz.vocabulary.Time;
  * @author Markus Stocker
  */
 
-public class SensorObservationQuery extends ObservationQuery {
+public class DatasetObservationQuery extends ObservationQuery {
 
-	private URI sensorId;
-	private URI propertyId;
-	private URI featureId;
+	private URI datasetId;
 	private DateTime timeFrom;
 	private DateTime timeTo;
 
@@ -50,20 +48,12 @@ public class SensorObservationQuery extends ObservationQuery {
 	private static StatementPatternCollector collector = new StatementPatternCollector();
 	private static SparqlQueryModelVisitor visitor = new SparqlQueryModelVisitor();
 
-	private SensorObservationQuery() {
+	private DatasetObservationQuery() {
 
 	}
 
-	public URI getSensorId() {
-		return sensorId;
-	}
-
-	public URI getPropertyId() {
-		return propertyId;
-	}
-
-	public URI getFeatureOfInterestId() {
-		return featureId;
+	public URI getDatasetId() {
+		return datasetId;
 	}
 
 	public DateTime getTimeFrom() {
@@ -75,26 +65,14 @@ public class SensorObservationQuery extends ObservationQuery {
 	}
 
 	public boolean isFullySpecified() {
-		if (sensorId == null)
-			return false;
-		if (propertyId == null)
-			return false;
-		if (featureId == null)
+		if (datasetId == null)
 			return false;
 
 		return true;
 	}
 
-	private void setSensorId(URI id) {
-		this.sensorId = id;
-	}
-
-	private void setPropertyId(URI id) {
-		this.propertyId = id;
-	}
-
-	private void setFeatureOfInterestId(URI id) {
-		this.featureId = id;
+	private void setDatasetId(URI id) {
+		this.datasetId = id;
 	}
 
 	private void setTimeFrom(DateTime time) {
@@ -105,24 +83,22 @@ public class SensorObservationQuery extends ObservationQuery {
 		this.timeTo = time;
 	}
 
-	private void setIsSensorObservationQuery(boolean isSensorObservationQuery) {
-		this.isSensorObservationQuery = isSensorObservationQuery;
+	private void setIsDatsetObservationQuery(boolean isDatsetObservationQuery) {
+		this.isDatsetObservationQuery = isDatsetObservationQuery;
 	}
 
-	public static SensorObservationQuery create(URI sensorId, URI propertyId,
-			URI featureId, DateTime timeFrom, DateTime timeTo) {
-		SensorObservationQuery ret = new SensorObservationQuery();
+	public static DatasetObservationQuery create(URI datasetId,
+			DateTime timeFrom, DateTime timeTo) {
+		DatasetObservationQuery ret = new DatasetObservationQuery();
 
-		ret.setSensorId(sensorId);
-		ret.setPropertyId(propertyId);
-		ret.setFeatureOfInterestId(featureId);
+		ret.setDatasetId(datasetId);
 		ret.setTimeFrom(timeFrom);
 		ret.setTimeTo(timeTo);
 
 		return ret;
 	}
 
-	public static SensorObservationQuery create(String query) {
+	public static DatasetObservationQuery create(String query) {
 		try {
 			return create(sparqlParser.parseQuery(query, null));
 		} catch (MalformedQueryException e) {
@@ -130,19 +106,17 @@ public class SensorObservationQuery extends ObservationQuery {
 		}
 	}
 
-	public static SensorObservationQuery create(ParsedQuery query) {
+	public static DatasetObservationQuery create(ParsedQuery query) {
 		if (query == null)
 			throw new RuntimeException("[query = null]");
 
-		SensorObservationQuery ret = new SensorObservationQuery();
+		DatasetObservationQuery ret = new DatasetObservationQuery();
 
 		TupleExpr expr = query.getTupleExpr();
 
 		expr.visit(collector);
 
-		URI sensorId = null;
-		URI propertyId = null;
-		URI featureId = null;
+		URI datasetId = null;
 		Var inXSDDateTimeVar = null;
 
 		List<StatementPattern> patterns = collector.getStatementPatterns();
@@ -160,31 +134,15 @@ public class SensorObservationQuery extends ObservationQuery {
 
 			Var object = pattern.getObjectVar();
 
-			if (p.equals(SSN.observedBy)) {
+			if (p.equals(QB.dataSet)) {
 				Value o = object.getValue();
 				if (o == null) {
-					sensorId = null;
+					datasetId = null;
 				} else {
 					if (o instanceof URI)
-						sensorId = (URI) o;
+						datasetId = (URI) o;
 				}
-				ret.setIsSensorObservationQuery(true);
-			} else if (p.equals(SSN.observedProperty)) {
-				Value o = object.getValue();
-				if (o == null) {
-					propertyId = null;
-				} else {
-					if (o instanceof URI)
-						propertyId = (URI) o;
-				}
-			} else if (p.equals(SSN.featureOfInterest)) {
-				Value o = object.getValue();
-				if (o == null) {
-					featureId = null;
-				} else {
-					if (o instanceof URI)
-						featureId = (URI) o;
-				}
+				ret.setIsDatsetObservationQuery(true);
 			} else if (p.equals(Time.inXSDDateTime)) {
 				inXSDDateTimeVar = object;
 			}
@@ -215,9 +173,7 @@ public class SensorObservationQuery extends ObservationQuery {
 					"Cannot create query, failed to determine time interval [timeTo = null; queryString = "
 							+ query + "]");
 
-		ret.setSensorId(sensorId);
-		ret.setPropertyId(propertyId);
-		ret.setFeatureOfInterestId(featureId);
+		ret.setDatasetId(datasetId);
 		ret.setTimeFrom(timeFrom);
 		ret.setTimeTo(timeTo);
 
@@ -230,11 +186,7 @@ public class SensorObservationQuery extends ObservationQuery {
 		int result = 1;
 
 		result = prime * result
-				+ ((sensorId == null) ? 0 : sensorId.hashCode());
-		result = prime * result
-				+ ((propertyId == null) ? 0 : propertyId.hashCode());
-		result = prime * result
-				+ ((featureId == null) ? 0 : featureId.hashCode());
+				+ ((datasetId == null) ? 0 : datasetId.hashCode());
 		result = prime * result
 				+ ((timeFrom == null) ? 0 : timeFrom.hashCode());
 		result = prime * result + ((timeTo == null) ? 0 : timeTo.hashCode());
@@ -251,24 +203,12 @@ public class SensorObservationQuery extends ObservationQuery {
 		if (getClass() != obj.getClass())
 			return false;
 
-		SensorObservationQuery other = (SensorObservationQuery) obj;
+		DatasetObservationQuery other = (DatasetObservationQuery) obj;
 
-		if (sensorId == null) {
-			if (other.sensorId != null)
+		if (datasetId == null) {
+			if (other.datasetId != null)
 				return false;
-		} else if (!sensorId.equals(other.sensorId))
-			return false;
-
-		if (propertyId == null) {
-			if (other.propertyId != null)
-				return false;
-		} else if (!propertyId.equals(other.propertyId))
-			return false;
-
-		if (featureId == null) {
-			if (other.featureId != null)
-				return false;
-		} else if (!featureId.equals(other.featureId))
+		} else if (!datasetId.equals(other.datasetId))
 			return false;
 
 		if (timeFrom == null) {
@@ -288,8 +228,7 @@ public class SensorObservationQuery extends ObservationQuery {
 
 	@Override
 	public String toString() {
-		return "SensorObservationQuery [sensorId = " + sensorId
-				+ "; propertyId = " + propertyId + "; featureId = " + featureId
+		return "DatasetObservationQuery [datasetId = " + datasetId
 				+ "; timeFrom = " + timeFrom + "; timeTo = " + timeTo + "]";
 	}
 

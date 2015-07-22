@@ -31,6 +31,7 @@ import com.datastax.driver.core.TableMetadata;
 import fi.uef.envi.emrooz.api.DataStore;
 import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.ssn.Frequency;
+import fi.uef.envi.emrooz.query.DatasetObservationQuery;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 
 /**
@@ -57,7 +58,7 @@ public class CassandraDataStore implements DataStore {
 	private String host;
 
 	private CassandraAdder cassandraAdder;
-	private PreparedStatement sensorObservationSelectStatement;
+	private PreparedStatement selectStatement;
 
 	private static final Logger log = Logger.getLogger(CassandraDataStore.class
 			.getName());
@@ -77,7 +78,7 @@ public class CassandraDataStore implements DataStore {
 		initialize();
 		connect();
 
-		this.sensorObservationSelectStatement = session.prepare("SELECT "
+		this.selectStatement = session.prepare("SELECT "
 				+ DATA_TABLE_ATTRIBUTE_3 + " FROM " + KEYSPACE + "."
 				+ DATA_TABLE + " WHERE " + DATA_TABLE_ATTRIBUTE_1 + "=? AND "
 				+ DATA_TABLE_ATTRIBUTE_2 + ">=minTimeuuid(?) AND "
@@ -139,10 +140,17 @@ public class CassandraDataStore implements DataStore {
 	}
 
 	@Override
-	public CassandraQueryHandler createQueryHandler(
+	public CassandraSensorObservationQueryHandler createSensorObservationQueryHandler(
 			Map<SensorObservationQuery, Frequency> queries) {
-		return new CassandraQueryHandler(session,
-				sensorObservationSelectStatement, queries);
+		return new CassandraSensorObservationQueryHandler(session,
+				selectStatement, queries);
+	}
+
+	@Override
+	public CassandraDatasetObservationQueryHandler createDatasetObservationQueryHandler(
+			Map<DatasetObservationQuery, QuantityValue> queries) {
+		return new CassandraDatasetObservationQueryHandler(session,
+				selectStatement, queries);
 	}
 
 	@Override

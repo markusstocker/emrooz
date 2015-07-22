@@ -40,6 +40,7 @@ import fi.uef.envi.emrooz.api.QueryHandler;
 import fi.uef.envi.emrooz.api.ResultSet;
 import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.ssn.Frequency;
+import fi.uef.envi.emrooz.query.DatasetObservationQuery;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 import fi.uef.envi.emrooz.sesame.SesameKnowledgeStore;
 
@@ -106,22 +107,24 @@ public class EmroozTest {
 
 	private class ThisDataStore implements DataStore {
 
-		Map<URI, Map<URI, Map<URI, Map<DateTime, Set<Statement>>>>> store;
-
+		Map<URI, Map<URI, Map<URI, Map<DateTime, Set<Statement>>>>> sensorObservationStore;
+		Map<URI, Map<DateTime, Set<Statement>>> datasetObservationStore;
+		
 		public ThisDataStore() {
-			this.store = new HashMap<URI, Map<URI, Map<URI, Map<DateTime, Set<Statement>>>>>();
+			this.sensorObservationStore = new HashMap<URI, Map<URI, Map<URI, Map<DateTime, Set<Statement>>>>>();
+			this.datasetObservationStore = new HashMap<URI, Map<DateTime, Set<Statement>>>();
 		}
 
 		@Override
 		public void addSensorObservation(URI sensorId, URI propertyId,
 				URI featureId, Frequency frequency, DateTime resultTime,
 				Set<Statement> statements) {
-			Map<URI, Map<URI, Map<DateTime, Set<Statement>>>> m1 = store
+			Map<URI, Map<URI, Map<DateTime, Set<Statement>>>> m1 = sensorObservationStore
 					.get(sensorId);
 
 			if (m1 == null) {
 				m1 = new HashMap<URI, Map<URI, Map<DateTime, Set<Statement>>>>();
-				store.put(sensorId, m1);
+				sensorObservationStore.put(sensorId, m1);
 			}
 
 			Map<URI, Map<DateTime, Set<Statement>>> m2 = m1.get(propertyId);
@@ -140,7 +143,7 @@ public class EmroozTest {
 
 			m3.put(resultTime, statements);
 		}
-		
+
 		@Override
 		public void addDatasetObservation(URI datasetId,
 				QuantityValue frequency, DateTime timePeriod,
@@ -149,10 +152,17 @@ public class EmroozTest {
 		}
 
 		@Override
-		public QueryHandler<Statement> createQueryHandler(
+		public QueryHandler<Statement> createSensorObservationQueryHandler(
 				Map<SensorObservationQuery, Frequency> queries) {
-			return new ThisQueryHandler(Collections.unmodifiableMap(store),
-					queries);
+			return new ThisSensorObservationQueryHandler(
+					Collections.unmodifiableMap(sensorObservationStore), queries);
+		}
+
+		@Override
+		public QueryHandler<Statement> createDatasetObservationQueryHandler(
+				Map<DatasetObservationQuery, QuantityValue> queries) {
+			return new ThisDatasetObservationQueryHandler(
+					Collections.unmodifiableMap(datasetObservationStore), queries);
 		}
 
 		@Override
@@ -162,12 +172,43 @@ public class EmroozTest {
 
 	}
 
-	private class ThisQueryHandler implements QueryHandler<Statement> {
+	private class ThisDatasetObservationQueryHandler implements
+			QueryHandler<Statement> {
+
+		private Map<URI, Map<DateTime, Set<Statement>>> store;
+		private Map<DatasetObservationQuery, QuantityValue> queries;
+
+		public ThisDatasetObservationQueryHandler(
+				Map<URI, Map<DateTime, Set<Statement>>> store,
+				Map<DatasetObservationQuery, QuantityValue> queries) {
+			this.store = store;
+			this.queries = queries;
+		}
+
+		@Override
+		public ResultSet<Statement> evaluate() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void evaluate(TupleQueryResultHandler handler) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void close() {
+			throw new UnsupportedOperationException();
+		}
+
+	}
+
+	private class ThisSensorObservationQueryHandler implements
+			QueryHandler<Statement> {
 
 		private Map<URI, Map<URI, Map<URI, Map<DateTime, Set<Statement>>>>> store;
 		private Map<SensorObservationQuery, Frequency> queries;
 
-		public ThisQueryHandler(
+		public ThisSensorObservationQueryHandler(
 				Map<URI, Map<URI, Map<URI, Map<DateTime, Set<Statement>>>>> store,
 				Map<SensorObservationQuery, Frequency> queries) {
 			this.store = store;

@@ -14,6 +14,7 @@ import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.ssn.Frequency;
+import fi.uef.envi.emrooz.query.DatasetObservationQuery;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 
 /**
@@ -42,7 +43,10 @@ public interface DataStore extends Store {
 	public void addDatasetObservation(URI datasetId, QuantityValue frequency,
 			DateTime timePeriod, Set<Statement> statements);
 
-	public QueryHandler<Statement> createQueryHandler(
+	public QueryHandler<Statement> createSensorObservationQueryHandler(
 			Map<SensorObservationQuery, Frequency> queries);
+
+	public QueryHandler<Statement> createDatasetObservationQueryHandler(
+			Map<DatasetObservationQuery, QuantityValue> queries);
 
 }

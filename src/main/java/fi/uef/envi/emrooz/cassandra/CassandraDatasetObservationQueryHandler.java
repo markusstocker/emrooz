@@ -27,12 +27,12 @@ import com.datastax.driver.core.Session;
 import fi.uef.envi.emrooz.Rollover;
 import fi.uef.envi.emrooz.api.QueryHandler;
 import fi.uef.envi.emrooz.api.ResultSet;
-import fi.uef.envi.emrooz.entity.ssn.Frequency;
-import fi.uef.envi.emrooz.query.SensorObservationQuery;
+import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
+import fi.uef.envi.emrooz.query.DatasetObservationQuery;
 
 /**
  * <p>
- * Title: CassandraQueryHandler
+ * Title: CassandraDatasetObservationQueryHandler
  * </p>
  * <p>
  * Description:
@@ -47,29 +47,28 @@ import fi.uef.envi.emrooz.query.SensorObservationQuery;
  * @author Markus Stocker
  */
 
-public class CassandraQueryHandler extends CassandraRequestHandler implements
-		QueryHandler<Statement> {
+public class CassandraDatasetObservationQueryHandler extends
+		CassandraRequestHandler implements QueryHandler<Statement> {
 
 	private Session session;
-	private PreparedStatement sensorObservationSelectStatement;
-	private Map<SensorObservationQuery, Frequency> queries;
+	private PreparedStatement selectStatement;
+	private Map<DatasetObservationQuery, QuantityValue> queries;
 
 	private static final Logger log = Logger
-			.getLogger(CassandraQueryHandler.class.getName());
+			.getLogger(CassandraDatasetObservationQueryHandler.class.getName());
 
-	public CassandraQueryHandler(Session session,
-			PreparedStatement sensorObservationSelectStatement,
-			Map<SensorObservationQuery, Frequency> queries) {
+	public CassandraDatasetObservationQueryHandler(Session session,
+			PreparedStatement selectStatement,
+			Map<DatasetObservationQuery, QuantityValue> queries) {
 		if (session == null)
 			throw new NullPointerException("[session = null]");
-		if (sensorObservationSelectStatement == null)
-			throw new NullPointerException(
-					"[sensorObservationSelectStatement = null]");
+		if (selectStatement == null)
+			throw new NullPointerException("[selectStatement = null]");
 		if (queries == null)
 			throw new NullPointerException("[queries = null]");
 
 		this.session = session;
-		this.sensorObservationSelectStatement = sensorObservationSelectStatement;
+		this.selectStatement = selectStatement;
 		this.queries = queries;
 	}
 
@@ -88,46 +87,37 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 	public ResultSet<Statement> evaluate() {
 		Set<Iterator<Row>> results = new HashSet<Iterator<Row>>();
 
-		for (Map.Entry<SensorObservationQuery, Frequency> entry : queries
+		for (Map.Entry<DatasetObservationQuery, QuantityValue> entry : queries
 				.entrySet()) {
-			results.addAll(getSensorObservations(entry.getKey(),
+			results.addAll(getDatasetObservations(entry.getKey(),
 					entry.getValue()));
 		}
 
 		return new CassandraResultSet(results.iterator());
 	}
 
-	private Set<Iterator<Row>> getSensorObservations(
-			SensorObservationQuery query, Frequency frequency) {
-		URI sensorId = query.getSensorId();
-		URI propertyId = query.getPropertyId();
-		URI featureId = query.getFeatureOfInterestId();
+	private Set<Iterator<Row>> getDatasetObservations(
+			DatasetObservationQuery query, QuantityValue frequency) {
+		URI datasetId = query.getDatasetId();
 		DateTime timeFrom = query.getTimeFrom();
 		DateTime timeTo = query.getTimeTo();
 
-		if (sensorId == null || propertyId == null || featureId == null
-				|| timeFrom == null || timeTo == null) {
+		if (datasetId == null || timeFrom == null || timeTo == null) {
 			if (log.isLoggable(Level.SEVERE))
-				log.severe("At least one parameter is null; returned empty set [sensorId = "
-						+ sensorId
-						+ "; propertyId = "
-						+ propertyId
-						+ "; featureId = "
-						+ featureId
+				log.severe("At least one parameter is null; returned empty set [datasetId = "
+						+ datasetId
 						+ "; timeFrom = "
-						+ timeFrom + "; timeTo = " + timeTo + "]");
+						+ timeFrom
+						+ "; timeTo = " + timeTo + "]");
 			return Collections.emptySet();
 		}
 
-		Rollover rollover = getRollover(sensorId, propertyId, featureId,
-				frequency);
+		Rollover rollover = getRollover(datasetId, frequency);
 
 		if (rollover == null) {
 			if (log.isLoggable(Level.SEVERE))
-				log.severe("Registration rollover is null [sensorId = "
-						+ sensorId + "; propertyId = " + propertyId
-						+ "; featureId = " + featureId + "; frequency = "
-						+ frequency + "]");
+				log.severe("Registration rollover is null [datasetId = "
+						+ datasetId + "; frequency = " + frequency + "]");
 			return Collections.emptySet();
 		}
 
@@ -135,9 +125,8 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 		Set<Iterator<Row>> results = new HashSet<Iterator<Row>>();
 
 		while (time.isBefore(timeTo)) {
-			Iterator<Row> it = getSensorObservations(
-					getRowKey(sensorId, propertyId, featureId, frequency, time),
-					time, timeTo);
+			Iterator<Row> it = getDatasetObservations(
+					getRowKey(datasetId, frequency, time), time, timeTo);
 
 			if (it != null)
 				results.add(it);
@@ -160,7 +149,7 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 		return Collections.unmodifiableSet(results);
 	}
 
-	private Iterator<Row> getSensorObservations(String rowKey,
+	private Iterator<Row> getDatasetObservations(String rowKey,
 			DateTime timeFrom, DateTime timeTo) {
 		if (timeFrom == null || timeTo == null) {
 			if (log.isLoggable(Level.SEVERE))
@@ -170,10 +159,10 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 			return null;
 		}
 
-		return getSensorObservations(rowKey, timeFrom.toDate(), timeTo.toDate());
+		return getDatasetObservations(rowKey, timeFrom.toDate(), timeTo.toDate());
 	}
 
-	private Iterator<Row> getSensorObservations(String rowKey,
+	private Iterator<Row> getDatasetObservations(String rowKey,
 			Date columnNameFrom, Date columnNameTo) {
 		if (rowKey == null || columnNameFrom == null || columnNameTo == null) {
 			if (log.isLoggable(Level.WARNING))
@@ -185,8 +174,8 @@ public class CassandraQueryHandler extends CassandraRequestHandler implements
 		}
 
 		return session.execute(
-				new BoundStatement(sensorObservationSelectStatement).bind(
-						rowKey, columnNameFrom, columnNameTo)).iterator();
+				new BoundStatement(selectStatement).bind(rowKey,
+						columnNameFrom, columnNameTo)).iterator();
 	}
 
 }

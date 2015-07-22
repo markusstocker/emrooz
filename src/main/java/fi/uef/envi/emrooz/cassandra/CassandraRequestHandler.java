@@ -55,4 +55,8 @@ public abstract class CassandraRequestHandler {
 				frequency);
 	}
 
+	protected Rollover getRollover(URI datasetId, QuantityValue frequency) {
+		return rowKeyUtils.getRollover(datasetId, frequency);
+	}
+
 }
