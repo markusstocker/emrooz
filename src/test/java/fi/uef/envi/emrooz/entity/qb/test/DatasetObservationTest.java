@@ -20,14 +20,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.openrdf.model.URI;
 
-import fi.uef.envi.emrooz.entity.qb.Dataset;
 import fi.uef.envi.emrooz.entity.qb.DatasetObservation;
-import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
-import fi.uef.envi.emrooz.entity.qudt.Unit;
 import fi.uef.envi.emrooz.entity.time.Instant;
 import fi.uef.envi.emrooz.test.ParamsConverterTest;
 import fi.uef.envi.emrooz.vocabulary.QB;
-import fi.uef.envi.emrooz.vocabulary.QUDTUnit;
 
 /**
  * <p>
@@ -55,15 +51,11 @@ public class DatasetObservationTest {
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI datasetId1,
-			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI frequency1Id,
-			double frequency1Value,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI instantId1,
 			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime value1,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id2,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type2,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI datasetId2,
-			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI frequency2Id,
-			double frequency2Value,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI instantId2,
 			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime value2,
 			String assertType) {
@@ -72,14 +64,10 @@ public class DatasetObservationTest {
 		if (type2 == null)
 			type2 = QB.Observation;
 
-		DatasetObservation o1 = new DatasetObservation(id1, type1, new Dataset(
-				datasetId1, new QuantityValue(frequency1Id, frequency1Value,
-						new Unit(QUDTUnit.Hertz))), new Instant(instantId1,
-				value1));
-		DatasetObservation o2 = new DatasetObservation(id2, type2, new Dataset(
-				datasetId2, new QuantityValue(frequency2Id, frequency2Value,
-						new Unit(QUDTUnit.Hertz))), new Instant(instantId2,
-				value2));
+		DatasetObservation o1 = new DatasetObservation(id1, type1, datasetId1,
+				new Instant(instantId1, value1));
+		DatasetObservation o2 = new DatasetObservation(id2, type2, datasetId2,
+				new Instant(instantId2, value2));
 
 		Set<URI> types1 = new HashSet<URI>();
 		types1.add(type1);

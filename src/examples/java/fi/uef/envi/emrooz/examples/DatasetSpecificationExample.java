@@ -44,20 +44,15 @@ public class DatasetSpecificationExample {
 
 		ks.addDataset(dataset1());
 		ks.addDataset(dataset2());
+		ks.addDataset(dataset3());
 
 		ks.close();
 	}
 
 	private static Dataset dataset1() {
-		QuantityValue frequency = f.createQuantityValue();
-		Unit unit = f.createUnit(QUDTUnit.Hertz);
-
-		frequency.setNumericValue(10.0);
-		frequency.setUnit(unit);
-
-		return f.createDataset("d1", frequency);
+		return f.createDataset("d1", 10.0);
 	}
-
+	
 	private static Dataset dataset2() {
 		QuantityValue frequency = f.createQuantityValue();
 		Unit unit = f.createUnit(QUDTUnit.Hertz);
@@ -65,7 +60,17 @@ public class DatasetSpecificationExample {
 		frequency.setNumericValue(10.0);
 		frequency.setUnit(unit);
 
-		Dataset dataset = f.createDataset("d2", frequency);
+		return f.createDataset("d2", frequency);
+	}
+
+	private static Dataset dataset3() {
+		QuantityValue frequency = f.createQuantityValue();
+		Unit unit = f.createUnit(QUDTUnit.Hertz);
+
+		frequency.setNumericValue(10.0);
+		frequency.setUnit(unit);
+
+		Dataset dataset = f.createDataset("d3", frequency);
 
 		DataStructureDefinition structure = f.createDataStructureDefinition("s1");
 

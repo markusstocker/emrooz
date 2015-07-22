@@ -38,6 +38,7 @@ import fi.uef.envi.emrooz.Emrooz;
 import fi.uef.envi.emrooz.api.DataStore;
 import fi.uef.envi.emrooz.api.QueryHandler;
 import fi.uef.envi.emrooz.api.ResultSet;
+import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.ssn.Frequency;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 import fi.uef.envi.emrooz.sesame.SesameKnowledgeStore;
@@ -138,6 +139,13 @@ public class EmroozTest {
 			}
 
 			m3.put(resultTime, statements);
+		}
+		
+		@Override
+		public void addDatasetObservation(URI datasetId,
+				QuantityValue frequency, DateTime timePeriod,
+				Set<Statement> statements) {
+			throw new UnsupportedOperationException();
 		}
 
 		@Override

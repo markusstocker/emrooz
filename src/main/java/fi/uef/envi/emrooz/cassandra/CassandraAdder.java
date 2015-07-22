@@ -27,6 +27,7 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 
 import fi.uef.envi.emrooz.cassandra.utils.StatementUtils;
+import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.ssn.Frequency;
 
 /**
@@ -49,7 +50,7 @@ import fi.uef.envi.emrooz.entity.ssn.Frequency;
 public class CassandraAdder extends CassandraRequestHandler {
 
 	private Session session;
-	private PreparedStatement sensorObservationInsertStatement;
+	private PreparedStatement insertStatement;
 
 	private static final Logger log = Logger.getLogger(CassandraAdder.class
 			.getName());
@@ -59,10 +60,10 @@ public class CassandraAdder extends CassandraRequestHandler {
 			throw new NullPointerException("[session = null]");
 
 		this.session = session;
-		this.sensorObservationInsertStatement = this.session
-				.prepare("INSERT INTO " + KEYSPACE + "." + DATA_TABLE + " ("
-						+ DATA_TABLE_ATTRIBUTE_1 + "," + DATA_TABLE_ATTRIBUTE_2
-						+ "," + DATA_TABLE_ATTRIBUTE_3 + ") VALUES (?, ?, ?)");
+		this.insertStatement = this.session.prepare("INSERT INTO " + KEYSPACE
+				+ "." + DATA_TABLE + " (" + DATA_TABLE_ATTRIBUTE_1 + ","
+				+ DATA_TABLE_ATTRIBUTE_2 + "," + DATA_TABLE_ATTRIBUTE_3
+				+ ") VALUES (?, ?, ?)");
 	}
 
 	public void addSensorObservation(URI sensorId, URI propertyId,
@@ -93,8 +94,38 @@ public class CassandraAdder extends CassandraRequestHandler {
 			return;
 		}
 
-		session.execute(new BoundStatement(sensorObservationInsertStatement)
-				.bind(rowKey, columnName, ByteBuffer.wrap(columnValue)));
+		session.execute(new BoundStatement(insertStatement).bind(rowKey,
+				columnName, ByteBuffer.wrap(columnValue)));
+	}
+
+	public void addDatasetObservation(URI datasetId, QuantityValue frequency,
+			DateTime timePeriod, Set<Statement> statements) {
+		addDatasetObservation(getRowKey(datasetId, frequency, timePeriod),
+				timePeriod, statements);
+	}
+
+	private void addDatasetObservation(String rowKey, DateTime timePeriod,
+			Set<Statement> columnValue) {
+		addDatasetObservation(rowKey, TimeUUID.toUUID(timePeriod), columnValue);
+	}
+
+	private void addDatasetObservation(String rowKey, UUID timePeriod,
+			Set<Statement> columnValue) {
+		addDatasetObservation(rowKey, timePeriod,
+				StatementUtils.toByteArray(columnValue));
+	}
+
+	private void addDatasetObservation(String rowKey, UUID columnName,
+			byte[] columnValue) {
+		if (rowKey == null || columnName == null || columnValue == null) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("At least one parameter is null (possibly the byte[] columnValue [rowKey = "
+						+ rowKey + "; columnName = " + columnName + "]");
+			return;
+		}
+
+		session.execute(new BoundStatement(insertStatement).bind(rowKey,
+				columnName, ByteBuffer.wrap(columnValue)));
 	}
 
 }

@@ -15,6 +15,7 @@ import org.openrdf.model.URI;
 import fi.uef.envi.emrooz.entity.AbstractEntity;
 import fi.uef.envi.emrooz.entity.EntityVisitor;
 import fi.uef.envi.emrooz.entity.time.TemporalEntity;
+import fi.uef.envi.emrooz.vocabulary.QB;
 import fi.uef.envi.emrooz.vocabulary.SDMXDimension;
 import static fi.uef.envi.emrooz.vocabulary.QB.Observation;
 
@@ -37,22 +38,46 @@ import static fi.uef.envi.emrooz.vocabulary.QB.Observation;
 
 public class DatasetObservation extends AbstractEntity {
 
-	private Dataset dataset;
+	private URI datasetId;
 	private Map<ComponentProperty, ComponentPropertyValue> components;
 
-	public DatasetObservation(URI id, URI type, Dataset dataset,
+	public DatasetObservation(URI id, URI datasetId, TemporalEntity timePeriod) {
+		this(id, QB.DataSet, datasetId, timePeriod);
+	}
+
+	public DatasetObservation(URI id, URI type, URI datasetId,
 			TemporalEntity timePeriod) {
+		this(id, type, datasetId, new Component(new DimensionProperty(
+				SDMXDimension.timePeriod), new ComponentPropertyValueEntity(
+				timePeriod)));
+	}
+
+	public DatasetObservation(URI id, URI datasetId, Component... components) {
+		this(id, QB.DataSet, datasetId, components);
+	}
+
+	public DatasetObservation(URI id, URI type, URI datasetId,
+			Component... components) {
 		super(id, type);
 
-		if (dataset == null)
-			throw new NullPointerException("[dataset = null]");
+		if (datasetId == null)
+			throw new NullPointerException("[datasetId = null]");
 
-		this.dataset = dataset;
+		this.datasetId = datasetId;
 		this.components = new HashMap<ComponentProperty, ComponentPropertyValue>();
 
 		addType(Observation);
-		addComponent(new DimensionProperty(SDMXDimension.timePeriod),
-				new ComponentPropertyValueEntity(timePeriod));
+		addComponents(components);
+	}
+
+	public void addComponents(Component... components) {
+		for (Component component : components)
+			addComponent(component);
+	}
+
+	public void addComponent(Component component) {
+		addComponent(component.getComponentProperty(),
+				component.getComponentPropertyValue());
 	}
 
 	public void addComponent(ComponentProperty property,
@@ -63,8 +88,8 @@ public class DatasetObservation extends AbstractEntity {
 		components.put(property, value);
 	}
 
-	public Dataset getDataset() {
-		return dataset;
+	public URI getDatasetId() {
+		return datasetId;
 	}
 
 	public Set<ComponentProperty> getComponentProperties() {
@@ -93,7 +118,7 @@ public class DatasetObservation extends AbstractEntity {
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		result = prime * result + types.hashCode();
-		result = prime * result + ((dataset == null) ? 0 : dataset.hashCode());
+		result = prime * result + datasetId.hashCode();
 		result = prime * result + components.hashCode();
 
 		return result;
@@ -125,10 +150,7 @@ public class DatasetObservation extends AbstractEntity {
 		if (!types.equals(other.types))
 			return false;
 
-		if (dataset == null) {
-			if (other.dataset != null)
-				return false;
-		} else if (!dataset.equals(other.dataset))
+		if (!datasetId.equals(other.datasetId))
 			return false;
 
 		if (!components.equals(other.components))
@@ -140,7 +162,7 @@ public class DatasetObservation extends AbstractEntity {
 	@Override
 	public String toString() {
 		return "DatasetObservation [id = " + id + "; type = " + type
-				+ "; types = " + types + "; dataset = " + dataset
+				+ "; types = " + types + "; datasetId = " + datasetId
 				+ "; components = " + components + "]";
 	}
 

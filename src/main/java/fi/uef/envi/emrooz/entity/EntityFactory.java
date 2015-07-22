@@ -15,10 +15,14 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
 
 import fi.uef.envi.emrooz.entity.qb.AttributeProperty;
+import fi.uef.envi.emrooz.entity.qb.Component;
 import fi.uef.envi.emrooz.entity.qb.ComponentProperty;
+import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValue;
+import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueEntity;
 import fi.uef.envi.emrooz.entity.qb.ComponentSpecification;
 import fi.uef.envi.emrooz.entity.qb.DataStructureDefinition;
 import fi.uef.envi.emrooz.entity.qb.Dataset;
+import fi.uef.envi.emrooz.entity.qb.DatasetObservation;
 import fi.uef.envi.emrooz.entity.qb.DimensionProperty;
 import fi.uef.envi.emrooz.entity.qb.MeasureProperty;
 import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
@@ -66,15 +70,65 @@ public class EntityFactory {
 		if (ns == null)
 			throw new NullPointerException("[ns = null]");
 
+		if (!ns.endsWith("#"))
+			ns = ns.concat("#");
+
 		this.ns = ns;
+	}
+
+	public Dataset createDataset(String datasetFragment, Double frequency) {
+		return createDataset(datasetFragment,
+				createQuantityValue(frequency, new Unit(QUDTUnit.Hertz)));
+	}
+
+	public Dataset createDataset(String datasetFragment, Double frequency,
+			DataStructureDefinition structure) {
+		return createDataset(datasetFragment,
+				createQuantityValue(frequency, new Unit(QUDTUnit.Hertz)),
+				structure);
 	}
 
 	public Dataset createDataset(String datasetFragment, QuantityValue frequency) {
 		return createDataset(vf.createURI(ns + datasetFragment), frequency);
 	}
 
-	public Dataset createDataset(URI dataset, QuantityValue frequency) {
-		return new Dataset(dataset, frequency);
+	public Dataset createDataset(String datasetFragment,
+			QuantityValue frequency, DataStructureDefinition structure) {
+		return createDataset(vf.createURI(ns + datasetFragment), frequency,
+				structure);
+	}
+
+	public Dataset createDataset(URI id, QuantityValue frequency) {
+		return createDataset(id, frequency, null);
+	}
+
+	public Dataset createDataset(URI id, QuantityValue frequency,
+			DataStructureDefinition structure) {
+		return new Dataset(id, frequency, structure);
+	}
+
+	public DataStructureDefinition createDataStructureDefinition(
+			ComponentSpecification... components) {
+		return createDataStructureDefinition(randomUUID(), components);
+	}
+
+	public DataStructureDefinition createDataStructureDefinition(String fragment) {
+		return createDataStructureDefinition(vf.createURI(ns + fragment));
+	}
+
+	public DataStructureDefinition createDataStructureDefinition(URI id) {
+		return new DataStructureDefinition(id);
+	}
+
+	public DataStructureDefinition createDataStructureDefinition(
+			String fragment, ComponentSpecification... components) {
+		return createDataStructureDefinition(vf.createURI(ns + fragment),
+				components);
+	}
+
+	public DataStructureDefinition createDataStructureDefinition(URI id,
+			ComponentSpecification... components) {
+		return new DataStructureDefinition(id, components);
 	}
 
 	public ComponentSpecification createComponentSpecification(
@@ -82,9 +136,31 @@ public class EntityFactory {
 		return createComponentSpecification(randomUUID(), property);
 	}
 
+	public ComponentSpecification createComponentSpecification(
+			ComponentProperty property, boolean required) {
+		return createComponentSpecification(randomUUID(), property, required,
+				-1);
+	}
+
+	public ComponentSpecification createComponentSpecification(
+			ComponentProperty property, boolean required, int order) {
+		return createComponentSpecification(randomUUID(), property, required,
+				order);
+	}
+
 	public ComponentSpecification createComponentSpecification(URI id,
 			ComponentProperty property) {
-		return new ComponentSpecification(id, property);
+		return createComponentSpecification(id, property, false);
+	}
+
+	public ComponentSpecification createComponentSpecification(URI id,
+			ComponentProperty property, boolean required) {
+		return createComponentSpecification(id, property, false, -1);
+	}
+
+	public ComponentSpecification createComponentSpecification(URI id,
+			ComponentProperty property, boolean required, int order) {
+		return new ComponentSpecification(id, property, required, order);
 	}
 
 	public DimensionProperty createDimensionProperty(String fragment) {
@@ -110,13 +186,32 @@ public class EntityFactory {
 	public AttributeProperty createAttributeProperty(URI id) {
 		return new AttributeProperty(id);
 	}
-	
-	public DataStructureDefinition createDataStructureDefinition(String fragment) {
-		return createDataStructureDefinition(vf.createURI(ns + fragment));
+
+	public DatasetObservation createDatasetObservation(String datasetFragment,
+			Component... components) {
+		return createDatasetObservation(vf.createURI(ns + datasetFragment),
+				components);
 	}
-	
-	public DataStructureDefinition createDataStructureDefinition(URI id) {
-		return new DataStructureDefinition(id);
+
+	public DatasetObservation createDatasetObservation(URI datasetId,
+			Component... components) {
+		return new DatasetObservation(randomUUID(), datasetId, components);
+	}
+
+	public Component createComponent(ComponentProperty property,
+			ComponentPropertyValue value) {
+		return new Component(property, value);
+	}
+
+	public ComponentPropertyValue createComponentPropertyValue(String dateTime) {
+		return new ComponentPropertyValueEntity(new Instant(randomUUID(),
+				dtf.parseDateTime(dateTime)));
+	}
+
+	public ComponentPropertyValue createComponentPropertyValue(double value,
+			Unit unit) {
+		return new ComponentPropertyValueEntity(new QuantityValue(randomUUID(),
+				value, unit));
 	}
 
 	public Sensor createSensor(String sensorFragment, String propertyFragment,

@@ -40,6 +40,7 @@ public class AddSensorObservationExample {
 
 		Repository r = new SailRepository(new MemoryStore());
 		KnowledgeStore ks = new SesameKnowledgeStore(r);
+		
 		ks.addSensor(f.createSensor("thermometer", "temperature", "air", 1.0));
 		ks.addSensor(f.createSensor("hygrometer", "humidity", "air", 1.0));
 
@@ -51,7 +52,7 @@ public class AddSensorObservationExample {
 				76.0, "2015-04-21T01:00:00.000+03:00"));
 
 		emrooz.add(f.createSensorObservation("thermometer", "temperature",
-				"air", 7.4, f.createUnit((QUDTUnit.DegreeCelsius)),
+				"air", 7.4, f.createUnit(QUDTUnit.DegreeCelsius),
 				"2015-04-21T01:30:00.000+03:00"));
 		emrooz.add(f.createSensorObservation("hygrometer", "humidity", "air",
 				84.0, QUDTUnit.RelativeHumidity, "2015-04-21T01:30:00.000+03:00"));

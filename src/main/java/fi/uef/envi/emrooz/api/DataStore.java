@@ -12,6 +12,7 @@ import org.joda.time.DateTime;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 
+import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.ssn.Frequency;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 
@@ -37,6 +38,9 @@ public interface DataStore extends Store {
 	public void addSensorObservation(URI sensorId, URI propertyId,
 			URI featureId, Frequency frequency, DateTime resultTime,
 			Set<Statement> statements);
+
+	public void addDatasetObservation(URI datasetId, QuantityValue frequency,
+			DateTime timePeriod, Set<Statement> statements);
 
 	public QueryHandler<Statement> createQueryHandler(
 			Map<SensorObservationQuery, Frequency> queries);

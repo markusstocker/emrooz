@@ -29,6 +29,7 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.TableMetadata;
 
 import fi.uef.envi.emrooz.api.DataStore;
+import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.ssn.Frequency;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 
@@ -101,7 +102,7 @@ public class CassandraDataStore implements DataStore {
 
 		if (statements.isEmpty()) {
 			if (log.isLoggable(Level.WARNING))
-				log.warning("Empty collection of statements [[sensorId = "
+				log.warning("Empty collection of statements [sensorId = "
 						+ sensorId + "; propertyId = " + propertyId
 						+ "; featureId = " + featureId + "; frequency = "
 						+ frequency + "; resultTime = " + resultTime
@@ -111,6 +112,30 @@ public class CassandraDataStore implements DataStore {
 
 		cassandraAdder.addSensorObservation(sensorId, propertyId, featureId,
 				frequency, resultTime, statements);
+	}
+
+	@Override
+	public void addDatasetObservation(URI datasetId, QuantityValue frequency,
+			DateTime timePeriod, Set<Statement> statements) {
+		if (datasetId == null || frequency == null || timePeriod == null) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("At least one parameter is null [datasetId = "
+						+ datasetId + "; frequency = " + frequency
+						+ "; timePeriod = " + timePeriod + "]");
+			return;
+		}
+
+		if (statements.isEmpty()) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("Empty collection of statements [[datasetId = "
+						+ datasetId + "; frequency = " + frequency
+						+ "; timePeriod = " + timePeriod + "; statements = "
+						+ statements + "]");
+			return;
+		}
+
+		cassandraAdder.addDatasetObservation(datasetId, frequency, timePeriod,
+				statements);
 	}
 
 	@Override

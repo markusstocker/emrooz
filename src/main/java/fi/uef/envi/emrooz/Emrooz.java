@@ -23,15 +23,32 @@ import fi.uef.envi.emrooz.api.DataStore;
 import fi.uef.envi.emrooz.api.KnowledgeStore;
 import fi.uef.envi.emrooz.api.QueryHandler;
 import fi.uef.envi.emrooz.api.ResultSet;
-import fi.uef.envi.emrooz.entity.TemporalEntityVisitor;
+import fi.uef.envi.emrooz.entity.ComponentPropertyValueVisitor;
+import fi.uef.envi.emrooz.entity.Entity;
+import fi.uef.envi.emrooz.entity.EntityVisitor;
+import fi.uef.envi.emrooz.entity.qb.AttributeProperty;
+import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValue;
+import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueDouble;
+import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueEntity;
+import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueString;
+import fi.uef.envi.emrooz.entity.qb.ComponentSpecification;
+import fi.uef.envi.emrooz.entity.qb.DataStructureDefinition;
 import fi.uef.envi.emrooz.entity.qb.Dataset;
+import fi.uef.envi.emrooz.entity.qb.DatasetObservation;
+import fi.uef.envi.emrooz.entity.qb.DimensionProperty;
+import fi.uef.envi.emrooz.entity.qb.MeasureProperty;
+import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
+import fi.uef.envi.emrooz.entity.qudt.Unit;
 import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
 import fi.uef.envi.emrooz.entity.ssn.Frequency;
 import fi.uef.envi.emrooz.entity.ssn.MeasurementCapability;
 import fi.uef.envi.emrooz.entity.ssn.MeasurementProperty;
+import fi.uef.envi.emrooz.entity.ssn.ObservationValue;
+import fi.uef.envi.emrooz.entity.ssn.ObservationValueDouble;
 import fi.uef.envi.emrooz.entity.ssn.Property;
 import fi.uef.envi.emrooz.entity.ssn.Sensor;
 import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
+import fi.uef.envi.emrooz.entity.ssn.SensorOutput;
 import fi.uef.envi.emrooz.entity.time.Instant;
 import fi.uef.envi.emrooz.entity.time.TemporalEntity;
 import fi.uef.envi.emrooz.query.EmptyResultSet;
@@ -39,6 +56,8 @@ import fi.uef.envi.emrooz.query.QueryFactory;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 import fi.uef.envi.emrooz.query.SensorObservationQueryRewriter;
 import fi.uef.envi.emrooz.rdf.RDFEntityRepresenter;
+import fi.uef.envi.emrooz.vocabulary.SDMXDimension;
+import fi.uef.envi.emrooz.vocabulary.SDMXMetadata;
 
 /**
  * <p>
@@ -64,14 +83,16 @@ public class Emrooz {
 
 	private Map<URI, Map<URI, Sensor>> sensors;
 	private Map<URI, Sensor> sensorsById;
-	private Map<URI, Map<URI, Dataset>> datasets;
-	private Map<URI, Dataset> datasetsById;
+	private Map<URI, Dataset> datasets;
 
 	private DateTime instant = null;
-	private final TemporalEntityVisitor temporalEntityVisitor;
+	private Entity entity = null;
+	private final EntityVisitor entityVisitor;
+	private final ComponentPropertyValueVisitor componentPropertyValueVisitor;
 	private final RDFEntityRepresenter representer;
 	private SensorObservationQueryRewriter sensorObservationQueryRewriter;
-	private Map<Sensor, Frequency> frequencyCache;
+	private Map<Sensor, Frequency> sensorFrequencyCache;
+	private Map<URI, QuantityValue> datasetFrequencyCache;
 
 	private static final Logger log = Logger.getLogger(Emrooz.class.getName());
 
@@ -88,15 +109,17 @@ public class Emrooz {
 
 		this.sensors = new HashMap<URI, Map<URI, Sensor>>();
 		this.sensorsById = new HashMap<URI, Sensor>();
-		this.datasets = new HashMap<URI, Map<URI, Dataset>>();
-		this.datasetsById = new HashMap<URI, Dataset>();
-		this.temporalEntityVisitor = new EmroozTemporalEntityVisitor();
+		this.datasets = new HashMap<URI, Dataset>();
+		this.entityVisitor = new EmroozEntityVisitor();
+		this.componentPropertyValueVisitor = new EmroozComponentPropertyValueVisitor();
 		this.representer = new RDFEntityRepresenter();
 		this.sensorObservationQueryRewriter = new SensorObservationQueryRewriter(
 				ks);
-		this.frequencyCache = new HashMap<Sensor, Frequency>();
+		this.sensorFrequencyCache = new HashMap<Sensor, Frequency>();
+		this.datasetFrequencyCache = new HashMap<URI, QuantityValue>();
 
 		sensors();
+		datasets();
 	}
 
 	public void loadKnowledgeBase(File file) {
@@ -109,7 +132,7 @@ public class Emrooz {
 		ks.addSensor(sensor);
 		sensors();
 	}
-	
+
 	public void add(Dataset dataset) {
 		ks.addDataset(dataset);
 		datasets();
@@ -128,6 +151,24 @@ public class Emrooz {
 			if (log.isLoggable(Level.WARNING))
 				log.warning("Cannot find sensor [sensorId = " + sensorId
 						+ "; sensorsById = " + sensorsById + "]");
+		}
+
+		return ret;
+	}
+
+	public Dataset getDatasetById(URI datasetId) {
+		if (datasetId == null) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("[datasetId = null]");
+			return null;
+		}
+
+		Dataset ret = datasets.get(datasetId);
+
+		if (ret == null) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("Cannot find dataset [datasetId = " + datasetId
+						+ "; datasets = " + datasets + "]");
 		}
 
 		return ret;
@@ -164,7 +205,7 @@ public class Emrooz {
 			return;
 		}
 
-		temporalEntity.accept(temporalEntityVisitor);
+		temporalEntity.accept(entityVisitor);
 
 		DateTime resultTime = instant;
 
@@ -212,7 +253,7 @@ public class Emrooz {
 		URI propertyId = property.getId();
 		URI featureId = feature.getId();
 
-		Sensor specification = getSpecification(sensorId, propertyId);
+		Sensor specification = getSensorSpecification(sensorId, propertyId);
 
 		if (specification == null) {
 			if (log.isLoggable(Level.WARNING))
@@ -222,7 +263,7 @@ public class Emrooz {
 			return;
 		}
 
-		Frequency frequency = getFrequency(specification);
+		Frequency frequency = getSensorFrequency(specification);
 
 		if (frequency == null) {
 			if (log.isLoggable(Level.WARNING))
@@ -233,6 +274,93 @@ public class Emrooz {
 
 		ds.addSensorObservation(sensorId, propertyId, featureId, frequency,
 				resultTime, statements);
+	}
+
+	public void addDatasetObservation(Set<Statement> statements) {
+		add(representer.createDatasetObservation(statements));
+	}
+
+	public void addDatasetObservations(Set<Statement> statements) {
+		throw new UnsupportedOperationException(); // TODO
+		// add(representer.createDatasetObservations(statements));
+	}
+
+	// public void add(Set<DatasetObservation> observations) {
+	// for (DatasetObservation observation : observations)
+	// add(observation);
+	// }
+
+	public void add(DatasetObservation observation) {
+		if (observation == null)
+			return;
+
+		URI datasetId = observation.getDatasetId();
+		ComponentPropertyValue componentPropertyValue = observation
+				.getComponentPropertyValue(new DimensionProperty(
+						SDMXDimension.timePeriod));
+
+		if (componentPropertyValue == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to obtain timePeriod component property value of observation [observation = "
+						+ observation + "]");
+			return;
+		}
+
+		entity = null;
+
+		componentPropertyValue.accept(componentPropertyValueVisitor);
+
+		if (entity == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Failed to obtain value entity for component property [componentPropertyValue = "
+						+ componentPropertyValue
+						+ "; observation = "
+						+ observation + "]");
+			return;
+		}
+
+		instant = null;
+
+		entity.accept(entityVisitor);
+
+		DateTime timePeriod = instant;
+
+		if (timePeriod == null) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe("Time period of observation is null [observation = "
+						+ observation + "]");
+
+			return;
+		}
+
+		addDatasetObservation(datasetId, timePeriod,
+				representer.createRepresentation(observation));
+	}
+
+	public void addDatasetObservation(URI datasetId, DateTime timePeriod,
+			Set<Statement> statements) {
+		if (datasets.isEmpty())
+			datasets();
+
+		Dataset specification = getDatasetSpecification(datasetId);
+
+		if (specification == null) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("No specification found [datasetId = " + datasetId
+						+ "]");
+			return;
+		}
+
+		QuantityValue frequency = getDatasetFrequency(specification);
+
+		if (frequency == null) {
+			if (log.isLoggable(Level.WARNING))
+				log.warning("No frequency specified [specification = "
+						+ specification + "]");
+			return;
+		}
+
+		ds.addDatasetObservation(datasetId, frequency, timePeriod, statements);
 	}
 
 	public ResultSet<BindingSet> evaluate(String query) {
@@ -327,7 +455,7 @@ public class Emrooz {
 				return null;
 			}
 
-			Sensor specification = getSpecification(sensorId, propertyId);
+			Sensor specification = getSensorSpecification(sensorId, propertyId);
 
 			if (specification == null) {
 				if (log.isLoggable(Level.WARNING))
@@ -336,7 +464,7 @@ public class Emrooz {
 				return null;
 			}
 
-			Frequency frequency = getFrequency(specification);
+			Frequency frequency = getSensorFrequency(specification);
 
 			if (frequency == null) {
 				if (log.isLoggable(Level.WARNING))
@@ -384,15 +512,20 @@ public class Emrooz {
 			}
 		}
 	}
-	
+
 	private void datasets() {
 		datasets.clear();
-		datasetsById.clear();
-		
-		// TODO
+
+		Set<Dataset> datasets = ks.getDatasets();
+
+		for (Dataset dataset : datasets) {
+			URI datasetId = dataset.getId();
+
+			this.datasets.put(datasetId, dataset);
+		}
 	}
 
-	private Sensor getSpecification(URI sensorId, URI propertyId) {
+	private Sensor getSensorSpecification(URI sensorId, URI propertyId) {
 		Map<URI, Sensor> m1 = sensors.get(sensorId);
 
 		if (m1 == null) {
@@ -427,8 +560,25 @@ public class Emrooz {
 		return specification;
 	}
 
-	private Frequency getFrequency(Sensor specification) {
-		Frequency ret = frequencyCache.get(specification);
+	private Dataset getDatasetSpecification(URI datasetId) {
+		Dataset specification = datasets.get(datasetId);
+
+		if (specification == null) {
+			datasets();
+			specification = datasets.get(datasetId);
+			if (specification == null) {
+				if (log.isLoggable(Level.WARNING))
+					log.warning("Failed to resolve dataset specification [datasetId = "
+							+ datasetId + "]");
+				return null;
+			}
+		}
+
+		return specification;
+	}
+
+	private Frequency getSensorFrequency(Sensor specification) {
+		Frequency ret = sensorFrequencyCache.get(specification);
 
 		if (ret != null)
 			return ret;
@@ -446,7 +596,7 @@ public class Emrooz {
 
 				ret = (Frequency) measProperty;
 
-				frequencyCache.put(specification, ret);
+				sensorFrequencyCache.put(specification, ret);
 
 				return ret;
 			}
@@ -455,11 +605,172 @@ public class Emrooz {
 		return null;
 	}
 
-	private class EmroozTemporalEntityVisitor implements TemporalEntityVisitor {
+	private QuantityValue getDatasetFrequency(Dataset specification) {
+		URI datasetId = specification.getId();
+
+		QuantityValue ret = datasetFrequencyCache.get(datasetId);
+
+		if (ret != null)
+			return ret;
+
+		for (Map.Entry<AttributeProperty, ComponentPropertyValue> component : specification
+				.getComponents().entrySet()) {
+			AttributeProperty property = component.getKey();
+
+			if (!property.getId().equals(SDMXMetadata.freq))
+				continue;
+
+			ret = (QuantityValue) component.getValue().getValue();
+
+			datasetFrequencyCache.put(datasetId, ret);
+
+			return ret;
+		}
+
+		return null;
+	}
+
+	private class EmroozComponentPropertyValueVisitor implements
+			ComponentPropertyValueVisitor {
+
+		@Override
+		public void visit(ComponentPropertyValueEntity value) {
+			entity = value.getValue();
+		}
+
+		@Override
+		public void visit(ComponentPropertyValueString value) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void visit(ComponentPropertyValueDouble value) {
+			// TODO Auto-generated method stub
+
+		}
+
+	}
+
+	private class EmroozEntityVisitor implements EntityVisitor {
+
+		@Override
+		public void visit(SensorObservation entity) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void visit(Sensor entity) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void visit(Property entity) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void visit(FeatureOfInterest entity) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void visit(SensorOutput entity) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void visit(ObservationValue entity) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void visit(ObservationValueDouble entity) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void visit(MeasurementCapability entity) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void visit(Frequency entity) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void visit(TemporalEntity entity) {
+			// TODO Auto-generated method stub
+
+		}
 
 		@Override
 		public void visit(Instant entity) {
 			instant = entity.getValue();
+		}
+
+		@Override
+		public void visit(QuantityValue entity) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void visit(Unit entity) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void visit(Dataset entity) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void visit(DataStructureDefinition entity) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void visit(ComponentSpecification entity) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void visit(DimensionProperty entity) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void visit(MeasureProperty entity) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void visit(AttributeProperty entity) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void visit(DatasetObservation entity) {
+			// TODO Auto-generated method stub
+
 		}
 
 	}

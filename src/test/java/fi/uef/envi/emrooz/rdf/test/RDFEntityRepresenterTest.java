@@ -453,8 +453,6 @@ public class RDFEntityRepresenterTest {
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI datasetId,
-			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI frequencyId,
-			double frequencyValue,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI instantId,
 			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime instantValue,
 			@ConvertParam(value = ParamsConverterTest.StringToStatementsConverter.class) Set<Statement> statementsE,
@@ -463,9 +461,7 @@ public class RDFEntityRepresenterTest {
 			type = QB.Observation;
 
 		DatasetObservation observationA = new DatasetObservation(id, type,
-				new Dataset(datasetId, new QuantityValue(frequencyId,
-						frequencyValue, new Unit(QUDTUnit.Hertz))),
-				new Instant(instantId, instantValue));
+				datasetId, new Instant(instantId, instantValue));
 		Set<Statement> statementsA = representer
 				.createRepresentation(observationA);
 		DatasetObservation observationE = representer
@@ -487,8 +483,6 @@ public class RDFEntityRepresenterTest {
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI datasetId,
-			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI frequencyId,
-			double frequencyValue,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI instantId,
 			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime instantValue,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI componentPropertyId,
@@ -501,9 +495,7 @@ public class RDFEntityRepresenterTest {
 			type = QB.Observation;
 
 		DatasetObservation observationA = new DatasetObservation(id, type,
-				new Dataset(datasetId, new QuantityValue(frequencyId,
-						frequencyValue, new Unit(QUDTUnit.Hertz))),
-				new Instant(instantId, instantValue));
+				datasetId, new Instant(instantId, instantValue));
 
 		observationA.addComponent(new MeasureProperty(componentPropertyId),
 				new ComponentPropertyValueEntity(new QuantityValue(
@@ -530,8 +522,6 @@ public class RDFEntityRepresenterTest {
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI id,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI type,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI datasetId,
-			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI frequencyId,
-			double frequencyValue,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI instantId,
 			@ConvertParam(value = ParamsConverterTest.StringToDateTimeConverter.class) DateTime instantValue,
 			@ConvertParam(value = ParamsConverterTest.StringToURIConverter.class) URI componentProperty1Id,
@@ -544,9 +534,7 @@ public class RDFEntityRepresenterTest {
 			type = QB.Observation;
 
 		DatasetObservation observationA = new DatasetObservation(id, type,
-				new Dataset(datasetId, new QuantityValue(frequencyId,
-						frequencyValue, new Unit(QUDTUnit.Hertz))),
-				new Instant(instantId, instantValue));
+				datasetId, new Instant(instantId, instantValue));
 
 		observationA.addComponent(new MeasureProperty(componentProperty1Id),
 				new ComponentPropertyValueDouble(componentPropertyValue1));

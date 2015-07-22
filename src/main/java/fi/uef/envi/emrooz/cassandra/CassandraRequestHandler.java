@@ -10,6 +10,7 @@ import org.openrdf.model.URI;
 
 import fi.uef.envi.emrooz.Rollover;
 import fi.uef.envi.emrooz.cassandra.utils.RowKeyUtils;
+import fi.uef.envi.emrooz.entity.qudt.QuantityValue;
 import fi.uef.envi.emrooz.entity.ssn.Frequency;
 
 /**
@@ -41,6 +42,11 @@ public abstract class CassandraRequestHandler {
 			Frequency frequency, DateTime time) {
 		return rowKeyUtils.getRowKey(sensorId, propertyId, featureId,
 				frequency, time);
+	}
+
+	protected String getRowKey(URI datasetId, QuantityValue frequency,
+			DateTime time) {
+		return rowKeyUtils.getRowKey(datasetId, frequency, time);
 	}
 
 	protected Rollover getRollover(URI sensorId, URI propertyId, URI featureId,

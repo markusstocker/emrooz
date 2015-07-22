@@ -45,6 +45,7 @@ public class QuerySensorObservationsExample {
 
 		Repository r = new SailRepository(new MemoryStore());
 		KnowledgeStore ks = new SesameKnowledgeStore(r);
+		
 		ks.addSensor(f.createSensor("thermometer", "temperature", "air", 1.0));
 		ks.addSensor(f.createSensor("hygrometer", "humidity", "air", 1.0));
 

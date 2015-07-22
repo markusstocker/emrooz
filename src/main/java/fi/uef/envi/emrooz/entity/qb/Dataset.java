@@ -89,6 +89,9 @@ public class Dataset extends AbstractEntity {
 	}
 
 	public void setStructure(DataStructureDefinition structure) {
+		if (structure == null)
+			return;
+		
 		this.structure = structure;
 	}
 

@@ -130,18 +130,17 @@ public class RDFEntityRepresenter {
 		Set<Statement> ret = new HashSet<Statement>();
 
 		Set<URI> types = observation.getTypes();
-		Dataset dataset = observation.getDataset();
+		URI datasetId = observation.getDatasetId();
 		Map<ComponentProperty, ComponentPropertyValue> components = observation
 				.getComponents();
 
 		URI id = observation.getId();
-		URI datasetId = dataset.getId();
 
 		for (URI type : types)
 			ret.add(_statement(id, RDF.TYPE, type));
 
 		ret.add(_statement(id, QB.dataSet, datasetId));
-		ret.addAll(createRepresentation(dataset));
+		ret.add(_statement(datasetId, RDF.TYPE, QB.DataSet));
 
 		// Assigned this hear, because createRepresentation(dataset) above will
 		// otherwise override this.id
@@ -189,15 +188,6 @@ public class RDFEntityRepresenter {
 			return null;
 		}
 
-		Dataset dataset = createDataset(_matchSubject(statements, datasetId));
-
-		if (dataset == null) {
-			if (log.isLoggable(Level.SEVERE))
-				log.severe("Failed to create dataset [datasetId = " + datasetId
-						+ "; statements = " + statements + "]");
-			return null;
-		}
-
 		URI temporalEntityId = _getObjectId(statements, id,
 				SDMXDimension.timePeriod);
 
@@ -205,7 +195,7 @@ public class RDFEntityRepresenter {
 				statements, temporalEntityId));
 
 		DatasetObservation ret = new DatasetObservation(id, _getType(
-				statements, id, QB.Observation), dataset, temporalEntity);
+				statements, id, QB.Observation), datasetId, temporalEntity);
 		ret.addTypes(_getTypes(statements, id));
 
 		Set<URI> componentPropertyIds = _getPredicateIds(statements, id,
