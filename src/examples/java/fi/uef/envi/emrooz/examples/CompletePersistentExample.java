@@ -54,7 +54,7 @@ public class CompletePersistentExample {
 				new MemoryStore(new File("/tmp/ks")))),
 				new CassandraDataStore());
 
-		// add(); // Comment to query again after adding the data
+		add(); // Comment to query again after adding the data
 		query();
 
 		e.close();
