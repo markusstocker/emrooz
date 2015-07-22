@@ -10,6 +10,7 @@ import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
 
 import fi.uef.envi.emrooz.Emrooz;
+import fi.uef.envi.emrooz.QueryType;
 import fi.uef.envi.emrooz.api.KnowledgeStore;
 import fi.uef.envi.emrooz.api.ResultSet;
 import fi.uef.envi.emrooz.cassandra.CassandraDataStore;
@@ -60,7 +61,8 @@ public class QueryDatasetObservationsExample {
 
 		Emrooz emrooz = new Emrooz(ks, new CassandraDataStore());
 
-		ResultSet<BindingSet> results = emrooz.evaluate(sparql);
+		ResultSet<BindingSet> results = emrooz.evaluate(
+				QueryType.DATASET_OBSERVATION, sparql);
 
 		while (results.hasNext()) {
 			System.out.println(results.next());

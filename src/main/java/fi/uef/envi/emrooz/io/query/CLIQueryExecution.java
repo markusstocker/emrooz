@@ -14,6 +14,7 @@ import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
 
 import fi.uef.envi.emrooz.Emrooz;
+import fi.uef.envi.emrooz.QueryType;
 import fi.uef.envi.emrooz.cassandra.CassandraDataStore;
 import fi.uef.envi.emrooz.io.licor.GHGSensorObservationReader;
 import fi.uef.envi.emrooz.sesame.SesameKnowledgeStore;
@@ -67,7 +68,8 @@ public class CLIQueryExecution {
 		long start = System.currentTimeMillis();
 
 		try {
-			e.evaluate(FileUtils.readFileToString(queryFileName),
+			e.evaluate(QueryType.SENSOR_OBSERVATION,
+					FileUtils.readFileToString(queryFileName),
 					new SPARQLResultsTSVWriter(System.out));
 		} catch (IOException e1) {
 			e1.printStackTrace();

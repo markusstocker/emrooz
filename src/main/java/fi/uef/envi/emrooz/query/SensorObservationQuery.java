@@ -105,10 +105,6 @@ public class SensorObservationQuery extends ObservationQuery {
 		this.timeTo = time;
 	}
 
-	private void setIsSensorObservationQuery(boolean isSensorObservationQuery) {
-		this.isSensorObservationQuery = isSensorObservationQuery;
-	}
-
 	public static SensorObservationQuery create(URI sensorId, URI propertyId,
 			URI featureId, DateTime timeFrom, DateTime timeTo) {
 		SensorObservationQuery ret = new SensorObservationQuery();
@@ -168,7 +164,6 @@ public class SensorObservationQuery extends ObservationQuery {
 					if (o instanceof URI)
 						sensorId = (URI) o;
 				}
-				ret.setIsSensorObservationQuery(true);
 			} else if (p.equals(SSN.observedProperty)) {
 				Value o = object.getValue();
 				if (o == null) {

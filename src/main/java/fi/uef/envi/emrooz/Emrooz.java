@@ -53,7 +53,6 @@ import fi.uef.envi.emrooz.entity.time.Instant;
 import fi.uef.envi.emrooz.entity.time.TemporalEntity;
 import fi.uef.envi.emrooz.query.DatasetObservationQuery;
 import fi.uef.envi.emrooz.query.EmptyResultSet;
-import fi.uef.envi.emrooz.query.ObservationQuery;
 import fi.uef.envi.emrooz.query.QueryFactory;
 import fi.uef.envi.emrooz.query.SensorObservationQuery;
 import fi.uef.envi.emrooz.query.SensorObservationQueryRewriter;
@@ -365,42 +364,46 @@ public class Emrooz {
 		ds.addDatasetObservation(datasetId, frequency, timePeriod, statements);
 	}
 
-	public ResultSet<BindingSet> evaluate(String query) {
-		return evaluate(QueryFactory.createParsedQuery(query));
+	public ResultSet<BindingSet> evaluate(QueryType type, String query) {
+		return evaluate(type, QueryFactory.createParsedQuery(query));
 	}
 
-	public void evaluate(String query, TupleQueryResultHandler handler) {
-		evaluate(QueryFactory.createParsedQuery(query), handler);
+	public void evaluate(QueryType type, String query,
+			TupleQueryResultHandler handler) {
+		evaluate(type, QueryFactory.createParsedQuery(query), handler);
 	}
 
-	private ResultSet<BindingSet> evaluate(ParsedQuery query) {
-		return evaluate(query, QueryFactory.createObservationQuery(query));
-	}
-
-	private ResultSet<BindingSet> evaluate(ParsedQuery original,
-			ObservationQuery query) {
-		if (query.isSensorObservationQuery())
-			return evaluate(original, (SensorObservationQuery) query);
-		if (query.isDatasetObservationQuery())
-			return evaluate(original, (DatasetObservationQuery) query);
+	private ResultSet<BindingSet> evaluate(QueryType type, ParsedQuery query) {
+		if (type.equals(QueryType.SENSOR_OBSERVATION))
+			return evaluate(query,
+					QueryFactory.createSensorObservationQuery(query));
+		if (type.equals(QueryType.DATASET_OBSERVATION))
+			return evaluate(query,
+					QueryFactory.createDatasetObservationQuery(query));
 
 		if (log.isLoggable(Level.SEVERE))
-			log.severe("Failed to deterine observation query type, sensor or dataset [original = "
-					+ original + "; query = " + query + "]");
+			log.severe("Failed to deterine observation query type, sensor or dataset [query = "
+					+ query + "]");
 
 		return new EmptyResultSet<BindingSet>();
 	}
 
-	private void evaluate(ParsedQuery query, TupleQueryResultHandler handler) {
-		evaluate(query, QueryFactory.createObservationQuery(query), handler);
-	}
-
-	private void evaluate(ParsedQuery original, ObservationQuery query,
+	private void evaluate(QueryType type, ParsedQuery query,
 			TupleQueryResultHandler handler) {
-		if (query instanceof SensorObservationQuery)
-			evaluate(original, (SensorObservationQuery) query, handler);
-		else
-			evaluate(original, (DatasetObservationQuery) query, handler);
+		if (type.equals(QueryType.SENSOR_OBSERVATION)) {
+			evaluate(query, QueryFactory.createSensorObservationQuery(query),
+					handler);
+			return;
+		}
+		if (type.equals(QueryType.DATASET_OBSERVATION)) {
+			evaluate(query, QueryFactory.createDatasetObservationQuery(query),
+					handler);
+			return;
+		}
+
+		if (log.isLoggable(Level.SEVERE))
+			log.severe("Failed to deterine observation query type, sensor or dataset [query = "
+					+ query + "]");
 	}
 
 	private ResultSet<BindingSet> evaluate(ParsedQuery original,

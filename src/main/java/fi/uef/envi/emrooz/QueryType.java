@@ -3,13 +3,11 @@
  * All rights reserved.
  */
 
-package fi.uef.envi.emrooz.query;
-
-import fi.uef.envi.emrooz.api.Query;
+package fi.uef.envi.emrooz;
 
 /**
  * <p>
- * Title: ObservationQuery
+ * Title: QueryType
  * </p>
  * <p>
  * Description:
@@ -24,6 +22,9 @@ import fi.uef.envi.emrooz.api.Query;
  * @author Markus Stocker
  */
 
-public abstract class ObservationQuery implements Query {
-
+public enum QueryType {
+	
+	SENSOR_OBSERVATION,
+	DATASET_OBSERVATION,
+	
 }

@@ -38,6 +38,9 @@ public class QUDTUnit extends AbstractVocabulary {
 	/** http://qudt.org/vocab/unit#DegreeCelsius */
 	public static final URI DegreeCelsius = _("DegreeCelsius");
 	
+	/** http://qudt.org/vocab/unit#MeterPerSecondSquared */
+	public static final URI MeterPerSecondSquared = _("MeterPerSecondSquared");
+	
 	/** http://qudt.org/vocab/unit#MilliMolePerCubicMeter (added) */
 	public static final URI MilliMolePerCubicMeter = _("MilliMolePerCubicMeter");
 	

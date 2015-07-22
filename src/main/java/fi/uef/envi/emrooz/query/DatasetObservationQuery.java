@@ -83,10 +83,6 @@ public class DatasetObservationQuery extends ObservationQuery {
 		this.timeTo = time;
 	}
 
-	private void setIsDatsetObservationQuery(boolean isDatsetObservationQuery) {
-		this.isDatsetObservationQuery = isDatsetObservationQuery;
-	}
-
 	public static DatasetObservationQuery create(URI datasetId,
 			DateTime timeFrom, DateTime timeTo) {
 		DatasetObservationQuery ret = new DatasetObservationQuery();
@@ -142,7 +138,6 @@ public class DatasetObservationQuery extends ObservationQuery {
 					if (o instanceof URI)
 						datasetId = (URI) o;
 				}
-				ret.setIsDatsetObservationQuery(true);
 			} else if (p.equals(Time.inXSDDateTime)) {
 				inXSDDateTimeVar = object;
 			}

@@ -35,6 +35,7 @@ import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
 
 import fi.uef.envi.emrooz.Emrooz;
+import fi.uef.envi.emrooz.QueryType;
 import fi.uef.envi.emrooz.api.DataStore;
 import fi.uef.envi.emrooz.api.QueryHandler;
 import fi.uef.envi.emrooz.api.ResultSet;
@@ -77,7 +78,8 @@ public class EmroozTest {
 				new MemoryStore())), new ThisDataStore());
 		em.loadKnowledgeBase(new File(kb));
 		em.addSensorObservations(statements);
-		ResultSet<BindingSet> rs = em.evaluate(query);
+		ResultSet<BindingSet> rs = em.evaluate(QueryType.SENSOR_OBSERVATION,
+				query);
 
 		Set<Map<String, String>> a = new HashSet<Map<String, String>>();
 
@@ -109,7 +111,7 @@ public class EmroozTest {
 
 		Map<URI, Map<URI, Map<URI, Map<DateTime, Set<Statement>>>>> sensorObservationStore;
 		Map<URI, Map<DateTime, Set<Statement>>> datasetObservationStore;
-		
+
 		public ThisDataStore() {
 			this.sensorObservationStore = new HashMap<URI, Map<URI, Map<URI, Map<DateTime, Set<Statement>>>>>();
 			this.datasetObservationStore = new HashMap<URI, Map<DateTime, Set<Statement>>>();
@@ -155,14 +157,16 @@ public class EmroozTest {
 		public QueryHandler<Statement> createSensorObservationQueryHandler(
 				Map<SensorObservationQuery, Frequency> queries) {
 			return new ThisSensorObservationQueryHandler(
-					Collections.unmodifiableMap(sensorObservationStore), queries);
+					Collections.unmodifiableMap(sensorObservationStore),
+					queries);
 		}
 
 		@Override
 		public QueryHandler<Statement> createDatasetObservationQueryHandler(
 				Map<DatasetObservationQuery, QuantityValue> queries) {
 			return new ThisDatasetObservationQueryHandler(
-					Collections.unmodifiableMap(datasetObservationStore), queries);
+					Collections.unmodifiableMap(datasetObservationStore),
+					queries);
 		}
 
 		@Override
