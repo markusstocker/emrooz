@@ -51,7 +51,8 @@ import fi.uef.envi.emrooz.vocabulary.QUDTUnit;
  * @author Markus Stocker
  */
 
-public class CSVSensorObservationReader extends AbstractSensorObservationReader {
+public class CSVSensorObservationReader extends
+		AbstractObservationReader<SensorObservation> {
 
 	private Iterator<String> lines;
 	private URI sensorId;
@@ -203,22 +204,22 @@ public class CSVSensorObservationReader extends AbstractSensorObservationReader 
 		Emrooz e = new Emrooz(ks, ds);
 
 		long start = System.currentTimeMillis();
-		
+
 		status("Processing: " + file);
-		
+
 		CSVSensorObservationReader reader = new CSVSensorObservationReader(
 				file, ns, sensorId, propertyId, featureId, unitId);
 
 		long numOfObservations = 0;
-		
+
 		while (reader.hasNext()) {
 			e.add(reader.next());
 		}
-		
+
 		long end = System.currentTimeMillis();
 
 		e.close();
-		
+
 		summary(start, end, numOfObservations, dataStoreHost);
 	}
 

@@ -5,22 +5,12 @@
 
 package fi.uef.envi.emrooz.io.licor;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 import org.apache.commons.io.FilenameUtils;
 import org.joda.time.DateTime;
@@ -41,7 +31,6 @@ import fi.uef.envi.emrooz.entity.ssn.Sensor;
 import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
 import fi.uef.envi.emrooz.entity.ssn.SensorOutput;
 import fi.uef.envi.emrooz.entity.time.Instant;
-import fi.uef.envi.emrooz.io.AbstractSensorObservationReader;
 import fi.uef.envi.emrooz.sesame.SesameKnowledgeStore;
 import fi.uef.envi.emrooz.vocabulary.QUDTUnit;
 import fi.uef.envi.emrooz.vocabulary.SWEETMatrCompound;
@@ -65,18 +54,8 @@ import fi.uef.envi.emrooz.vocabulary.SWEETPropMass;
  * @author Markus Stocker
  */
 
-public class GHGSensorObservationReader extends AbstractSensorObservationReader {
-
-	private static final String COLUMN_SEPARATOR = "\t";
-	private static final int DATA_ROW = 8;
-	private static final int TIMEZONE_ROW = 6;
-	private static final int TIMEZONE_COL = 1;
-	private static final int DATE_COL = 6;
-	private static final int TIME_COL = 7;
-	private static final int CARBON_DIOXIDE_COL = 10; // Density in mmol m-3
-	private static final int WATER_COL = 12; // Density in mmol m-3
-	private static final int METHANE_COL = 33; // Density in mmol m-3
-	private static final double SAMPLING_FREQUENCY = 10.0;
+public class GHGSensorObservationReader extends
+		AbstractGHGObservationReader<SensorObservation> {
 
 	// The gas analyzers make in-situ *density* [mmol m-3] measurement of the
 	// gas (CO2, CH4, H2O) (Source:
@@ -95,7 +74,6 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 	private Sensor methaneAnalyzer;
 
 	private SensorObservation next;
-	private Queue<File> files;
 	private Queue<SensorObservation> observations;
 
 	private static final Logger log = Logger
@@ -114,8 +92,6 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 
 		this.carbonDioxideAndWaterAnalyzer = carbonDioxideAndWaterAnalyzer;
 		this.methaneAnalyzer = methaneAnalyzer;
-
-		this.files = new LinkedList<File>();
 		this.observations = new LinkedList<SensorObservation>();
 
 		listFiles(file);
@@ -134,11 +110,17 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 			if (log.isLoggable(Level.INFO))
 				log.info("Processing file [file = " + file + "]");
 
-			List<String> lines = readFile(file);
+			String fileName = file.getName();
+			String fileBaseName = FilenameUtils.getBaseName(fileName);
+			String dataFileName = fileBaseName + ".data";
+			
+			List<String> lines = readFile(file, fileName, dataFileName);
 
-			DateTimeZone dateTimeZone = getDateTimeZone(lines.get(TIMEZONE_ROW));
+			DateTimeZone dateTimeZone = getDateTimeZone(
+					lines.get(GAS_ANALYZER_TIMEZONE_ROW),
+					GAS_ANALYZER_TIMEZONE_COL);
 
-			for (int i = DATA_ROW; i < lines.size(); i++) {
+			for (int i = GAS_ANALYZER_DATA_ROW; i < lines.size(); i++) {
 				String line = lines.get(i);
 				String[] cols = line.split(COLUMN_SEPARATOR);
 
@@ -149,17 +131,30 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 					continue;
 				}
 
-				DateTime dateTime = getDateTime(cols[DATE_COL], cols[TIME_COL],
-						dateTimeZone);
+				DateTime dateTime = getDateTime(cols[GAS_ANALYZER_DATE_COL],
+						cols[GAS_ANALYZER_TIME_COL], dateTimeZone);
 
-				observations.add(getSensorObservation(
-						carbonDioxideAndWaterAnalyzer, density, carbonDioxide,
-						dateTime, Double.valueOf(cols[CARBON_DIOXIDE_COL])));
-				observations.add(getSensorObservation(
-						carbonDioxideAndWaterAnalyzer, density, water,
-						dateTime, Double.valueOf(cols[WATER_COL])));
-				observations.add(getSensorObservation(methaneAnalyzer, density,
-						methane, dateTime, Double.valueOf(cols[METHANE_COL])));
+				observations
+						.add(getSensorObservation(
+								carbonDioxideAndWaterAnalyzer,
+								density,
+								carbonDioxide,
+								dateTime,
+								Double.valueOf(cols[GAS_ANALYZER_CARBON_DIOXIDE_MOLAR_CONCENTRATION_COL])));
+				observations
+						.add(getSensorObservation(
+								carbonDioxideAndWaterAnalyzer,
+								density,
+								water,
+								dateTime,
+								Double.valueOf(cols[GAS_ANALYZER_WATER_VAPOR_MOLAR_CONCENTRATION_COL])));
+				observations
+						.add(getSensorObservation(
+								methaneAnalyzer,
+								density,
+								methane,
+								dateTime,
+								Double.valueOf(cols[GAS_ANALYZER_METHANE_MOLAR_CONCENTRATION_COL])));
 			}
 
 			next = observations.poll();
@@ -172,115 +167,6 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 	@Override
 	public SensorObservation next() {
 		return next;
-	}
-
-	private void listFiles(File file) {
-		if (file.isFile()) {
-			// It is a file
-			considerFile(file);
-			return;
-		}
-
-		// It is a directory
-		File[] lof = file.listFiles();
-		Arrays.sort(lof);
-
-		for (File f : lof)
-			considerFile(f);
-	}
-
-	private void considerFile(File file) {
-		String fileName = file.getName();
-
-		if (FilenameUtils.getExtension(fileName).equals("ghg"))
-			files.add(file);
-	}
-
-	private List<String> readFile(File file) {
-		List<String> ret = new ArrayList<String>();
-
-		String fileName = file.getName();
-		String fileBaseName = FilenameUtils.getBaseName(fileName);
-		String dataFileName = fileBaseName + ".data";
-
-		try {
-			String line;
-			ZipFile zip = new ZipFile(file);
-
-			try {
-				for (Enumeration<? extends ZipEntry> e = zip.entries(); e
-						.hasMoreElements();) {
-					ZipEntry entry = e.nextElement();
-
-					String zipEntryName = entry.getName();
-
-					if (!zipEntryName.equals(dataFileName))
-						continue;
-
-					try (BufferedReader br = new BufferedReader(
-							new InputStreamReader(zip.getInputStream(entry)))) {
-						while ((line = br.readLine()) != null) {
-							ret.add(line);
-						}
-					}
-
-				}
-			} catch (IOException e2) {
-				throw new RuntimeException(e2);
-			} finally {
-				zip.close();
-			}
-		} catch (IOException e1) {
-			throw new RuntimeException(e1);
-		}
-
-		if (ret.isEmpty()) {
-			if (log.isLoggable(Level.WARNING))
-				log.warning("Failed to read lines of file [fileName = "
-						+ fileName + "; dataFileName = " + dataFileName + "]");
-		}
-
-		return ret;
-	}
-
-	private DateTimeZone getDateTimeZone(String line) {
-		if (line == null)
-			return null;
-		if (line.length() == 0)
-			return null;
-
-		DateTimeZone ret = null;
-		String[] cols = line.split(COLUMN_SEPARATOR);
-		String col = cols[TIMEZONE_COL];
-
-		Pattern p = Pattern.compile("(GMT\\+)(\\d+)");
-		Matcher m = p.matcher(col);
-
-		if (m.find()) {
-			String hoursOffset = m.group(2);
-			ret = DateTimeZone.forOffsetHours(Integer.valueOf(hoursOffset));
-		} else {
-			if (log.isLoggable(Level.WARNING))
-				log.warning("Failed to read date time zone [col = " + col + "]");
-		}
-
-		return ret;
-	}
-
-	private DateTime getDateTime(String date, String time, DateTimeZone zone) {
-		// Example: date = 2015-01-06; time = 16:59:47:000
-		String[] dateEl = date.split("-");
-		String[] timeEl = time.split(":");
-
-		int year = Integer.valueOf(dateEl[0]);
-		int month = Integer.valueOf(dateEl[1]);
-		int day = Integer.valueOf(dateEl[2]);
-		int hour = Integer.valueOf(timeEl[0]);
-		int min = Integer.valueOf(timeEl[1]);
-		int sec = Integer.valueOf(timeEl[2]);
-		int msec = Integer.valueOf(timeEl[3]);
-
-		return new DateTime(year, month, day, hour, min, sec, msec, zone);
 	}
 
 	private SensorObservation getSensorObservation(Sensor sensor,
@@ -326,12 +212,14 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 		Sensor carbonDioxideAndWaterAnalyzer = new Sensor(
 				carbonDioxideAndWaterAnalyzerId, density,
 				new MeasurementCapability(_id(ns), new Frequency(_id(ns),
-						new QuantityValue(_id(ns), SAMPLING_FREQUENCY,
-								new Unit(QUDTUnit.Hertz)))));
+						new QuantityValue(_id(ns),
+								GAS_ANALYZER_SAMPLING_FREQUENCY, new Unit(
+										QUDTUnit.Hertz)))));
 		Sensor methaneAnalyzer = new Sensor(methaneAnalyzerId, density,
 				new MeasurementCapability(_id(ns), new Frequency(_id(ns),
-						new QuantityValue(_id(ns), SAMPLING_FREQUENCY,
-								new Unit(QUDTUnit.Hertz)))));
+						new QuantityValue(_id(ns),
+								GAS_ANALYZER_SAMPLING_FREQUENCY, new Unit(
+										QUDTUnit.Hertz)))));
 
 		SesameKnowledgeStore ks = new SesameKnowledgeStore(new SailRepository(
 				new MemoryStore(knowledgeStoreFile)));
@@ -385,5 +273,5 @@ public class GHGSensorObservationReader extends AbstractSensorObservationReader 
 
 		System.exit(0);
 	}
-	
+
 }

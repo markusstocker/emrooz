@@ -5,11 +5,11 @@
 
 package fi.uef.envi.emrooz.api;
 
-import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
+import fi.uef.envi.emrooz.entity.qb.DatasetObservation;
 
 /**
  * <p>
- * Title: SensorObservationReader
+ * Title: DatasetObservationReader
  * </p>
  * <p>
  * Description:
@@ -24,13 +24,13 @@ import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
  * @author Markus Stocker
  */
 
-public interface SensorObservationReader extends
-		ObservationReader<SensorObservation> {
+public interface DatasetObservationReader extends
+		ObservationReader<DatasetObservation> {
 
 	@Override
 	public boolean hasNext();
 
 	@Override
-	public SensorObservation next();
+	public DatasetObservation next();
 
 }

@@ -45,17 +45,23 @@ public class CLIQueryExecution {
 		if (args.length == 0)
 			help();
 
+		boolean isSensorQuery = false;
 		File queryFileName = null;
 		File knowledgeStoreFile = null;
 		String dataStoreHost = "localhost";
 
 		for (int i = 0; i < args.length; i++) {
-			if (args[i].equals("-q"))
+			if (args[i].equals("-sq")) {
 				queryFileName = new File(args[++i]);
-			if (args[i].equals("-ks"))
+				isSensorQuery = true;
+			} else if (args[i].equals("-dq")) {
+				queryFileName = new File(args[++i]);
+				isSensorQuery = false;
+			} else if (args[i].equals("-ks")) {
 				knowledgeStoreFile = new File(args[++i]);
-			if (args[i].equals("-ds"))
+			} else if (args[i].equals("-ds")) {
 				dataStoreHost = args[++i];
+			}
 		}
 
 		if (queryFileName == null || knowledgeStoreFile == null)
@@ -68,9 +74,14 @@ public class CLIQueryExecution {
 		long start = System.currentTimeMillis();
 
 		try {
-			e.evaluate(QueryType.SENSOR_OBSERVATION,
-					FileUtils.readFileToString(queryFileName),
-					new SPARQLResultsTSVWriter(System.out));
+			if (isSensorQuery)
+				e.evaluate(QueryType.SENSOR_OBSERVATION,
+						FileUtils.readFileToString(queryFileName),
+						new SPARQLResultsTSVWriter(System.out));
+			else
+				e.evaluate(QueryType.DATASET_OBSERVATION,
+						FileUtils.readFileToString(queryFileName),
+						new SPARQLResultsTSVWriter(System.out));
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
@@ -87,7 +98,7 @@ public class CLIQueryExecution {
 
 		sb.append(GHGSensorObservationReader.class.getName() + LINE_SEPARATOR);
 		sb.append("Arguments:" + LINE_SEPARATOR);
-		sb.append("  -q  [file name]       SPARQL query file name"
+		sb.append("  -sq/-dq  [file name]  SPARQL query file name"
 				+ LINE_SEPARATOR);
 		sb.append("  -ks [directory name]  Knowledge store data directory (e.g. /tmp/ks)"
 				+ LINE_SEPARATOR);

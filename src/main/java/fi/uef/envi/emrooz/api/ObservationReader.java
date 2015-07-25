@@ -5,11 +5,11 @@
 
 package fi.uef.envi.emrooz.api;
 
-import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
+import java.util.Iterator;
 
 /**
  * <p>
- * Title: SensorObservationReader
+ * Title: ObservationReader
  * </p>
  * <p>
  * Description:
@@ -24,13 +24,12 @@ import fi.uef.envi.emrooz.entity.ssn.SensorObservation;
  * @author Markus Stocker
  */
 
-public interface SensorObservationReader extends
-		ObservationReader<SensorObservation> {
+public interface ObservationReader<T> extends Iterator<T> {
 
 	@Override
 	public boolean hasNext();
-
+	
 	@Override
-	public SensorObservation next();
-
+	public T next();
+	
 }

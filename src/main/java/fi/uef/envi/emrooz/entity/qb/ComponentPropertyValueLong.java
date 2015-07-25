@@ -9,7 +9,7 @@ import fi.uef.envi.emrooz.entity.ComponentPropertyValueVisitor;
 
 /**
  * <p>
- * Title: ComponentPropertyValueDouble
+ * Title: ComponentPropertyValueLong
  * </p>
  * <p>
  * Description:
@@ -24,12 +24,12 @@ import fi.uef.envi.emrooz.entity.ComponentPropertyValueVisitor;
  * @author Markus Stocker
  */
 
-public class ComponentPropertyValueDouble extends
+public class ComponentPropertyValueLong extends
 		ComponentPropertyValuePrimitive {
 
-	private Double value;
+	private Long value;
 
-	public ComponentPropertyValueDouble(Double value) {
+	public ComponentPropertyValueLong(Long value) {
 		this.value = value;
 	}
 
@@ -38,7 +38,7 @@ public class ComponentPropertyValueDouble extends
 	}
 
 	@Override
-	public Double getValue() {
+	public Long getValue() {
 		return value;
 	}
 
@@ -56,7 +56,7 @@ public class ComponentPropertyValueDouble extends
 		if (getClass() != obj.getClass())
 			return false;
 
-		ComponentPropertyValueDouble other = (ComponentPropertyValueDouble) obj;
+		ComponentPropertyValueLong other = (ComponentPropertyValueLong) obj;
 
 		if (value == null) {
 			if (other.value != null)
@@ -69,7 +69,7 @@ public class ComponentPropertyValueDouble extends
 
 	@Override
 	public String toString() {
-		return "ComponentPropertyValueDouble [value = " + value + "]";
+		return "ComponentPropertyValueLong [value = " + value + "]";
 	}
 
 }

@@ -1,0 +1,71 @@
+LI-7500A Open Path CO2/H2O Analyzer
+===================================
+0 	DATAH			datah					String
+1 	Seconds			seconds					Long
+2 	Nanoseconds		nanoseconds				Integer
+3 	Sequence Number		sequenceNumber				Long
+4 	Diagnostic Value	diagnosticValue				Integer
+5 	Diagnostic Value 2	diagnosticValue2			Integer
+6 	Date			date					String
+7 	Time			time					String
+8 	CO2 Absorptance		carbonDioxideAbsorptance		Double
+9 	H2O Absorptance		waterVaporAbsorptance			Double
+10	CO2 (mmol/m^3)		carbonDioxideMolarConcentration		Double
+11	CO2 (mg/m^3)		carbonDioxideMassConcentration		Double
+12	H2O (mmol/m^3)		waterVaporMolarConcentration		Double
+13	H2O (g/m^3)		waterVaporMassConcentration		Double
+14	Temperature (C)		temperature				Double
+15	Pressure (kPa)		pressure				Double
+16	Aux 1 - U (m/s)		windSpeedU				Double
+17	Aux 2 - V (m/s)		windSpeedV				Double
+18	Aux 3 - W (m/s)		windSpeedW				Double
+19	Aux 4 - Ts (C)		sonicTemperature			Double
+20	Cooler Voltage (V)	coolerVoltage				Double
+21	Vin SmartFlux (V)	inputVoltageSmartFlux			Double
+22	CO2 (umol/mol)		carbonDioxideMoleFraction		Double
+23	H2O (mmol/mol)		waterVaporMoleFraction			Double
+24	Dew Point (C)		dewPoint				Double
+25	CO2 Signal Strength	carbonDioxideAnalyzerSignalStrength	Double
+26	H2O Sample		waterVaporAnalyzerSample		Double
+27	H2O Reference		waterVaporAnalyzerReference		Double
+28	CO2 Sample		carbonDioxideAnalyzerSample		Double
+29	CO2 Reference		carbonDioxideAnalyzerReference		Double
+30	CH4 Seconds		methaneAnalyzerSeconds			Long
+31	CH4 Nanoseconds		methaneAnalyzerNanoseconds		Integer
+32	CH4 (umol/mol)		methaneMoleFraction			Double
+33	CH4 (mmol/m^3)		methaneMolarConcentration		Double
+34	CH4 Temperature		methaneAnalyzerTemperature		Double
+35	CH4 Pressure		methaneAnalyzerPressure			Double
+36	CH4 Signal Strength	methaneAnalyzerSignalStrength		Double
+37	CH4 Diagnostic Value	methaneAnalyzerDiagnosticValue		Integer
+38	CH4 Drop Rate (%)	methaneAnalyzerDropRate			Double
+39	CHK			check					Integer
+
+LERS_BIOMET
+===========	
+0	DATAH			datah					String
+1	DATE			date					String
+2	TIME			time					String
+3	LOGGERTEMP(C)		loggerTemperature			Double
+4	LOGGERVIN(V)		loggerInputVoltage			Double
+5	PPFD(umol/m^2/s^1)	photosyntheticPhotonFluxDensity		Double
+6	RAIN(mm)		rainfall				Double
+7	RG(W/m^2)		globalSolarRadiation			Double
+8	RH(%)			relativeHumidity			Double
+9	RN(W/m^2)		surfaceNetRadiation			Double
+10	SHF1(W/m^2)		soilHeatFlux1				Double
+11	SHF2(W/m^2)		soilHeatFlux2				Double
+12	SHF3(W/m^2)		soilHeatFlux3				Double
+13	SHFSENS1(other)		soilHeatFluxSens1			Double
+14	SHFSENS2(other)		soilHeatFluxSens2			Double
+15	SHFSENS3(other)		soilHeatFluxSens3			Double
+16	SWC1(m^3/m^3)		soilWaterContent1			Double
+17	SWC2(m^3/m^3)		soilWaterContent2			Double
+18	SWC3(m^3/m^3)		soilWaterContent3			Double
+19	TA(C)			airTemperature				Double
+20	TS1(C)			soilTemperature1			Double
+21	TS2(C)			soilTemperature2			Double
+22	TS3(C)			soilTemperature3			Double
+23	CHK			check					Integer
+
+

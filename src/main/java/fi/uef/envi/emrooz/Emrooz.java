@@ -30,6 +30,8 @@ import fi.uef.envi.emrooz.entity.qb.AttributeProperty;
 import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValue;
 import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueDouble;
 import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueEntity;
+import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueInteger;
+import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueLong;
 import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueString;
 import fi.uef.envi.emrooz.entity.qb.ComponentSpecification;
 import fi.uef.envi.emrooz.entity.qb.DataStructureDefinition;
@@ -728,6 +730,18 @@ public class Emrooz {
 		public void visit(ComponentPropertyValueDouble value) {
 			// TODO Auto-generated method stub
 
+		}
+
+		@Override
+		public void visit(ComponentPropertyValueInteger value) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void visit(ComponentPropertyValueLong value) {
+			// TODO Auto-generated method stub
+			
 		}
 
 	}

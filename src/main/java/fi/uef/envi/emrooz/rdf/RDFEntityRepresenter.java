@@ -38,6 +38,8 @@ import fi.uef.envi.emrooz.entity.qb.ComponentProperty;
 import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValue;
 import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueDouble;
 import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueEntity;
+import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueInteger;
+import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueLong;
 import fi.uef.envi.emrooz.entity.qb.ComponentPropertyValueString;
 import fi.uef.envi.emrooz.entity.qb.ComponentSpecification;
 import fi.uef.envi.emrooz.entity.qb.DataStructureDefinition;
@@ -1697,6 +1699,30 @@ public class RDFEntityRepresenter {
 			statements.add(_statement(id, componentPropertyId, vf
 					.createLiteral(value.getValue().toString(),
 							XMLSchema.DOUBLE)));
+		}
+
+		@Override
+		public void visit(ComponentPropertyValueInteger value) {
+			if (id == null || componentPropertyId == null)
+				throw new NullPointerException("[id = " + id
+						+ "; componentPropertyId = " + componentPropertyId
+						+ "]");
+
+			statements.add(_statement(id, componentPropertyId, vf
+					.createLiteral(value.getValue().toString(),
+							XMLSchema.INTEGER)));
+		}
+
+		@Override
+		public void visit(ComponentPropertyValueLong value) {
+			if (id == null || componentPropertyId == null)
+				throw new NullPointerException("[id = " + id
+						+ "; componentPropertyId = " + componentPropertyId
+						+ "]");
+
+			statements
+					.add(_statement(id, componentPropertyId, vf.createLiteral(
+							value.getValue().toString(), XMLSchema.LONG)));
 		}
 	}
 

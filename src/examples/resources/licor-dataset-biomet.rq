@@ -1,0 +1,23 @@
+prefix time: <http://www.w3.org/2006/time#>
+prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+prefix qudt: <http://qudt.org/schema/qudt#>
+prefix qb: <http://purl.org/linked-data/cube#>
+prefix licor: <http://www.licor.com/property#>
+prefix sdmx-dimension: <http://purl.org/linked-data/sdmx/2009/dimension#>
+
+select ?time ?airTemperature ?rainfall ?relativeHumidity ?soilHeatFlux1 ?soilWaterContent1 ?soilTemperature1
+where {
+[
+    qb:dataSet <http://example.org#d2> ;
+    sdmx-dimension:timePeriod [ time:inXSDDateTime ?time ] ;
+    licor:airTemperature ?airTemperature ;
+    licor:rainfall ?rainfall ;
+    licor:relativeHumidity ?relativeHumidity ;
+    licor:soilHeatFlux1 ?soilHeatFlux1 ;
+    licor:soilWaterContent1 ?soilWaterContent1 ;
+    licor:soilTemperature1 ?soilTemperature1
+] 
+    filter (?time >= "2015-01-07T00:00:00.000+06:00"^^xsd:dateTime 
+    	&& ?time < "2015-01-07T00:00:01.000+06:00"^^xsd:dateTime)
+}
+order by asc(?time)

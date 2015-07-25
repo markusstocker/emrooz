@@ -1,0 +1,23 @@
+prefix time: <http://www.w3.org/2006/time#>
+prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+prefix qudt: <http://qudt.org/schema/qudt#>
+prefix qb: <http://purl.org/linked-data/cube#>
+prefix licor: <http://www.licor.com/property#>
+prefix sdmx-dimension: <http://purl.org/linked-data/sdmx/2009/dimension#>
+
+select ?time ?carbonDioxideMoleFraction ?waterVaporMoleFraction ?methaneMoleFraction ?windSpeedU ?windSpeedV ?windSpeedW
+where {
+[
+    qb:dataSet <http://example.org#d1> ;
+    sdmx-dimension:timePeriod [ time:inXSDDateTime ?time ] ;
+    licor:carbonDioxideMoleFraction ?carbonDioxideMoleFraction ;
+    licor:waterVaporMoleFraction ?waterVaporMoleFraction ;
+    licor:methaneMoleFraction ?methaneMoleFraction ;
+    licor:windSpeedU ?windSpeedU ;
+    licor:windSpeedV ?windSpeedV ;
+    licor:windSpeedW ?windSpeedW
+] 
+    filter (?time >= "2015-01-07T00:00:00.000+06:00"^^xsd:dateTime 
+    	&& ?time < "2015-01-07T00:00:01.000+06:00"^^xsd:dateTime)
+}
+order by asc(?time)
