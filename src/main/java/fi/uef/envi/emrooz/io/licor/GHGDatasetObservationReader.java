@@ -170,46 +170,47 @@ public class GHGDatasetObservationReader extends
 						+ cols.length + "]");
 				continue;
 			}
-			
+
 			value = value.replaceAll("\\s", "");
 
-			try {
-				if (type.equals("Double"))
+			if (type.equals("Double")) {
+				try {
 					ret.addComponent(
 							property,
 							new ComponentPropertyValueDouble(Double
 									.valueOf(value)));
-				else if (type.equals("String"))
+				} catch (NumberFormatException e) {
 					ret.addComponent(property,
-							new ComponentPropertyValueString(value));
-				else if (type.equals("Long"))
+							new ComponentPropertyValueDouble(Double.NaN));
+				}
+			} else if (type.equals("String")) {
+				ret.addComponent(property, new ComponentPropertyValueString(
+						value));
+			} else if (type.equals("Long")) {
+				try {
 					ret.addComponent(property, new ComponentPropertyValueLong(
 							Long.valueOf(value)));
-				else if (type.equals("Integer"))
+				} catch (NumberFormatException e) {
+					ret.addComponent(property,
+							new ComponentPropertyValueDouble(Double.NaN));
+				}
+			} else if (type.equals("Integer")) {
+				try {
 					ret.addComponent(
 							property,
 							new ComponentPropertyValueInteger(Integer
 									.valueOf(value)));
-				else {
-					if (log.isLoggable(Level.SEVERE))
-						log.severe("Unsupported component property value type [type = "
-								+ type + "]");
+				} catch (NumberFormatException e) {
+					ret.addComponent(property,
+							new ComponentPropertyValueDouble(Double.NaN));
 				}
-			} catch (NumberFormatException e) {
-				log.severe("Failed to create value of appropriate type [value = "
-						+ value
-						+ "; type = "
-						+ type
-						+ "; nrow = "
-						+ nrow
-						+ "; ncol = "
-						+ i
-						+ "; dataFileName = "
-						+ dataFileName
-						+ "]");
+			} else {
+				if (log.isLoggable(Level.SEVERE))
+					log.severe("Unsupported component property value type [type = "
+							+ type + "]");
 			}
 		}
-		
+
 		return ret;
 	}
 
