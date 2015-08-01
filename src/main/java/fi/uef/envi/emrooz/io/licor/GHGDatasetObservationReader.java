@@ -17,7 +17,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.openrdf.model.URI;
 import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.sail.memory.MemoryStore;
+import org.openrdf.sail.nativerdf.NativeStore;
 
 import fi.uef.envi.emrooz.Emrooz;
 import fi.uef.envi.emrooz.cassandra.CassandraDataStore;
@@ -245,7 +245,7 @@ public class GHGDatasetObservationReader extends
 			help();
 
 		SesameKnowledgeStore ks = new SesameKnowledgeStore(new SailRepository(
-				new MemoryStore(knowledgeStoreFile)));
+				new NativeStore(knowledgeStoreFile)));
 		ks.addDataset(new Dataset(gasDatasetId, new QuantityValue(_id(ns),
 				GAS_ANALYZER_SAMPLING_FREQUENCY, new Unit(QUDTUnit.Hertz))));
 		ks.addDataset(new Dataset(biometDatasetId, new QuantityValue(_id(ns),

@@ -5,9 +5,12 @@
 
 package fi.uef.envi.emrooz.examples;
 
+import java.io.File;
+
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
+import org.openrdf.sail.nativerdf.NativeStore;
 
 import fi.uef.envi.emrooz.Emrooz;
 import fi.uef.envi.emrooz.api.KnowledgeStore;
@@ -38,9 +41,10 @@ public class AddSensorObservationExample {
 	public static void main(String[] args) {
 		EntityFactory f = EntityFactory.getInstance("http://example.org#");
 
-		Repository r = new SailRepository(new MemoryStore());
+		// Repository r = new SailRepository(new MemoryStore());
+		Repository r = new SailRepository(new NativeStore(new File("/tmp/ks")));
 		KnowledgeStore ks = new SesameKnowledgeStore(r);
-		
+
 		ks.addSensor(f.createSensor("thermometer", "temperature", "air", 1.0));
 		ks.addSensor(f.createSensor("hygrometer", "humidity", "air", 1.0));
 
@@ -55,7 +59,8 @@ public class AddSensorObservationExample {
 				"air", 7.4, f.createUnit(QUDTUnit.DegreeCelsius),
 				"2015-04-21T01:30:00.000+03:00"));
 		emrooz.add(f.createSensorObservation("hygrometer", "humidity", "air",
-				84.0, QUDTUnit.RelativeHumidity, "2015-04-21T01:30:00.000+03:00"));
+				84.0, QUDTUnit.RelativeHumidity,
+				"2015-04-21T01:30:00.000+03:00"));
 
 		emrooz.close();
 	}

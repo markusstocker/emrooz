@@ -81,6 +81,8 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 	private RepositoryConnection connection;
 	private Map<URI, Sensor> sensors;
 	private Map<URI, Dataset> datasets;
+	private Map<URI, Property> properties;
+	private Map<URI, FeatureOfInterest> features;
 	private ValueFactory vf;
 	private RDFEntityRepresenter representer;
 
@@ -104,6 +106,8 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 		this.vf = connection.getValueFactory();
 		this.representer = new RDFEntityRepresenter();
 
+		loadProperties();
+		loadFeatures();
 		loadSensors();
 		loadDatasets();
 	}
@@ -153,6 +157,18 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 	}
 
 	@Override
+	public Set<Property> getProperties() {
+		return Collections.unmodifiableSet(new HashSet<Property>(properties
+				.values()));
+	}
+
+	@Override
+	public Set<FeatureOfInterest> getFeaturesOfInterest() {
+		return Collections.unmodifiableSet(new HashSet<FeatureOfInterest>(
+				features.values()));
+	}
+
+	@Override
 	public Set<Sensor> getSensors() {
 		return Collections
 				.unmodifiableSet(new HashSet<Sensor>(sensors.values()));
@@ -198,6 +214,8 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 			}
 		}
 
+		loadProperties();
+		loadFeatures();
 		loadSensors();
 		loadDatasets();
 	}
@@ -214,8 +232,74 @@ public class SesameKnowledgeStore implements KnowledgeStore {
 				log.severe(e.getMessage());
 		}
 
+		loadProperties();
+		loadFeatures();
 		loadSensors();
 		loadDatasets();
+	}
+
+	private void loadProperties() {
+		properties = new HashMap<URI, Property>();
+
+		String sparql = "prefix ssn: <" + SSN.ns + "#>" + "prefix rdf: <"
+				+ RDF.NAMESPACE + ">" + "select ?id " + "where {"
+				+ "?id rdf:type ssn:Property ." + "}";
+
+		try {
+			TupleQuery query = connection.prepareTupleQuery(
+					QueryLanguage.SPARQL, sparql);
+			TupleQueryResult rs = query.evaluate();
+
+			while (rs.hasNext()) {
+				BindingSet bs = rs.next();
+
+				URI id = _uri(bs.getValue("id"));
+				Property property = new Property(id);
+
+				properties.put(id, property);
+			}
+
+		} catch (RepositoryException | MalformedQueryException
+				| QueryEvaluationException e) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe(e.getMessage());
+		}
+
+		if (log.isLoggable(Level.INFO))
+			log.info("Loaded properties (" + properties.size() + ") {"
+					+ properties + "}");
+	}
+
+	private void loadFeatures() {
+		features = new HashMap<URI, FeatureOfInterest>();
+
+		String sparql = "prefix ssn: <" + SSN.ns + "#>" + "prefix rdf: <"
+				+ RDF.NAMESPACE + ">" + "select ?id " + "where {"
+				+ "?id rdf:type ssn:FeatureOfInterest ." + "}";
+
+		try {
+			TupleQuery query = connection.prepareTupleQuery(
+					QueryLanguage.SPARQL, sparql);
+			TupleQueryResult rs = query.evaluate();
+
+			while (rs.hasNext()) {
+				BindingSet bs = rs.next();
+
+				URI id = _uri(bs.getValue("id"));
+				FeatureOfInterest feature = new FeatureOfInterest(id);
+
+				features.put(id, feature);
+			}
+
+		} catch (RepositoryException | MalformedQueryException
+				| QueryEvaluationException e) {
+			if (log.isLoggable(Level.SEVERE))
+				log.severe(e.getMessage());
+		}
+
+		if (log.isLoggable(Level.INFO))
+			log.info("Loaded features of interest (" + features.size() + ") {"
+					+ features + "}");
 	}
 
 	private void loadSensors() {

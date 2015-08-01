@@ -13,7 +13,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.openrdf.query.resultio.text.tsv.SPARQLResultsTSVWriter;
 import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.sail.memory.MemoryStore;
+import org.openrdf.sail.nativerdf.NativeStore;
 
 import fi.uef.envi.emrooz.Emrooz;
 import fi.uef.envi.emrooz.QueryType;
@@ -51,7 +51,7 @@ public class CompletePersistentExample {
 
 	public static void main(String[] args) {
 		e = new Emrooz(new SesameKnowledgeStore(new SailRepository(
-				new MemoryStore(new File("/tmp/ks")))),
+				new NativeStore(new File("/tmp/ks")))),
 				new CassandraDataStore());
 
 		add(); // Comment to query again after adding the data
@@ -69,7 +69,7 @@ public class CompletePersistentExample {
 		String sparql = "prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#>"
 				+ "prefix time: <http://www.w3.org/2006/time#>"
 				+ "prefix dul: <http://www.loa-cnr.it/ontologies/DUL.owl#>"
-				+ "select ?time ?sensor ?property ?feature ?value "
+				+ "select ?time ?value ?sensor ?property ?feature "
 				+ "where {"
 				+ "["
 				+ "ssn:observedBy ?sensor ;"

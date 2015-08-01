@@ -6,7 +6,9 @@
 package fi.uef.envi.emrooz;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -84,6 +86,8 @@ public class Emrooz {
 	private KnowledgeStore ks;
 	private DataStore ds;
 
+	private Map<URI, Property> properties;
+	private Map<URI, FeatureOfInterest> features;
 	private Map<URI, Map<URI, Sensor>> sensors;
 	private Map<URI, Sensor> sensorsById;
 	private Map<URI, Dataset> datasets;
@@ -110,6 +114,8 @@ public class Emrooz {
 		this.ks = ks;
 		this.ds = ds;
 
+		this.properties = new HashMap<URI, Property>();
+		this.features = new HashMap<URI, FeatureOfInterest>();
 		this.sensors = new HashMap<URI, Map<URI, Sensor>>();
 		this.sensorsById = new HashMap<URI, Sensor>();
 		this.datasets = new HashMap<URI, Dataset>();
@@ -121,24 +127,37 @@ public class Emrooz {
 		this.sensorFrequencyCache = new HashMap<Sensor, Frequency>();
 		this.datasetFrequencyCache = new HashMap<URI, QuantityValue>();
 
-		sensors();
-		datasets();
+		init();
 	}
 
 	public void loadKnowledgeBase(File file) {
 		ks.load(file);
-		sensors();
-		datasets();
+		init();
 	}
 
 	public void add(Sensor sensor) {
 		ks.addSensor(sensor);
-		sensors();
+		init();
 	}
 
 	public void add(Dataset dataset) {
 		ks.addDataset(dataset);
-		datasets();
+		init();
+	}
+
+	public Set<Property> getProperties() {
+		return Collections.unmodifiableSet(new HashSet<Property>(properties
+				.values()));
+	}
+
+	public Set<FeatureOfInterest> getFeaturesOfInterest() {
+		return Collections.unmodifiableSet(new HashSet<FeatureOfInterest>(
+				features.values()));
+	}
+
+	public Set<Sensor> getSensors() {
+		return Collections.unmodifiableSet(new HashSet<Sensor>(sensorsById
+				.values()));
 	}
 
 	public Sensor getSensorById(URI sensorId) {
@@ -157,6 +176,11 @@ public class Emrooz {
 		}
 
 		return ret;
+	}
+
+	public Set<Dataset> getDatasets() {
+		return Collections.unmodifiableSet(new HashSet<Dataset>(datasets
+				.values()));
 	}
 
 	public Dataset getDatasetById(URI datasetId) {
@@ -375,6 +399,13 @@ public class Emrooz {
 		evaluate(type, QueryFactory.createParsedQuery(query), handler);
 	}
 
+	private void init() {
+		properties();
+		features();
+		sensors();
+		datasets();
+	}
+
 	private ResultSet<BindingSet> evaluate(QueryType type, ParsedQuery query) {
 		if (type.equals(QueryType.SENSOR_OBSERVATION))
 			return evaluate(query,
@@ -562,6 +593,26 @@ public class Emrooz {
 				ds.createDatasetObservationQueryHandler(queriesMap), original);
 	}
 
+	private void properties() {
+		properties.clear();
+		
+		Set<Property> properties = ks.getProperties();
+		
+		for (Property property : properties) {
+			this.properties.put(property.getId(), property);
+		}
+	}
+	
+	private void features() {
+		features.clear();
+		
+		Set<FeatureOfInterest> features = ks.getFeaturesOfInterest();
+		
+		for (FeatureOfInterest feature : features) {
+			this.features.put(feature.getId(), feature);
+		}
+	}
+	
 	private void sensors() {
 		sensors.clear();
 		sensorsById.clear();
@@ -735,13 +786,13 @@ public class Emrooz {
 		@Override
 		public void visit(ComponentPropertyValueInteger value) {
 			// TODO Auto-generated method stub
-			
+
 		}
 
 		@Override
 		public void visit(ComponentPropertyValueLong value) {
 			// TODO Auto-generated method stub
-			
+
 		}
 
 	}

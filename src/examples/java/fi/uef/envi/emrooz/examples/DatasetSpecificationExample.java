@@ -5,8 +5,11 @@
 
 package fi.uef.envi.emrooz.examples;
 
+import java.io.File;
+
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
+import org.openrdf.sail.nativerdf.NativeStore;
 
 import fi.uef.envi.emrooz.api.KnowledgeStore;
 import fi.uef.envi.emrooz.entity.EntityFactory;
@@ -39,8 +42,14 @@ public class DatasetSpecificationExample {
 	static EntityFactory f = EntityFactory.getInstance("http://example.org#");
 
 	public static void main(String[] args) {
+		// KnowledgeStore ks = new SesameKnowledgeStore(new SailRepository(
+		// new MemoryStore()));
+
+		// KnowledgeStore ks = new SesameKnowledgeStore(new SailRepository(
+		// new MemoryStore(new File("/tmp/ks"))));
+
 		KnowledgeStore ks = new SesameKnowledgeStore(new SailRepository(
-				new MemoryStore()));
+				new NativeStore(new File("/tmp/ks"))));
 
 		ks.addDataset(dataset1());
 		ks.addDataset(dataset2());
@@ -52,7 +61,7 @@ public class DatasetSpecificationExample {
 	private static Dataset dataset1() {
 		return f.createDataset("d1", 10.0);
 	}
-	
+
 	private static Dataset dataset2() {
 		QuantityValue frequency = f.createQuantityValue();
 		Unit unit = f.createUnit(QUDTUnit.Hertz);
@@ -72,11 +81,12 @@ public class DatasetSpecificationExample {
 
 		Dataset dataset = f.createDataset("d3", frequency);
 
-		DataStructureDefinition structure = f.createDataStructureDefinition("s1");
+		DataStructureDefinition structure = f
+				.createDataStructureDefinition("s1");
 
 		structure.addComponent(f.createComponentSpecification(f
 				.createMeasureProperty("m1")));
-		
+
 		dataset.setStructure(structure);
 
 		return dataset;

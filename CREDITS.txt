@@ -59,3 +59,16 @@ snappy-java (1.1.1.7):
 	https://github.com/xerial/snappy-java
 	Apache License 2.0
 	
+Grizzly (2.3.21):
+	https://grizzly.java.net/
+	Common Development and Distribution License (CDDL) Version 1.1
+    GNU General Public License (GPL) Version 2
+    
+Jersey (1.19):
+	https://jersey.java.net/
+    Common Development and Distribution License (CDDL) Version 1.1
+    GNU General Public License (GPL) Version 2
+    
+Jackson (2.6.0):
+	http://wiki.fasterxml.com/JacksonHome
+	Apache License 2.0

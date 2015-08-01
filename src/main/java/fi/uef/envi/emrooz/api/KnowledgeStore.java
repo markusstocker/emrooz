@@ -13,6 +13,8 @@ import org.openrdf.query.BindingSet;
 import org.openrdf.query.parser.ParsedQuery;
 
 import fi.uef.envi.emrooz.entity.qb.Dataset;
+import fi.uef.envi.emrooz.entity.ssn.FeatureOfInterest;
+import fi.uef.envi.emrooz.entity.ssn.Property;
 import fi.uef.envi.emrooz.entity.ssn.Sensor;
 
 /**
@@ -40,6 +42,10 @@ public interface KnowledgeStore extends Store {
 	
 	public void addDataset(Dataset dataset);
 
+	public Set<Property> getProperties();
+	
+	public Set<FeatureOfInterest> getFeaturesOfInterest();
+	
 	public Set<Sensor> getSensors();
 	
 	public Set<Dataset> getDatasets();
