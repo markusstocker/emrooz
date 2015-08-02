@@ -36,8 +36,8 @@ import fi.uef.envi.emrooz.entity.qb.Dataset;
  * @author Markus Stocker
  */
 
-@Path("/databases/list")
-public class ListDatabases {
+@Path("/datasets/list")
+public class ListDatasets {
 
 	private ObjectMapper mapper = new ObjectMapper();
 

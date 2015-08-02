@@ -60,7 +60,7 @@ public class EmroozServer {
 		try {
 			StringBuffer sb = new StringBuffer();
 			sb.append("Server started\n");
-			sb.append("WADL at " + BASE_URI + "sapplication.wadl\n");
+			sb.append("WADL at " + BASE_URI + "application.wadl\n");
 			sb.append("Press enter to stop the server...\n");
 			System.out.println(sb);
 			System.in.read();
