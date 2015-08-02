@@ -117,6 +117,26 @@ public class Connection {
 		
 		return emrooz.evaluate(QueryType.SENSOR_OBSERVATION, query.toString());
 	}
+	
+	public static ResultSet<BindingSet> evaluate(String datasetId, String from, String to) {
+		StringBuffer query = new StringBuffer();
+		
+		query.append("prefix qb: <http://purl.org/linked-data/cube#> ");
+		query.append("prefix sdmx-dimension: <http://purl.org/linked-data/sdmx/2009/dimension#> ");
+		query.append("prefix time: <http://www.w3.org/2006/time#> ");
+		query.append("prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> ");
+		query.append("select ?id ?time ?property ?value ");
+		query.append("where { ");
+		query.append("?id qb:dataSet <" + datasetId + "> . ");
+		query.append("?id sdmx-dimension:timePeriod [ time:inXSDDateTime ?time ] . ");
+		query.append("?id ?property ?value . ");
+		query.append("?property rdf:type qb:ComponentProperty . ");
+		query.append("filter (?time >= \"" + from + "\"^^xsd:dateTime && ");
+	    query.append("?time < \"" + to + "\"^^xsd:dateTime) ");
+		query.append("} order by asc (?time)");
+		
+		return emrooz.evaluate(QueryType.DATASET_OBSERVATION, query.toString());
+	}
 
 	public static void shutdown() {
 		emrooz.close();
