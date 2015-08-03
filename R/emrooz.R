@@ -1,6 +1,7 @@
 library(RCurl)
 library(ggplot2)
 library(grid)
+library(dplyr)
 
 host <- "http://localhost:8080"
 
